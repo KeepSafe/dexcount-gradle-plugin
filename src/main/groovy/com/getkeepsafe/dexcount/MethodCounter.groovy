@@ -78,6 +78,7 @@ class MethodCounter {
         def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
         return dexEntries.collect { entry ->
             def temp = File.createTempFile("dexcount", ".dex")
+            temp.deleteOnExit()
 
             zipfile.getInputStream(entry).withStream { input ->
                 temp.withOutputStream { output ->
