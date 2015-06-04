@@ -29,14 +29,15 @@ class MethodCounter {
         def dataList = extractDexData(file)
 
         try {
-            int count = 0
-            def methods = dataList*.data*.getMethodRefs()
-                    .flatten()
-                    .inject(new HashMap<String, Integer>()) { HashMap<String, Integer> map, ref ->
+            def count = 0
+            def map = new HashMap<String, Integer>()
+            def datas = dataList*.data
+            def methodRefs = datas*.getMethodRefs().flatten()
+
+            methodRefs.each { ref ->
                 def classDescriptor = ref.getDeclClassName().replace('$', '.')
                 def className = Output.descriptorToDot(classDescriptor)
 
-                ++count
                 while (true) {
                     increment(map, className)
                     def nextIndex = className.lastIndexOf('.')
@@ -46,13 +47,13 @@ class MethodCounter {
                     className = className.substring(0, nextIndex)
                 }
 
-                map
+                ++count
             }
 
-            def counter = new MethodCounter()
-            counter.totalCount = count
-            counter.methodCountsByPackage = methods
-            return counter
+            return new MethodCounter(
+                    totalCount: count,
+                    methodCountsByPackage: map)
+
         } finally {
             dataList*.dispose()
         }
