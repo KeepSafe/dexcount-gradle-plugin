@@ -33,16 +33,17 @@ class MethodCounter {
             def methods = dataList*.data*.getMethodRefs()
                     .flatten()
                     .inject(new HashMap<String, Integer>()) { HashMap<String, Integer> map, ref ->
-                String name = Output.descriptorToDot(ref.name)
+                def classDescriptor = ref.getDeclClassName().replace('$', '.')
+                def className = Output.descriptorToDot(classDescriptor)
 
                 ++count
                 while (true) {
-                    increment(map, name)
-                    def nextIndex = name.lastIndexOf('.')
+                    increment(map, className)
+                    def nextIndex = className.lastIndexOf('.')
                     if (nextIndex == -1) {
                         break
                     }
-                    name = name.substring(0, nextIndex)
+                    className = className.substring(0, nextIndex)
                 }
 
                 map
