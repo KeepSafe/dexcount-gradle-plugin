@@ -1,0 +1,102 @@
+apply plugin: 'groovy'
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+sourceCompatibility = 1.7
+
+group 'com.getkeepsafe.dexcount'
+version '0.1.0-SNAPSHOT'
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+
+        groovy {
+            srcDir 'src/main/groovy'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile 'com.android.tools.build:gradle:1.0.0'
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.4'
+    distributionUrl = 'http://services.gradle.org/distributions/gradle-2.4-all.zip'
+}
+
+task groovydocJar(type: Jar, dependsOn: groovydoc) {
+    classifier = 'groovydoc'
+    from 'build/docs/groovydoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives groovydocJar
+    archives sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+def snapshotUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+def stagingUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: snapshotUrl) {
+                authentication(userName: ksSonatypeUsername, password: ksSonatypePassword)
+            }
+
+            pom.project {
+                name 'dexcount-gradle-plugin'
+                packaging 'jar'
+                description 'dexcount-gradle-plugin is a Gradle plugin for counting methods in an .apk'
+                url 'http://github.com/KeepSafe/dexcount-gradle-plugin.git'
+                inceptionYear '2015'
+
+                scm {
+                    url 'scm:git@github.com:KeepSafe/dexcount-gradle-plugin.git'
+                    connection 'scm:git@github.com:KeepSafe/dexcount-gradle-plugin.git'
+                    developerConnection 'scm:git@github.com:KeepSafe/dexcount-gradle-plugin.git'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'benjamin-bader'
+                        name 'Ben Bader'
+                    }
+                }
+            }
+        }
+    }
+}
