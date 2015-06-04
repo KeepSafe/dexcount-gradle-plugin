@@ -34,8 +34,11 @@ class DexMethodCountPlugin implements Plugin<Project> {
     private static void applyAndroid(Project project, DomainObjectCollection<BaseVariant> variants) {
         variants.all { variant ->
             variant.outputs.each { output ->
-                def taskName = "count${variant.name.capitalize()}${output.name.capitalize()}DexMethods"
-                DexMethodCountTask task = project.tasks.create(taskName, DexMethodCountTask)
+                def slug = variant.name.capitalize()
+                if (variant.outputs.size() > 1) {
+                    slug += output.name.capitalize()
+                }
+                DexMethodCountTask task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
                 task.output(output)
                 variant.assemble.doLast { task.countMethods() }
             }
