@@ -41,8 +41,9 @@ class DexMethodCountTask extends DefaultTask {
             color = 'GREEN'
         }
 
+        def filename = output.outputFile.name
         withColor(StyledTextOutput.Style.Info, color) { out ->
-            out.println("Total methods in ${output.outputFile.name}: ${count}")
+            out.println("Total methods in ${filename}: ${count}")
         }
     }
 
