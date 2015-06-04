@@ -79,8 +79,11 @@ class MethodCounter {
         return dexEntries.collect { entry ->
             def temp = File.createTempFile("dexcount", ".dex")
 
-            zipfile.getInputStream(entry).withStream {
-                IOUtils.copy(it, new FileOutputStream(temp))
+            zipfile.getInputStream(entry).withStream { input ->
+                temp.withOutputStream { output ->
+                    IOUtils.copy(input, output)
+                    output.flush()
+                }
             }
 
             return new DexFile(temp, true)
