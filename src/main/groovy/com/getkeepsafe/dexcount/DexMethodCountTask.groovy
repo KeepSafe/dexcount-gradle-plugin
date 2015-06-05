@@ -16,20 +16,20 @@ package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
 
 class DexMethodCountTask extends DefaultTask {
-    private BaseVariantOutput output
+    def BaseVariantOutput apkOrDex
 
-    void output(BaseVariantOutput output) {
-        this.output = output;
-    }
+    @OutputFile
+    def File outputFile
 
     @TaskAction
     void countMethods() {
-        def counter = MethodCounter.count(output.outputFile)
+        def counter = MethodCounter.count(apkOrDex.outputFile)
         def count = counter.getTotalCount()
 
         String color
@@ -41,7 +41,15 @@ class DexMethodCountTask extends DefaultTask {
             color = 'GREEN'
         }
 
-        def filename = output.outputFile.name
+        if (outputFile != null) {
+            outputFile.parentFile.mkdirs()
+            outputFile.createNewFile()
+            outputFile.withPrintWriter { writer ->
+                counter.printTree(writer)
+            }
+        }
+
+        def filename = apkOrDex.outputFile.name
         withColor(StyledTextOutput.Style.Info, color) { out ->
             out.println("Total methods in ${filename}: ${count}")
         }

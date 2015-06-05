@@ -15,6 +15,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.dexdeps.DexData
+import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
 
 import java.util.zip.ZipException
@@ -29,11 +30,9 @@ class MethodCounter {
 
         try {
             def count = 0
-            def map = new HashMap<String, Integer>()
-            def datas = dataList*.data
-            def methodRefs = datas*.getMethodRefs().flatten()
+            def map = new TreeMap<String, Integer>()
 
-            methodRefs.each { ref ->
+            dataList*.getMethodRefs().flatten().each { ref ->
                 def classDescriptor = ref.getDeclClassName().replace('$', '.')
                 def className = Output.descriptorToDot(classDescriptor)
 
@@ -55,6 +54,13 @@ class MethodCounter {
 
         } finally {
             dataList*.dispose()
+        }
+    }
+
+    def printTree(PrintWriter out) {
+        methodCountsByPackage.each { entry ->
+            def line = String.format(Locale.ROOT, "%-8d %s\n", entry.value, entry.key)
+            out.print(line)
         }
     }
 
@@ -116,6 +122,10 @@ class MethodCounter {
             this.raf = new RandomAccessFile(file, 'r')
             this.data = new DexData(raf)
             data.load()
+        }
+
+        def List<MethodRef> getMethodRefs() {
+            return data.getMethodRefs()
         }
 
         void dispose() {
