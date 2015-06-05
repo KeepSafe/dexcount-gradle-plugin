@@ -35,7 +35,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         variants.all { variant ->
             variant.outputs.each { output ->
                 def slug = variant.name.capitalize()
-                def path = "${project.buildDir}/dexcount/${variant.name}"
+                def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
                 if (variant.outputs.size() > 1) {
                     slug += output.name.capitalize()
                     path += "/${output.name}.txt"
