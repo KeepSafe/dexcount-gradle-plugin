@@ -18,7 +18,7 @@ buildScript {
   }
 }
 
-apply plugin: com.getkeepsafe.dexcount
+apply plugin: 'com.getkeepsafe.dexcount'
 ```
 
 ## Sample output:
