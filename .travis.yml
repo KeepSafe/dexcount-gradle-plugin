@@ -1,6 +1,23 @@
 language: groovy
+
 groovy:
   - 2.3.9
+
 jdk:
   - oraclejdk8
+
 script: ./gradlew check
+
+after_success:
+  - .buildscript/deploy_snapshot.sh
+
+env:
+  global:
+    - secure: ZMqOZBFH4rfwJZWCaf58bpLl7Q3S4Z0VbGgJS+DiLEBJZRKBbu70xLKUeV8oLC/GdOZo9KXujub1L9OP20s+eA4ddY0FpaHPuNZSAl6OMhjRYkJbc5MIYDSVKnDwVKBkwx7QpEghv/Qaz8p34wLt90Qic+62ntxzQuJ5Ng5YOv/9MangdzBdZnCGOU/Mb/erE5n5yVZpkqCvX/0w38DYPANoD+AvdSlTx+OsYqxy5VKdq7ktGMHaDmyBZvbNJnuWvwLNhUUE+ZoLbCIIh+cS4sCeTw24hD/Ssn4t2rQ+MMuJ3I0ksI3qUC6UQvrNu6Mdl2sJF04yfn+/C7LMNK6S9mH/m3MJI9ejI2v/MjmrEiuhogHxD4YpvlRL7iK2oyKbZhEvq/9VJORABmbDCDB21QhH5IBX1tD0/GkbSTuWvQ0+MuXs4tvI2fE9JnNBlipN5LUlT60PECvtiAJAXpih8Qtgqzsl+b2xqs7s70ia3MGF5Q167O7Uf8+lGsowUlgafqxwxpYSrXxklNNzK3n3Y1XAjaA8pYaJBCee24gKfsLHsjxkreB0c8//zZRmIt0yXMmXCxrXcoyHkDRHLGTqCRDOFzdreg3RbQNHgam2BZ4nLCl9kiBiqVTMumzrs7CgIRSzu3eWBE0elcHGGWAHqYuR5CoRk8lGeGA8izZijPk=
+    - secure: m9RS5t7kSUQk3hdQiq7C/b+DRYZeJWWPZorvKTSeF/043Kef9CEpSCdgp7pd9iWvh2YGCWqby2YP2IANbiMa4wjcf9nuiE5QjhSRuKDTR99zR0CcBj7DzySWSbVsn5vj5+MsETETGwUIt+6biXcg5Pv39HeqjNDuMZvEN41X1hcwbuUYOm0mZpXa/F8WbDIJX7eOsmrexgrc2XyE6SNR/T3Qs/gyy0xgNm6MsxDc7BBYR9AGXd+EJfRLu5zpwzYGOUk/kgFwwc4k/91Mrd6icwtYI5Ubf4uEgcjkbre5K/f8zmel5b18x4/uzDDMIp70bJezujjDxcTLQeRZVe7CNxQNgwKQxd+BBBUhO88FY5Z3DsOsrCm9rzAGY0IILCm1Uy1cVgD7dKRTyyhW7Sr/6n596UhX4HXhy7foSDUwSuNJvvtLVm5N2V91gSP6PLu4H5waWRM72Oj3SiFFew5MKj8CmL/gwDKJHTWOFu+lprOnVH66pGf1vhpOocqkAMpc9C+jRzI4+dj5ND8JXwBE9xdynkyB/6z9IEc3kftVyYezzwNAFgekidNGBJPazaLffzTdbtLSvqFlIW5YHkofVoKd/GThNJXsfPdSYn8vFGxlB+REcB+dxx0wZY6y14YhJywG5FrgAGZO+D7bGYGc0lryOvCovpSoh6q3i/VPr00=
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.m2
