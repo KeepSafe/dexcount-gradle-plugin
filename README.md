@@ -1,5 +1,7 @@
 # Dexcount Gradle Plugin
 
+[![Build Status](https://travis-ci.org/KeepSafe/dexcount-gradle-plugin.svg?branch=master)](https://travis-ci.org/KeepSafe/dexcount-gradle-plugin)
+
 A Gradle plugin to report the number of method references in your APK on every build.
 
 This helps you keep tabs on the growth of your app, with an eye to staying under the 65,536 method-reference limit, and avoiding the headache of eliminating methods or enabling multidex.
