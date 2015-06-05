@@ -21,6 +21,6 @@ elif [ "$TRAVIS_BRANCH" != "$BRANCH" ]; then
   echo "Skipping snapshot deployment: wrong branch. Expected '$BRANCH' but was '$TRAVIS_BRANCH'."
 else
   echo "Deploying snapshot..."
-  ./gradlew uploadArchives -PksSonatypeUsername=$CI_DEPLOY_USER -PksSonatypePassword=$CI_DEPLOY_PASS
+  ./gradlew clean uploadArchives
   echo "Snapshot deployed!"
 fi

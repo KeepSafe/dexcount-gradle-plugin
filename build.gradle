@@ -1,12 +1,10 @@
 apply plugin: 'groovy'
 apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
 
 sourceCompatibility = 1.7
 
-group 'com.getkeepsafe.dexcount'
-version '0.1.0-SNAPSHOT'
+group = GROUP
+version = VERSION_NAME
 
 sourceSets {
     main {
@@ -54,53 +52,4 @@ artifacts {
     archives sourcesJar
 }
 
-signing {
-    sign configurations.archives
-}
-
-def snapshotUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-def stagingUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-
-def ksSonatypeUsername = hasProperty('ksSonatypeUsername') ? ksSonatypeUsername : ''
-def ksSonatypePassword = hasProperty('ksSonatypePassword') ? ksSonatypePassword : ''
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: snapshotUrl) {
-                authentication(userName: ksSonatypeUsername, password: ksSonatypePassword)
-            }
-
-            pom.project {
-                name 'dexcount-gradle-plugin'
-                packaging 'jar'
-                description 'dexcount-gradle-plugin is a Gradle plugin for counting methods in an .apk'
-                url 'http://github.com/KeepSafe/dexcount-gradle-plugin.git'
-                inceptionYear '2015'
-
-                scm {
-                    url 'scm:git@github.com:KeepSafe/dexcount-gradle-plugin.git'
-                    connection 'scm:git@github.com:KeepSafe/dexcount-gradle-plugin.git'
-                    developerConnection 'scm:git@github.com:KeepSafe/dexcount-gradle-plugin.git'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'benjamin-bader'
-                        name 'Ben Bader'
-                    }
-                }
-            }
-        }
-    }
-}
+apply from: file('gradle/gradle-mvn-push.gradle')
