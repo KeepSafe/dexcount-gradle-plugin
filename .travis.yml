@@ -1,0 +1,6 @@
+language: groovy
+groovy:
+  - 2.3.9
+jdk:
+  - oraclejdk8
+script: ./gradlew check
