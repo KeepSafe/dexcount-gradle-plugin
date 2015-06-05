@@ -12,11 +12,11 @@ in `build.gradle`
 ```groovy
 buildScript {
   repositories {
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    mavenCentral() // or jCenter()
   }
-  
+
   classpath {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.1.0-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.1.1'
   }
 }
 
