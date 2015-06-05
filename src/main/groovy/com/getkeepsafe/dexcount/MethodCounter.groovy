@@ -16,7 +16,6 @@ package com.getkeepsafe.dexcount
 
 import com.android.dexdeps.DexData
 import com.android.dexdeps.Output
-import org.apache.commons.io.IOUtils
 
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
@@ -81,9 +80,13 @@ class MethodCounter {
             def temp = File.createTempFile("dexcount", ".dex")
             temp.deleteOnExit()
 
+            def buf = new byte[4096]
             zipfile.getInputStream(entry).withStream { input ->
                 temp.withOutputStream { output ->
-                    IOUtils.copy(input, output)
+                    def read
+                    while ((read = input.read(buf)) != -1) {
+                        output.write(buf, 0, read)
+                    }
                     output.flush()
                 }
             }
