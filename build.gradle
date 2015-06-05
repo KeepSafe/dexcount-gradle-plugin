@@ -61,6 +61,9 @@ signing {
 def snapshotUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 def stagingUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
 
+def ksSonatypeUsername = hasProperty('ksSonatypeUsername') ? ksSonatypeUsername : ''
+def ksSonatypePassword = hasProperty('ksSonatypePassword') ? ksSonatypePassword : ''
+
 uploadArchives {
     repositories {
         mavenDeployer {
