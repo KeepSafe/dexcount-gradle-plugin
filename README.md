@@ -42,6 +42,32 @@ BUILD SUCCESSFUL
 Total time: 33.017 secs
 ```
 
+## Detailed method counts
+
+By default, a breakdown of method references by package and class will be written to a file under `${buildDir}/outputs/dexcount/${variant}`.
+
+For example, an excerpt from our own app (in `app/build/outputs/dexcount/debug.txt`):
+```
+6        android.speech
+6        android.speech.tts
+5        android.speech.tts.TextToSpeech
+1        android.speech.tts.UtteranceProgressListener
+10789    android.support
+20       android.support.annotation
+1        android.support.annotation.CheckResult
+4        android.support.annotation.FloatRange
+2        android.support.annotation.IntDef
+2        android.support.annotation.IntRange
+6        android.support.annotation.RequiresPermission
+1        android.support.annotation.RequiresPermission.Read
+1        android.support.annotation.RequiresPermission.Write
+4        android.support.annotation.Size
+1        android.support.annotation.StringDef
+7010     android.support.v4
+1        android.support.v4.BuildConfig
+41       android.support.v4.accessibilityservice
+```
+
 ## Building
 
 `./gradlew build`
