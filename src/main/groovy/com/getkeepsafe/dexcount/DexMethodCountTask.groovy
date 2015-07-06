@@ -15,11 +15,17 @@
 package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariantOutput
+import com.android.dexdeps.DexData
+import com.android.dexdeps.MethodRef
+import com.android.dexdeps.Output
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
+
+import java.util.zip.ZipException
+import java.util.zip.ZipFile
 
 class DexMethodCountTask extends DefaultTask {
     def BaseVariantOutput apkOrDex
@@ -29,8 +35,16 @@ class DexMethodCountTask extends DefaultTask {
 
     @TaskAction
     void countMethods() {
-        def counter = MethodCounter.count(apkOrDex.outputFile)
-        def count = counter.getTotalCount()
+        def tree = getPackageTree()
+        def count = tree.getCount()
+
+        if (outputFile != null) {
+            outputFile.parentFile.mkdirs()
+            outputFile.createNewFile()
+            outputFile.withPrintWriter { writer ->
+                tree.printPackageList(writer)
+            }
+        }
 
         String color
         if (count > 60000) {
@@ -39,14 +53,6 @@ class DexMethodCountTask extends DefaultTask {
             color = 'YELLOW'
         } else {
             color = 'GREEN'
-        }
-
-        if (outputFile != null) {
-            outputFile.parentFile.mkdirs()
-            outputFile.createNewFile()
-            outputFile.withPrintWriter { writer ->
-                counter.printTree(writer)
-            }
         }
 
         def filename = apkOrDex.outputFile.name
@@ -71,6 +77,81 @@ class DexMethodCountTask extends DefaultTask {
                 System.setProperty(prop, oldValue)
             } else {
                 System.clearProperty(prop)
+            }
+        }
+    }
+
+    def getPackageTree() {
+        def dataList = extractDexData(apkOrDex.outputFile)
+        try {
+            def tree = new PackageTree()
+            dataList*.getMethodRefs().flatten().each { ref ->
+                def classDescriptor = ref.getDeclClassName().replace('$', '.')
+                def className = Output.descriptorToDot(classDescriptor)
+
+                tree.add(className)
+            }
+            return tree
+        } finally {
+            dataList*.dispose()
+        }
+    }
+
+    static List<DexFile> extractDexData(File file) {
+        try {
+            return extractDexFromZip(file)
+        } catch (ZipException ignored) {
+            // not a zip, no problem
+        }
+
+        return [new DexFile(file, false)]
+    }
+
+    static List<DexFile> extractDexFromZip(File file) {
+        def zipfile = new ZipFile(file)
+        def entries = Collections.list(zipfile.entries())
+        def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
+        return dexEntries.collect { entry ->
+            def temp = File.createTempFile("dexcount", ".dex")
+            temp.deleteOnExit()
+
+            def buf = new byte[4096]
+            zipfile.getInputStream(entry).withStream { input ->
+                temp.withOutputStream { output ->
+                    def read
+                    while ((read = input.read(buf)) != -1) {
+                        output.write(buf, 0, read)
+                    }
+                    output.flush()
+                }
+            }
+
+            return new DexFile(temp, true)
+        }
+    }
+
+    static class DexFile {
+        public DexData data
+        private RandomAccessFile raf
+        private File file
+        private boolean isTemp
+
+        public DexFile(File file, boolean isTemp) {
+            this.file = file
+            this.isTemp = isTemp
+            this.raf = new RandomAccessFile(file, 'r')
+            this.data = new DexData(raf)
+            data.load()
+        }
+
+        def List<MethodRef> getMethodRefs() {
+            return data.getMethodRefs()
+        }
+
+        void dispose() {
+            raf.close()
+            if (isTemp) {
+                file.delete()
             }
         }
     }
