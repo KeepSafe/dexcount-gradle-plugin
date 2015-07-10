@@ -32,6 +32,8 @@ class DexMethodCountPlugin implements Plugin<Project> {
     }
 
     private static void applyAndroid(Project project, DomainObjectCollection<BaseVariant> variants) {
+        project.extensions.create('dexcount', DexMethodCountExtension)
+
         variants.all { variant ->
             variant.outputs.each { output ->
                 def slug = variant.name.capitalize()
@@ -43,9 +45,12 @@ class DexMethodCountPlugin implements Plugin<Project> {
                     path += '.txt'
                 }
 
+                def ext = project.extensions['dexcount']
+
                 DexMethodCountTask task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
                 task.apkOrDex = output
                 task.outputFile = project.file(path)
+                task.config = ext
                 variant.assemble.doLast { task.countMethods() }
             }
         }

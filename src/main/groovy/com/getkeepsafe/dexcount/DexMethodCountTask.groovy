@@ -19,6 +19,7 @@ import com.android.dexdeps.DexData
 import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
 import org.gradle.api.DefaultTask
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
@@ -33,6 +34,8 @@ class DexMethodCountTask extends DefaultTask {
     @OutputFile
     def File outputFile
 
+    def DexMethodCountExtension config
+
     @TaskAction
     void countMethods() {
         def tree = getPackageTree()
@@ -41,8 +44,11 @@ class DexMethodCountTask extends DefaultTask {
         if (outputFile != null) {
             outputFile.parentFile.mkdirs()
             outputFile.createNewFile()
-            outputFile.withPrintWriter { writer ->
-                tree.printPackageList(writer)
+            outputFile.withOutputStream { stream ->
+                def appendableStream = new PrintStream(stream)
+                print(tree, appendableStream)
+                appendableStream.flush()
+                appendableStream.close()
             }
         }
 
@@ -59,9 +65,23 @@ class DexMethodCountTask extends DefaultTask {
         withColor(StyledTextOutput.Style.Info, color) { out ->
             out.println("Total methods in ${filename}: ${count}")
         }
+
+        // Log the entire package list/tree at LogLevel.DEBUG, unless
+        // verbose is enabled (in which case use the default log level).
+        def outputFactory = services.get(StyledTextOutputFactory)
+        def output = config.verbose ? outputFactory.create('dexcount') : outputFactory.create('dexcount', LogLevel.DEBUG)
+        print(tree, output.withStyle(StyledTextOutput.Style.Info))
     }
 
-    void withColor(StyledTextOutput.Style style, String color, Closure<StyledTextOutput> closure) {
+    def print(tree, writer) {
+        if (config.printAsTree) {
+            tree.printTree(writer, config.includeClasses)
+        } else {
+            tree.printPackageList(writer, config.includeClasses)
+        }
+    }
+
+    private void withColor(StyledTextOutput.Style style, String color, Closure<StyledTextOutput> closure) {
         def prop = "org.gradle.color.${style.name().toLowerCase()}"
         def oldValue = System.getProperty(prop)
 

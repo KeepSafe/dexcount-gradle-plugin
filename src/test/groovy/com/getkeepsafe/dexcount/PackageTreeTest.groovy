@@ -17,7 +17,7 @@ class PackageTreeTest extends Specification {
 
     def "can print a package list with classes included"() {
         setup:
-        def writer = new StringWriter()
+        def writer = new StringBuilder()
         def tree = new PackageTree()
 
         when:
@@ -26,7 +26,7 @@ class PackageTreeTest extends Specification {
         tree.add("com.foo.Qux")
         tree.add("com.alpha.Beta")
 
-        tree.printPackageListWithClasses(new PrintWriter(writer))
+        tree.printPackageListWithClasses(writer)
 
         then:
         writer.toString() == """4        com
@@ -40,7 +40,7 @@ class PackageTreeTest extends Specification {
 
     def "can print a package list without classes"() {
         setup:
-        def writer = new StringWriter()
+        def writer = new StringBuilder()
         def tree = new PackageTree()
 
         when:
@@ -49,7 +49,7 @@ class PackageTreeTest extends Specification {
         tree.add("com.foo.Qux")
         tree.add("com.alpha.Beta")
 
-        tree.printPackageList(new PrintWriter(writer))
+        tree.printPackageListWithoutClasses(writer)
 
         then:
         writer.toString() == """4        com
@@ -60,7 +60,7 @@ class PackageTreeTest extends Specification {
 
     def "can print a tree"() {
         setup:
-        def writer = new StringWriter()
+        def sb = new StringBuilder()
         def tree = new PackageTree()
 
         when:
@@ -69,10 +69,10 @@ class PackageTreeTest extends Specification {
         tree.add("com.foo.Qux")
         tree.add("com.alpha.Beta")
 
-        tree.printTree(new PrintWriter(writer))
+        tree.printTree(sb, true)
 
         then:
-        writer.toString() == """com (4)
+        sb.toString() == """com (4)
   alpha (1)
     Beta (1)
   foo (3)

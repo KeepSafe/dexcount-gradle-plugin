@@ -4,98 +4,93 @@ class PackageTree {
     // A cached sum of this node and all children's method ref counts.
     // -1 means that there is no cached value.  Set by `getCount()`, and
     // invalidated by adding new nodes.
-    private int total = -1
+    private int total_ = -1
 
     // The local count of method refs.  Will be zero for package nodes and
     // non-zero for class nodes.
-    private int count = 0
+    private int count_ = 0
 
-    private boolean isClass
-    private final String name
-    private final SortedMap<String, PackageTree> children = new TreeMap<>()
+    private final boolean isClass_
+    private final String name_
+    private final SortedMap<String, PackageTree> children_ = new TreeMap<>()
 
     PackageTree() {
-        name = ""
+        this.name_ = ""
+        this.isClass_ = false
     }
 
     private PackageTree(name) {
-        this.name = name
-        this.isClass = name.charAt(0).isUpperCase()
+        this.name_ = name
+        this.isClass_ = name.charAt(0).isUpperCase()
     }
 
     public def add(String fullyQualifiedClassName) {
-        def parts = fullyQualifiedClassName.split("\\.")
-        def queue = new ArrayDeque<String>(parts.length)
-        for (int i = 0; i < parts.length; ++i) {
-            if (!parts[i].isEmpty()) {
-                queue.add(parts[i])
-            }
-        }
-
-        addInternal(queue)
+        addInternal(fullyQualifiedClassName, 0)
     }
 
-    private def addInternal(Queue<String> parts) {
-        // Computed totals get invalidated
-        total = -1
-
-        if (parts.size() == 0) {
-            isClass = true
-            ++count
-            return
-        }
-
-        def part = parts.remove()
-        def child = children[part]
+    private def addInternal(String name, int startIndex) {
+        def ix = name.indexOf('.', startIndex)
+        def segment = ix == -1 ? name.substring(startIndex) : name.substring(startIndex, ix)
+        def child = children_[segment]
         if (child == null) {
-            children[part] = child = new PackageTree(part)
+            child = children_[segment] = new PackageTree(segment)
         }
-        child.addInternal(parts)
+
+        if (ix == -1) {
+            child.count_++
+        } else {
+            total_ = -1
+            child.addInternal(name, ix + 1)
+        }
     }
 
     def getCount() {
-        if (total == -1) {
-            total = children.values().inject(count, { sum, child -> sum + child.getCount() })
+        if (total_ == -1) {
+            total_ = children_.values().inject(count_, { sum, child -> sum + child.getCount() })
         }
-        return total
+        return total_
     }
 
-    def printPackageList(PrintWriter out) {
+    def printPackageListWithoutClasses(Appendable out) {
+        printPackageList(out, false)
+    }
+
+    def printPackageListWithClasses(Appendable out) {
+        printPackageList(out, true)
+    }
+
+    def printPackageList(Appendable out, boolean printClasses) {
         def sb = new StringBuilder(64)
-        children.values().each { it -> it.printPackageListRecursively(out, sb, false) }
+        children_.values().each { it -> it.printPackageListRecursively(out, sb, printClasses) }
     }
 
-    def printPackageListWithClasses(PrintWriter out) {
-        def sb = new StringBuilder(64)
-        children.values().each { it -> it.printPackageListRecursively(out, sb, true) }
-    }
-
-    private def printPackageListRecursively(PrintWriter out, StringBuilder sb, boolean includeClasses) {
+    private def printPackageListRecursively(Appendable out, StringBuilder sb, boolean includeClasses) {
         def len = sb.length()
         if (len > 0) {
             sb.append(".")
         }
-        sb.append(name)
+        sb.append(name_)
 
-        if (!isClass || includeClasses) {
-            out.format("%-8d %s\n", getCount(), sb.toString())
+        if (!isClass_ || includeClasses) {
+            out.append(String.format("%-8d %s\n", getCount(), sb.toString()))
         }
 
-        children.values().each { it -> it.printPackageListRecursively(out, sb, includeClasses) }
+        children_.values().each { it -> it.printPackageListRecursively(out, sb, includeClasses) }
         sb.setLength(len)
     }
 
-    def printTree(PrintWriter out) {
-        children.values().each { it -> it.printTreeRecursively(out, 0) }
+    def printTree(Appendable out, boolean printClasses) {
+        children_.values().each { it -> it.printTreeRecursively(out, 0, printClasses) }
     }
 
-    private def printTreeRecursively(PrintWriter out, int indent) {
-        indent.times { out.print("  ") }
-        out.print(name)
-        out.print(" (")
-        out.print(getCount())
-        out.print(")")
-        out.println()
-        children.values().each { it -> it.printTreeRecursively(out, indent + 1) }
+    private def printTreeRecursively(Appendable out, int indent, boolean printClasses) {
+        if (printClasses || !isClass_) {
+            indent.times { out.append("  ") }
+            out.append(name_)
+            out.append(" (")
+            out.append(String.valueOf(getCount()))
+            out.append(")\n")
+        }
+        children_.values().each { it -> it.printTreeRecursively(out, indent + 1, printClasses) }
     }
 }
