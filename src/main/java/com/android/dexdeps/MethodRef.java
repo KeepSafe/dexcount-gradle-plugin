@@ -18,7 +18,7 @@ package com.android.dexdeps;
 
 import java.util.Arrays;
 
-public class MethodRef {
+public class MethodRef implements HasDeclaringClass {
     private String mDeclClass, mReturnType, mMethodName;
     private String[] mArgTypes;
 

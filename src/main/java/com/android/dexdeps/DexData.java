@@ -435,6 +435,18 @@ public class DexData {
         return methodRefs;
     }
 
+    public FieldRef[] getFieldRefs() {
+        FieldRef[] fieldRefs = new FieldRef[mFieldIds.length];
+        for (int i = 0; i < mFieldIds.length; i++) {
+            FieldIdItem fieldId = mFieldIds[i];
+            fieldRefs[i] = new FieldRef(
+                    classNameFromTypeIndex(fieldId.classIdx),
+                    classNameFromTypeIndex(fieldId.typeIdx),
+                    mStrings[fieldId.nameIdx]);
+        }
+        return fieldRefs;
+    }
+
 
     /*
      * =======================================================================
@@ -495,7 +507,7 @@ public class DexData {
      * Reads a variable-length unsigned LEB128 value.  Does not attempt to
      * verify that the value is valid.
      *
-     * @throws EOFException if we run off the end of the file
+     * @throws java.io.EOFException if we run off the end of the file
      */
     int readUnsignedLeb128() throws IOException {
         int result = 0;

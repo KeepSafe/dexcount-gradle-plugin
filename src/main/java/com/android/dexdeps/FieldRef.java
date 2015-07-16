@@ -16,7 +16,7 @@
 
 package com.android.dexdeps;
 
-public class FieldRef {
+public class FieldRef implements HasDeclaringClass {
     private String mDeclClass, mFieldType, mFieldName;
 
     /**
