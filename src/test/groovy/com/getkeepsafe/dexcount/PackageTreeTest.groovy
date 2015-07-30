@@ -6,13 +6,13 @@ class PackageTreeTest extends Specification {
     def "adding duplicates increments count"() {
         setup:
         def tree = new PackageTree()
-        tree.add("com.foo.Bar")
+        tree.addMethodRef("com.foo.Bar")
 
         when:
-        tree.add("com.foo.Bar")
+        tree.addMethodRef("com.foo.Bar")
 
         then:
-        tree.getCount() == 2
+        tree.getMethodCount() == 2
     }
 
     def "can print a package list with classes included"() {
@@ -21,10 +21,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.add("com.foo.Bar")
-        tree.add("com.foo.Bar")
-        tree.add("com.foo.Qux")
-        tree.add("com.alpha.Beta")
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Qux")
+        tree.addMethodRef("com.alpha.Beta")
 
         tree.printPackageListWithClasses(writer)
 
@@ -44,10 +44,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.add("com.foo.Bar")
-        tree.add("com.foo.Bar")
-        tree.add("com.foo.Qux")
-        tree.add("com.alpha.Beta")
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Qux")
+        tree.addMethodRef("com.alpha.Beta")
 
         tree.printPackageListWithoutClasses(writer)
 
@@ -64,10 +64,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.add("com.foo.Bar")
-        tree.add("com.foo.Bar")
-        tree.add("com.foo.Qux")
-        tree.add("com.alpha.Beta")
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Qux")
+        tree.addMethodRef("com.alpha.Beta")
 
         tree.printTree(sb, true)
 

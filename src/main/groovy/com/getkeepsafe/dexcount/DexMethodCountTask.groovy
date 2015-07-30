@@ -16,6 +16,8 @@ package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.dexdeps.DexData
+import com.android.dexdeps.FieldRef
+import com.android.dexdeps.HasDeclaringClass
 import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
 import org.gradle.api.DefaultTask
@@ -39,7 +41,8 @@ class DexMethodCountTask extends DefaultTask {
     @TaskAction
     void countMethods() {
         def tree = getPackageTree()
-        def count = tree.getCount()
+        def methodCount = tree.getMethodCount()
+        def fieldCount = tree.getFieldCount()
 
         if (outputFile != null) {
             outputFile.parentFile.mkdirs()
@@ -53,9 +56,9 @@ class DexMethodCountTask extends DefaultTask {
         }
 
         String color
-        if (count > 60000) {
+        if (methodCount > 60000) {
             color = 'RED'
-        } else if (count > 40000) {
+        } else if (methodCount > 40000) {
             color = 'YELLOW'
         } else {
             color = 'GREEN'
@@ -63,7 +66,8 @@ class DexMethodCountTask extends DefaultTask {
 
         def filename = apkOrDex.outputFile.name
         withColor(StyledTextOutput.Style.Info, color) { out ->
-            out.println("Total methods in ${filename}: ${count}")
+            out.println("Total methods in ${filename}: ${methodCount}")
+            out.println("Total fields in ${filename}:  ${fieldCount}")
         }
 
         // Log the entire package list/tree at LogLevel.DEBUG, unless
@@ -105,15 +109,24 @@ class DexMethodCountTask extends DefaultTask {
         def dataList = extractDexData(apkOrDex.outputFile)
         try {
             def tree = new PackageTree()
-            dataList*.getMethodRefs().flatten().each { ref ->
-                def classDescriptor = ref.getDeclClassName().replace('$', '.')
-                def className = Output.descriptorToDot(classDescriptor)
-
-                tree.add(className)
+            refListToClassNames(dataList*.getMethodRefs()).each {
+                tree.addMethodRef(it)
             }
+
+            refListToClassNames(dataList*.getFieldRefs()).each {
+                tree.addFieldRef(it)
+            }
+
             return tree
         } finally {
             dataList*.dispose()
+        }
+    }
+
+    static refListToClassNames(List<List<HasDeclaringClass>> refs) {
+        return refs.flatten().collect { ref ->
+            def descriptor = ref.getDeclClassName()
+            return Output.descriptorToDot(descriptor)
         }
     }
 
@@ -166,6 +179,10 @@ class DexMethodCountTask extends DefaultTask {
 
         def List<MethodRef> getMethodRefs() {
             return data.getMethodRefs()
+        }
+
+        def List<FieldRef> getFieldRefs() {
+            return data.getFieldRefs()
         }
 
         void dispose() {

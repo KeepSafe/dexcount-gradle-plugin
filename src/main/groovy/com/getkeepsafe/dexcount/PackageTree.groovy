@@ -2,13 +2,21 @@ package com.getkeepsafe.dexcount
 
 class PackageTree {
     // A cached sum of this node and all children's method ref counts.
-    // -1 means that there is no cached value.  Set by `getCount()`, and
+    // -1 means that there is no cached value.  Set by `getMethodCount()`, and
     // invalidated by adding new nodes.
-    private int total_ = -1
+    private int methodTotal_ = -1
 
     // The local count of method refs.  Will be zero for package nodes and
     // non-zero for class nodes.
-    private int count_ = 0
+    private int methodCount_ = 0
+
+    // A cached sum of this node and all children's field-ref counts.
+    // Same semantics as methodTotal_.
+    private int fieldTotal_ = -1
+
+    // The local count of field refs.  Will be zero for package nodes and
+    // possibly non-zero for class nodes.
+    private int fieldCount_ = 0
 
     private final boolean isClass_
     private final String name_
@@ -24,11 +32,15 @@ class PackageTree {
         this.isClass_ = name.charAt(0).isUpperCase()
     }
 
-    public def add(String fullyQualifiedClassName) {
-        addInternal(fullyQualifiedClassName, 0)
+    public def addMethodRef(String fullyQualifiedClassName) {
+        addInternal(fullyQualifiedClassName, 0, true)
     }
 
-    private def addInternal(String name, int startIndex) {
+    public def addFieldRef(String fullyQualifiedClassName) {
+        addInternal(fullyQualifiedClassName, 0, false)
+    }
+
+    private def addInternal(String name, int startIndex, boolean isMethod) {
         def ix = name.indexOf('.', startIndex)
         def segment = ix == -1 ? name.substring(startIndex) : name.substring(startIndex, ix)
         def child = children_[segment]
@@ -37,18 +49,33 @@ class PackageTree {
         }
 
         if (ix == -1) {
-            child.count_++
+            if (isMethod) {
+                child.methodCount_++
+            } else {
+                child.fieldCount_++
+            }
         } else {
-            total_ = -1
-            child.addInternal(name, ix + 1)
+            if (isMethod) {
+                methodTotal_ = -1
+            } else {
+                fieldTotal_ = -1
+            }
+            child.addInternal(name, ix + 1, isMethod)
         }
     }
 
-    def getCount() {
-        if (total_ == -1) {
-            total_ = children_.values().inject(count_, { sum, child -> sum + child.getCount() })
+    def getMethodCount() {
+        if (methodTotal_ == -1) {
+            methodTotal_ = children_.values().inject(methodCount_) { sum, child -> sum + child.getMethodCount() }
         }
-        return total_
+        return methodTotal_
+    }
+
+    def getFieldCount() {
+        if (fieldTotal_ == -1) {
+            fieldTotal_ = children_.values().inject(fieldCount_) { sum, child -> sum + child.getFieldCount() }
+        }
+        return fieldTotal_
     }
 
     def printPackageListWithoutClasses(Appendable out) {
@@ -72,7 +99,7 @@ class PackageTree {
         sb.append(name_)
 
         if (!isClass_ || includeClasses) {
-            out.append(String.format("%-8d %s\n", getCount(), sb.toString()))
+            out.append(String.format("%-8d %s\n", getMethodCount(), sb.toString()))
         }
 
         children_.values().each { it -> it.printPackageListRecursively(out, sb, includeClasses) }
@@ -88,7 +115,7 @@ class PackageTree {
             indent.times { out.append("  ") }
             out.append(name_)
             out.append(" (")
-            out.append(String.valueOf(getCount()))
+            out.append(String.valueOf(getMethodCount()))
             out.append(")\n")
         }
         children_.values().each { it -> it.printTreeRecursively(out, indent + 1, printClasses) }
