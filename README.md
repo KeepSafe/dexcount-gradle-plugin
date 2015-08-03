@@ -68,6 +68,11 @@ For example, an excerpt from our own app (in `app/build/outputs/dexcount/debug.t
 41       android.support.v4.accessibilityservice
 ```
 
+####Note:
+If your app is large enough for method counts to be a concern, you probably have hundreds or thousands of packages in this list.  If you want to quickly find the packages with the most methods, a feature is forthcoming.  In the meanwhile, a bit of command-line work will do:
+
+`cat app/build/outputs/dexcount/debug.txt | sort -nr | less`
+
 ## Building
 
 `./gradlew build`
