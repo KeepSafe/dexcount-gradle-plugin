@@ -10,14 +10,14 @@ This helps you keep tabs on the growth of your app, with an eye to staying under
 
 in `build.gradle`
 ```groovy
-buildScript {
-  repositories {
-    mavenCentral() // or jCenter()
-  }
+buildscript {
+    repositories {
+        mavenCentral() // or jCenter()
+    }
 
-  classpath {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.1.1'
-  }
+    dependencies {
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.1.1'
+    }
 }
 
 apply plugin: 'com.getkeepsafe.dexcount'
