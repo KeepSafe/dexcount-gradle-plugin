@@ -23,13 +23,16 @@ class PackageTree {
     private final SortedMap<String, PackageTree> children_ = new TreeMap<>()
 
     PackageTree() {
-        this.name_ = ""
-        this.isClass_ = false
+        this("", false)
     }
 
-    private PackageTree(name) {
+    PackageTree(name) {
+        this(name, name.charAt(0).isUpperCase())
+    }
+
+    private PackageTree(name, isClass) {
         this.name_ = name
-        this.isClass_ = name.charAt(0).isUpperCase()
+        this.isClass_ = isClass
     }
 
     public def addMethodRef(String fullyQualifiedClassName) {
