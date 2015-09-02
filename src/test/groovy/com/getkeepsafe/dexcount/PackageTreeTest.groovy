@@ -26,7 +26,7 @@ class PackageTreeTest extends Specification {
         tree.addMethodRef("com.foo.Qux")
         tree.addMethodRef("com.alpha.Beta")
 
-        tree.printPackageListWithClasses(writer)
+        tree.printPackageList(writer, new PrintOptions(includeClasses: true))
 
         then:
         writer.toString() == """4        com
@@ -49,7 +49,7 @@ class PackageTreeTest extends Specification {
         tree.addMethodRef("com.foo.Qux")
         tree.addMethodRef("com.alpha.Beta")
 
-        tree.printPackageListWithoutClasses(writer)
+        tree.printPackageList(writer, new PrintOptions(includeClasses: false))
 
         then:
         writer.toString() == """4        com
@@ -69,7 +69,7 @@ class PackageTreeTest extends Specification {
         tree.addMethodRef("com.foo.Qux")
         tree.addMethodRef("com.alpha.Beta")
 
-        tree.printTree(sb, true)
+        tree.printTree(sb, new PrintOptions(includeClasses: true))
 
         then:
         sb.toString() == """com (4)
@@ -89,7 +89,7 @@ class PackageTreeTest extends Specification {
         when:
         tree.addMethodRef('com.foo.bar.$$Generated$Class$$')
 
-        tree.printPackageListWithClasses(sb)
+        tree.printPackageList(sb, new PrintOptions(includeClasses: true))
 
         then:
         def trimmed = sb.toString().trim()

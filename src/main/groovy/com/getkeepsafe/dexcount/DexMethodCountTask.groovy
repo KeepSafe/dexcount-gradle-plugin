@@ -132,5 +132,7 @@ class DexMethodCountTask extends DefaultTask {
         opts.includeMethodCount = true
         opts.includeFieldCount = config.countFields
         opts.orderByMethodCount = config.orderByMethodCount
+        opts.printHeader = true
+        return opts
     }
 }

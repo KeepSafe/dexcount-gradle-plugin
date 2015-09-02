@@ -81,21 +81,6 @@ class PackageTree {
         return fieldTotal_
     }
 
-    def printPackageListWithoutClasses(Appendable out) {
-        printPackageList(out, false)
-    }
-
-    def printPackageListWithClasses(Appendable out) {
-        printPackageList(out, true)
-    }
-
-    def printPackageList(Appendable out, boolean printClasses) {
-        def opts = new PrintOptions()
-        opts.includeClasses = printClasses
-
-        printPackageList(out, opts)
-    }
-
     def printPackageList(Appendable out, PrintOptions opts) {
         def sb = new StringBuilder(64)
 
@@ -140,12 +125,6 @@ class PackageTree {
 
         children_.values().each { it -> it.printPackageListRecursively(out, sb, opts) }
         sb.setLength(len)
-    }
-
-    def printTree(Appendable out, boolean printClasses) {
-        def opts = new PrintOptions()
-        opts.includeClasses = printClasses
-        printTree(out, opts)
     }
 
     def printTree(Appendable out, PrintOptions opts) {
