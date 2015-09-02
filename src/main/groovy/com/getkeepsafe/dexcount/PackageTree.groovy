@@ -135,25 +135,50 @@ class PackageTree {
         if (opts.includeClasses || !isClass_) {
             indent.times { out.append("  ") }
             out.append(name_)
-            out.append(" (")
-            out.append(String.valueOf(getMethodCount()))
-            out.append(")\n")
+
+            if (opts.includeFieldCount || opts.includeMethodCount) {
+                out.append(" (")
+
+                def appended = false
+                if (opts.includeMethodCount) {
+                    out.append(String.valueOf(getMethodCount()))
+                    out.append(" ")
+                    out.append(pluralizedMethods(getMethodCount()))
+                    appended = true
+                }
+
+                if (opts.includeFieldCount) {
+                    if (appended) {
+                        out.append(", ")
+                    }
+                    out.append(String.valueOf(getFieldCount()))
+                    out.append(" ")
+                    out.append(pluralizeFields(getFieldCount()))
+                }
+
+                out.append(")")
+            }
+
+            out.append("\n")
         }
+
         getChildren(opts).each { it -> it.printTreeRecursively(out, indent + 1, opts) }
     }
 
     private def getChildren(PrintOptions opts) {
         if (opts.orderByMethodCount) {
-            return children_.values().sort(false, { x, y ->
-                def lhs = x.getMethodCount()
-                def rhs = y.getMethodCount()
-
-                // If we are ordering by method count, we want a descending
-                // sort order.
-                return lhs < rhs ? 1 : lhs > rhs ? -1 : 0
-            })
+            // Return the child nodes sorted in descending order by method count.
+            return children_.values().sort(false, { -it.getMethodCount() })
         } else {
             return children_.values()
         }
+    }
+
+    private static def pluralizedMethods(int n) {
+        return n == 1 ? "method" : "methods"
+    }
+
+    private static def pluralizeFields(int n) {
+        return n == 1 ? "field" : "fields"
     }
 }

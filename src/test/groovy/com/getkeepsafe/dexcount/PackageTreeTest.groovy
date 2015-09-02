@@ -72,12 +72,12 @@ class PackageTreeTest extends Specification {
         tree.printTree(sb, new PrintOptions(includeClasses: true))
 
         then:
-        sb.toString() == """com (4)
-  alpha (1)
-    Beta (1)
-  foo (3)
-    Bar (2)
-    Qux (1)
+        sb.toString() == """com (4 methods)
+  alpha (1 method)
+    Beta (1 method)
+  foo (3 methods)
+    Bar (2 methods)
+    Qux (1 method)
 """
     }
 
