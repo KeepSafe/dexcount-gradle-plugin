@@ -90,37 +90,76 @@ class PackageTree {
     }
 
     def printPackageList(Appendable out, boolean printClasses) {
-        def sb = new StringBuilder(64)
-        children_.values().each { it -> it.printPackageListRecursively(out, sb, printClasses) }
+        def opts = new PrintOptions()
+        opts.includeClasses = printClasses
+
+        printPackageList(out, opts)
     }
 
-    private def printPackageListRecursively(Appendable out, StringBuilder sb, boolean includeClasses) {
+    def printPackageList(Appendable out, PrintOptions opts) {
+        def sb = new StringBuilder(64)
+
+        if (opts.printHeader) {
+            printPackageListHeader(out, opts)
+        }
+
+        children_.values().each { it -> it.printPackageListRecursively(out, sb, opts) }
+    }
+
+    private static def printPackageListHeader(Appendable out, PrintOptions opts) {
+        if (opts.includeMethodCount) {
+            out.append(String.format("%-8s ", "methods"))
+        }
+
+        if (opts.includeFieldCount) {
+            out.append(String.format("%-8s ", "fields"))
+        }
+
+        out.append("package/class name\n")
+    }
+
+    private def printPackageListRecursively(Appendable out, StringBuilder sb, PrintOptions opts) {
         def len = sb.length()
         if (len > 0) {
             sb.append(".")
         }
         sb.append(name_)
 
-        if (!isClass_ || includeClasses) {
-            out.append(String.format("%-8d %s\n", getMethodCount(), sb.toString()))
+        if (!isClass_ || opts.includeClasses) {
+            if (opts.includeMethodCount) {
+                out.append(String.format("%-8d ", getMethodCount()))
+            }
+
+            if (opts.includeFieldCount) {
+                out.append(String.format("%-8d ", getFieldCount()))
+            }
+
+            out.append(sb.toString())
+            out.append('\n')
         }
 
-        children_.values().each { it -> it.printPackageListRecursively(out, sb, includeClasses) }
+        children_.values().each { it -> it.printPackageListRecursively(out, sb, opts) }
         sb.setLength(len)
     }
 
     def printTree(Appendable out, boolean printClasses) {
-        children_.values().each { it -> it.printTreeRecursively(out, 0, printClasses) }
+        def opts = new PrintOptions()
+        opts.includeClasses = printClasses
+        printTree(out, opts)
     }
 
-    private def printTreeRecursively(Appendable out, int indent, boolean printClasses) {
-        if (printClasses || !isClass_) {
+    def printTree(Appendable out, PrintOptions opts) {
+        children_.values().each { it -> it.printTreeRecursively(out, 0, opts) }
+    }
+
+    private def printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
+        if (opts.includeClasses || !isClass_) {
             indent.times { out.append("  ") }
             out.append(name_)
             out.append(" (")
             out.append(String.valueOf(getMethodCount()))
             out.append(")\n")
         }
-        children_.values().each { it -> it.printTreeRecursively(out, indent + 1, printClasses) }
+        children_.values().each { it -> it.printTreeRecursively(out, indent + 1, opts) }
     }
 }

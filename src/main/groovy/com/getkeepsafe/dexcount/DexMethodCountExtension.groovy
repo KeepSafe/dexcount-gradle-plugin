@@ -2,7 +2,7 @@ package com.getkeepsafe.dexcount
 
 class DexMethodCountExtension {
     private boolean includeClasses
-    private boolean orderBy
+    private boolean orderByMethodCount
     private boolean countFields
     private boolean printAsTree
     private boolean verbose
@@ -37,5 +37,13 @@ class DexMethodCountExtension {
 
     public void setCountFields(boolean countFields) {
         this.countFields = countFields
+    }
+
+    public boolean getOrderByMethodCount() {
+        return this.orderByMethodCount
+    }
+
+    public void setOrderByMethodCount(boolean orderByMethodCount) {
+        this.orderByMethodCount = orderByMethodCount
     }
 }

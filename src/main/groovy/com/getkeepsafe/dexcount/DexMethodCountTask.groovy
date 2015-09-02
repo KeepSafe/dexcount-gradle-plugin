@@ -74,10 +74,11 @@ class DexMethodCountTask extends DefaultTask {
     }
 
     def print(tree, writer) {
+        def opts = getPrintOptions()
         if (config.printAsTree) {
-            tree.printTree(writer, config.includeClasses)
+            tree.printTree(writer, opts)
         } else {
-            tree.printPackageList(writer, config.includeClasses)
+            tree.printPackageList(writer, opts)
         }
     }
 
@@ -124,5 +125,12 @@ class DexMethodCountTask extends DefaultTask {
             def descriptor = ref.getDeclClassName()
             return Output.descriptorToDot(descriptor)
         }
+    }
+
+    private def getPrintOptions() {
+        def opts = new PrintOptions()
+        opts.includeMethodCount = true
+        opts.includeFieldCount = config.countFields
+        opts.orderByMethodCount = config.orderByMethodCount
     }
 }

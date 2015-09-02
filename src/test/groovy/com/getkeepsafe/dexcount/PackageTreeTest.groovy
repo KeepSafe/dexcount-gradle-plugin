@@ -87,13 +87,74 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.addMethodRef('com.foo.bar.$$GeneratedClass$$')
+        tree.addMethodRef('com.foo.bar.$$Generated$Class$$')
 
         tree.printPackageListWithClasses(sb)
 
         then:
         def trimmed = sb.toString().trim()
         def ix = trimmed.lastIndexOf(' ')
-        trimmed.substring(ix + 1) == 'com.foo.bar.$$GeneratedClass$$'
+        trimmed.substring(ix + 1) == 'com.foo.bar.$$Generated$Class$$'
+    }
+
+    def "prints a header when options say to"() {
+        setup:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.printHeader = true
+
+        when:
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        trimmed == "methods  package/class name"
+    }
+
+    def "header includes column for fields when field count is specified"() {
+        setup:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.printHeader = true
+        opts.includeFieldCount = true
+
+        when:
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        trimmed == "methods  fields   package/class name"
+    }
+
+    def "package list can include field counts"() {
+        setup:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.printHeader = true
+        opts.includeFieldCount = true
+        opts.includeClasses = true
+
+        when:
+        tree.addMethodRef("x.y.Z")
+        tree.addMethodRef("x.y.Z")
+        tree.addMethodRef("x.y.Z")
+        tree.addFieldRef("x.y.Z")
+        tree.addFieldRef("x.y.Z")
+        tree.addFieldRef("x.y.W")
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        def expected = """
+methods  fields   package/class name
+3        3        x
+3        3        x.y
+0        1        x.y.W
+3        2        x.y.Z""".trim()
+
+        trimmed == expected
     }
 }
