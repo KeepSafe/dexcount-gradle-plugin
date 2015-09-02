@@ -88,7 +88,7 @@ class PackageTree {
             printPackageListHeader(out, opts)
         }
 
-        children_.values().each { it -> it.printPackageListRecursively(out, sb, opts) }
+        getChildren(opts).each { it -> it.printPackageListRecursively(out, sb, opts) }
     }
 
     private static def printPackageListHeader(Appendable out, PrintOptions opts) {
@@ -123,12 +123,12 @@ class PackageTree {
             out.append('\n')
         }
 
-        children_.values().each { it -> it.printPackageListRecursively(out, sb, opts) }
+        getChildren(opts).each { it -> it.printPackageListRecursively(out, sb, opts) }
         sb.setLength(len)
     }
 
     def printTree(Appendable out, PrintOptions opts) {
-        children_.values().each { it -> it.printTreeRecursively(out, 0, opts) }
+        getChildren(opts).each { it -> it.printTreeRecursively(out, 0, opts) }
     }
 
     private def printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
@@ -139,6 +139,21 @@ class PackageTree {
             out.append(String.valueOf(getMethodCount()))
             out.append(")\n")
         }
-        children_.values().each { it -> it.printTreeRecursively(out, indent + 1, opts) }
+        getChildren(opts).each { it -> it.printTreeRecursively(out, indent + 1, opts) }
+    }
+
+    private def getChildren(PrintOptions opts) {
+        if (opts.orderByMethodCount) {
+            return children_.values().sort(false, { x, y ->
+                def lhs = x.getMethodCount()
+                def rhs = y.getMethodCount()
+
+                // If we are ordering by method count, we want a descending
+                // sort order.
+                return lhs < rhs ? 1 : lhs > rhs ? -1 : 0
+            })
+        } else {
+            return children_.values()
+        }
     }
 }

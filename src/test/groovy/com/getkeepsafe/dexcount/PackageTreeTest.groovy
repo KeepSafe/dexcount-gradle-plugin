@@ -157,4 +157,36 @@ methods  fields   package/class name
 
         trimmed == expected
     }
+
+    def "package list can be sorted by method count"() {
+        setup:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.printHeader = true
+        opts.includeFieldCount = true
+        opts.includeClasses = true
+        opts.orderByMethodCount = true
+
+        when:
+        tree.addMethodRef("x.y.Z")
+        tree.addMethodRef("x.y.Z")
+        tree.addMethodRef("x.y.Z")
+        tree.addFieldRef("x.y.Z")
+        tree.addFieldRef("x.y.Z")
+        tree.addFieldRef("x.y.W")
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        def expected = """
+methods  fields   package/class name
+3        3        x
+3        3        x.y
+3        2        x.y.Z
+0        1        x.y.W
+""".trim()
+
+        trimmed == expected
+    }
 }
