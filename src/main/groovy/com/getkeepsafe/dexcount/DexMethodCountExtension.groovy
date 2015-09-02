@@ -2,6 +2,8 @@ package com.getkeepsafe.dexcount
 
 class DexMethodCountExtension {
     private boolean includeClasses
+    private boolean orderBy
+    private boolean countFields
     private boolean printAsTree
     private boolean verbose
 
@@ -27,5 +29,13 @@ class DexMethodCountExtension {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose
+    }
+
+    public boolean getCountFields() {
+        return countFields
+    }
+
+    public void setCountFields(boolean countFields) {
+        this.countFields = countFields
     }
 }
