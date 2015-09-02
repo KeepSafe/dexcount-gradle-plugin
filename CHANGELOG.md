@@ -6,6 +6,7 @@
 * Add verbose output option
 * Add option to include field counts in printed package lists
 * Add option to sort printed package list by method count (issue #7)
+* Add header to list-formatted output
 
 
 0.1.1

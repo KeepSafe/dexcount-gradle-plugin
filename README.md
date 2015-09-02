@@ -8,7 +8,7 @@ This helps you keep tabs on the growth of your app, with an eye to staying under
 
 ## Usage:
 
-in `build.gradle`
+in `app/build.gradle`
 ```groovy
 buildscript {
     repositories {
@@ -48,6 +48,7 @@ By default, a breakdown of method references by package and class will be writte
 
 For example, an excerpt from our own app (in `app/build/outputs/dexcount/debug.txt`):
 ```
+methods  package/class name
 6        android.speech
 6        android.speech.tts
 5        android.speech.tts.TextToSpeech
@@ -68,10 +69,28 @@ For example, an excerpt from our own app (in `app/build/outputs/dexcount/debug.t
 41       android.support.v4.accessibilityservice
 ```
 
-####Note:
-If your app is large enough for method counts to be a concern, you probably have hundreds or thousands of packages in this list.  If you want to quickly find the packages with the most methods, a feature is forthcoming.  In the meanwhile, a bit of command-line work will do:
+## Configuration
 
-`cat app/build/outputs/dexcount/debug.txt | sort -nr | less`
+Dexcount is configurable via a Gradle extension (shown with default values):
+
+in `app/build.gradle`:
+```groovy
+dexcount {
+    includeClasses = false
+    includeFieldCount = false
+    printAsTree = false
+    orderByMethodCount = false
+    verbose = false
+}
+```
+
+Each flag controls some aspect of the printed output:
+- `includeClasses`: When true, individual classes will be include in the pacage list - otherwise, only packages are included.
+- `includeFieldCount`: When true, the number of fields in a package or class will be included in the printed output.
+- `printAsTree`: When true, the output file will be formatted as a package tree, with nested packages indented, instead of the default list format.
+- `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
+- `verbose`: When true, the output file will also be printed to the build's standard output.
+
 
 ## Building
 
