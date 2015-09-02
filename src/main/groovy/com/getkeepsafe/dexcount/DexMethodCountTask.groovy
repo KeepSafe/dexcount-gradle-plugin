@@ -130,7 +130,7 @@ class DexMethodCountTask extends DefaultTask {
     private def getPrintOptions() {
         def opts = new PrintOptions()
         opts.includeMethodCount = true
-        opts.includeFieldCount = config.countFields
+        opts.includeFieldCount = config.includeFieldCount
         opts.orderByMethodCount = config.orderByMethodCount
         opts.printHeader = true
         return opts
