@@ -15,22 +15,18 @@
 package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariantOutput
-import com.android.dexdeps.DexData
-import com.android.dexdeps.FieldRef
 import com.android.dexdeps.HasDeclaringClass
-import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
 
-import java.util.zip.ZipException
-import java.util.zip.ZipFile
-
 class DexMethodCountTask extends DefaultTask {
+    @Input
     def BaseVariantOutput apkOrDex
 
     @OutputFile
@@ -106,7 +102,7 @@ class DexMethodCountTask extends DefaultTask {
     }
 
     def getPackageTree() {
-        def dataList = extractDexData(apkOrDex.outputFile)
+        def dataList = DexFile.extractDexData(apkOrDex.outputFile)
         try {
             def tree = new PackageTree()
             refListToClassNames(dataList*.getMethodRefs()).each {
@@ -127,69 +123,6 @@ class DexMethodCountTask extends DefaultTask {
         return refs.flatten().collect { ref ->
             def descriptor = ref.getDeclClassName()
             return Output.descriptorToDot(descriptor)
-        }
-    }
-
-    static List<DexFile> extractDexData(File file) {
-        try {
-            return extractDexFromZip(file)
-        } catch (ZipException ignored) {
-            // not a zip, no problem
-        }
-
-        return [new DexFile(file, false)]
-    }
-
-    static List<DexFile> extractDexFromZip(File file) {
-        def zipfile = new ZipFile(file)
-        def entries = Collections.list(zipfile.entries())
-        def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
-        return dexEntries.collect { entry ->
-            def temp = File.createTempFile("dexcount", ".dex")
-            temp.deleteOnExit()
-
-            def buf = new byte[4096]
-            zipfile.getInputStream(entry).withStream { input ->
-                temp.withOutputStream { output ->
-                    def read
-                    while ((read = input.read(buf)) != -1) {
-                        output.write(buf, 0, read)
-                    }
-                    output.flush()
-                }
-            }
-
-            return new DexFile(temp, true)
-        }
-    }
-
-    static class DexFile {
-        public DexData data
-        private RandomAccessFile raf
-        private File file
-        private boolean isTemp
-
-        public DexFile(File file, boolean isTemp) {
-            this.file = file
-            this.isTemp = isTemp
-            this.raf = new RandomAccessFile(file, 'r')
-            this.data = new DexData(raf)
-            data.load()
-        }
-
-        def List<MethodRef> getMethodRefs() {
-            return data.getMethodRefs()
-        }
-
-        def List<FieldRef> getFieldRefs() {
-            return data.getFieldRefs()
-        }
-
-        void dispose() {
-            raf.close()
-            if (isTemp) {
-                file.delete()
-            }
         }
     }
 }
