@@ -125,7 +125,15 @@ class DexMethodCountTask extends DefaultTask {
     static refListToClassNames(List<List<HasDeclaringClass>> refs) {
         return refs.flatten().collect { ref ->
             def descriptor = ref.getDeclClassName()
-            return Output.descriptorToDot(descriptor)
+            def dot = Output.descriptorToDot(descriptor)
+            if (dot.indexOf('.') == -1) {
+                // Classes in the unnamed package (e.g. primitive arrays)
+                // will not appear in the output in the current PackageTree
+                // implementation if classes are not included.  To work around,
+                // we make an artificial package named "<unnamed>".
+                dot = "<unnamed>." + dot
+            }
+            return dot
         }
     }
 

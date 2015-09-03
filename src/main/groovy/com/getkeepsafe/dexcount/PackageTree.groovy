@@ -42,13 +42,17 @@ class PackageTree {
         this("", false)
     }
 
-    PackageTree(name) {
-        this(name, name.charAt(0).isUpperCase())
+    PackageTree(String name) {
+        this(name, isClassName(name))
     }
 
     private PackageTree(name, isClass) {
         this.name_ = name
         this.isClass_ = isClass
+    }
+
+    private static boolean isClassName(String name) {
+        return Character.isUpperCase(name.charAt(0)) || name.contains("[]")
     }
 
     public def addMethodRef(String fullyQualifiedClassName) {
