@@ -1,6 +1,7 @@
 language: groovy
 
 groovy:
+  - 2.3.6
   - 2.3.9
 
 jdk:
