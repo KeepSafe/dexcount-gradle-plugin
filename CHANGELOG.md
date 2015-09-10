@@ -1,3 +1,9 @@
+unreleased
+----------
+
+* BUG: Fix invalid bytecode (issue #11)
+* BUG: Work around Groovy-Java interop bug (issue #12)
+
 0.2.0 (released 2 September 2015)
 ------------------
 

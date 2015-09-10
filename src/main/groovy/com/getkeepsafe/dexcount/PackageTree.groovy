@@ -16,6 +16,9 @@
 
 package com.getkeepsafe.dexcount
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class PackageTree {
     // A cached sum of this node and all children's method ref counts.
     // -1 means that there is no cached value.  Set by `getMethodCount()`, and
@@ -55,15 +58,15 @@ class PackageTree {
         return Character.isUpperCase(name.charAt(0)) || name.contains("[]")
     }
 
-    public def addMethodRef(String fullyQualifiedClassName) {
+    public void addMethodRef(String fullyQualifiedClassName) {
         addInternal(fullyQualifiedClassName, 0, true)
     }
 
-    public def addFieldRef(String fullyQualifiedClassName) {
+    public void addFieldRef(String fullyQualifiedClassName) {
         addInternal(fullyQualifiedClassName, 0, false)
     }
 
-    private def addInternal(String name, int startIndex, boolean isMethod) {
+    private void addInternal(String name, int startIndex, boolean isMethod) {
         def ix = name.indexOf('.', startIndex)
         def segment = ix == -1 ? name.substring(startIndex) : name.substring(startIndex, ix)
         def child = children_[segment]
@@ -87,21 +90,23 @@ class PackageTree {
         }
     }
 
-    def getMethodCount() {
+    int getMethodCount() {
         if (methodTotal_ == -1) {
-            methodTotal_ = children_.values().inject(methodCount_) { sum, child -> sum + child.getMethodCount() }
+            methodTotal_ = (int) children_.values().inject(methodCount_) {
+                int sum, PackageTree child -> sum + child.getMethodCount() }
         }
         return methodTotal_
     }
 
-    def getFieldCount() {
+    int getFieldCount() {
         if (fieldTotal_ == -1) {
-            fieldTotal_ = children_.values().inject(fieldCount_) { sum, child -> sum + child.getFieldCount() }
+            fieldTotal_ = (int) children_.values().inject(fieldCount_) {
+                int sum, PackageTree child -> sum + child.getFieldCount() }
         }
         return fieldTotal_
     }
 
-    def printPackageList(Appendable out, PrintOptions opts) {
+    void printPackageList(Appendable out, PrintOptions opts) {
         def sb = new StringBuilder(64)
 
         if (opts.printHeader) {
@@ -123,7 +128,7 @@ class PackageTree {
         out.append("package/class name\n")
     }
 
-    private def printPackageListRecursively(Appendable out, StringBuilder sb, PrintOptions opts) {
+    private void printPackageListRecursively(Appendable out, StringBuilder sb, PrintOptions opts) {
         def len = sb.length()
         if (len > 0) {
             sb.append(".")
@@ -143,15 +148,15 @@ class PackageTree {
             out.append('\n')
         }
 
-        getChildren(opts).each { it -> it.printPackageListRecursively(out, sb, opts) }
+        getChildren(opts).each { PackageTree it -> it.printPackageListRecursively(out, sb, opts) }
         sb.setLength(len)
     }
 
-    def printTree(Appendable out, PrintOptions opts) {
-        getChildren(opts).each { it -> it.printTreeRecursively(out, 0, opts) }
+    void printTree(Appendable out, PrintOptions opts) {
+        getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, 0, opts) }
     }
 
-    private def printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
+    private void printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
         if (opts.includeClasses || !isClass_) {
             indent.times { out.append("  ") }
             out.append(name_)
@@ -182,23 +187,23 @@ class PackageTree {
             out.append("\n")
         }
 
-        getChildren(opts).each { it -> it.printTreeRecursively(out, indent + 1, opts) }
+        getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
     }
 
-    private def getChildren(PrintOptions opts) {
+    private Collection<PackageTree> getChildren(PrintOptions opts) {
         if (opts.orderByMethodCount) {
             // Return the child nodes sorted in descending order by method count.
-            return children_.values().sort(false, { -it.getMethodCount() })
+            return children_.values().sort(false) { PackageTree it -> -it.getMethodCount() }
         } else {
             return children_.values()
         }
     }
 
-    private static def pluralizedMethods(int n) {
+    private static String pluralizedMethods(int n) {
         return n == 1 ? "method" : "methods"
     }
 
-    private static def pluralizeFields(int n) {
+    private static String pluralizeFields(int n) {
         return n == 1 ? "field" : "fields"
     }
 }
