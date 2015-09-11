@@ -1,4 +1,4 @@
-unreleased
+0.2.1 (release 11 September 2015)
 ----------
 
 * BUG: Fix invalid bytecode (issue #11)
