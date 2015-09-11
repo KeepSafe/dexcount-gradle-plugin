@@ -138,12 +138,11 @@ class DexMethodCountTask extends DefaultTask {
     }
 
     private def getPrintOptions() {
-        def opts = new PrintOptions()
-        opts.includeMethodCount = true
-        opts.includeFieldCount = config.includeFieldCount
-        opts.orderByMethodCount = config.orderByMethodCount
-        opts.includeClasses = config.includeClasses
-        opts.printHeader = true
-        return opts
+        return new PrintOptions(
+            includeMethodCount: true,
+            includeFieldCount: config.includeFieldCount,
+            orderByMethodCount: config.orderByMethodCount,
+            includeClasses: config.includeClasses,
+            printHeader: true)
     }
 }
