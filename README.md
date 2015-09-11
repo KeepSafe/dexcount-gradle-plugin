@@ -91,6 +91,23 @@ Each flag controls some aspect of the printed output:
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
 
+## Snapshot Builds
+
+We host snapshots in the Sonatype OSS repo.  They are updated on each commit.  As snapshots, they are inherently unstable - use at your own risk!  To use them, add the Sonatype Snapshot repo to your repositories:
+
+```groovy
+buildscript {
+  repositories {
+    // other repos should come first
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+  }
+  
+  dependencies {
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.2.1-SNAPSHOT'
+  }
+}
+```
+
 
 ## Building
 
