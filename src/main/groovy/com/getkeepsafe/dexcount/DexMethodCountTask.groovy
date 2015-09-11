@@ -19,6 +19,8 @@ package com.getkeepsafe.dexcount
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.dexdeps.HasDeclaringClass
 import com.android.dexdeps.Output
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Input
@@ -53,26 +55,19 @@ class DexMethodCountTask extends DefaultTask {
             }
         }
 
-        String color
-        if (methodCount > 60000) {
-            color = 'RED'
-        } else if (methodCount > 40000) {
-            color = 'YELLOW'
-        } else {
-            color = 'GREEN'
-        }
-
         def filename = apkOrDex.outputFile.name
-        withColor(StyledTextOutput.Style.Info, color) { out ->
+        withStyledOutput(StyledTextOutput.Style.Info) { out ->
             out.println("Total methods in ${filename}: ${methodCount}")
             out.println("Total fields in ${filename}:  ${fieldCount}")
         }
 
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
-        def outputFactory = services.get(StyledTextOutputFactory)
-        def output = config.verbose ? outputFactory.create('dexcount') : outputFactory.create('dexcount', LogLevel.DEBUG)
-        print(tree, output.withStyle(StyledTextOutput.Style.Info))
+        def level = config.verbose ? null : LogLevel.DEBUG
+
+        withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
+            print(tree, out)
+        }
     }
 
     def print(tree, writer) {
@@ -84,24 +79,14 @@ class DexMethodCountTask extends DefaultTask {
         }
     }
 
-    private void withColor(StyledTextOutput.Style style, String color, Closure<StyledTextOutput> closure) {
-        def prop = "org.gradle.color.${style.name().toLowerCase()}"
-        def oldValue = System.getProperty(prop)
+    private void withStyledOutput(
+            StyledTextOutput.Style style,
+            LogLevel level = null,
+            @ClosureParams(value = SimpleType, options = ['org.gradle.logging.StyledTextOutput']) Closure closure) {
+        def factory = services.get(StyledTextOutputFactory)
+        def output = level == null ? factory.create('dexcount') : factory.create('dexcount', level)
 
-        System.setProperty(prop, color)
-        try {
-            def sto = services.get(StyledTextOutputFactory)
-                    .create("dexcount")
-                    .withStyle(style)
-
-            closure(sto)
-        } finally {
-            if (oldValue != null) {
-                System.setProperty(prop, oldValue)
-            } else {
-                System.clearProperty(prop)
-            }
-        }
+        closure(output.withStyle(style))
     }
 
     def getPackageTree() {
