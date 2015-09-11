@@ -18,7 +18,7 @@ package com.getkeepsafe.dexcount
 
 import groovy.transform.CompileStatic
 
-@CompileStatic
+@CompileStatic  // necessary to avoid JDK verifier bugs (issues #11 and #12)
 class PackageTree {
     // A cached sum of this node and all children's method ref counts.
     // -1 means that there is no cached value.  Set by `getMethodCount()`, and
