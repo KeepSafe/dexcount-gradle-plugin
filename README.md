@@ -1,6 +1,8 @@
 # Dexcount Gradle Plugin
 
 [![Build Status](https://travis-ci.org/KeepSafe/dexcount-gradle-plugin.svg?branch=master)](https://travis-ci.org/KeepSafe/dexcount-gradle-plugin)
+[![Android Weekly](http://img.shields.io/badge/Android%20Weekly-%23174-2CB3E5.svg?style=flat)](http://androidweekly.net/issues/issue-174)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Dexcount%20Gradle%20Plugin-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1940)
 
 A Gradle plugin to report the number of method references in your APK on every build.
 
