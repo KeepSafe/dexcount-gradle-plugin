@@ -103,7 +103,7 @@ If you are counting both methods and fields, the following post-build script wil
 INPUT=path/to/outputs/dexcount/debug.txt
 PLOT_FILE=path/to/jenkins/report.csv
 
-tail -n +2 $INPUT | awk '$3 !~ /\./ { methods += $1; fields += $2 } END { printf "\"methods\",\"fields\"\n\"%d\",\"%d\"\n", methods, fields }' > $PLOT_FILE
+tail -n +2 $INPUT | awk '$3 !~ /\./ { methods += $1; fields += $2 } END { printf "methods,fields\n%d,%d\n", methods, fields }' > $PLOT_FILE
 ```
 
 If you are counting only methods, the awk script changes slightly:
@@ -112,7 +112,7 @@ If you are counting only methods, the awk script changes slightly:
 INPUT=path/to/outputs/dexcount/debug.txt
 METHOD_FILE=path/to/jenkins/report.csv
 
-tail -n +2 INPUT | awk '$2 !~ /\./ { methods += $1 } END { printf "\"methods\"\n\"%d\"\n", methods }' > $PLOT_FILE
+tail -n +2 INPUT | awk '$2 !~ /\./ { methods += $1 } END { printf "methods\n%d\n", methods }' > $PLOT_FILE
 ```
 
 Consult the plugin documentation for details on how to configure it.
