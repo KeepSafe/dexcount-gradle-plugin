@@ -93,6 +93,30 @@ Each flag controls some aspect of the printed output:
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
 
+## Use with Jenkins Plot Plugin
+
+A common use-case is to plot method and field counts across builds.  The [Jenkins Plot plugin][0] is a general-purpose tool that graphs per-build scalar values through time.  It reads java .properties files, CSV files, and XML files.  The default dexcount output is a tab-separated, and using command-line tools can easily be converted into a form Jenkins can use.  Assuming a UNIX enviroment, it is simple.
+
+If you are counting both methods and fields, the following post-build script will (when you make the appropriate path substitutions) generate a .csv file:
+
+```bash
+INPUT=path/to/outputs/dexcount/debug.txt
+PLOT_FILE=path/to/jenkins/report.csv
+
+tail -n +2 $INPUT | awk '$3 !~ /\./ { methods += $1; fields += $2 } END { printf "\"methods\",\"fields\"\n\"%d\",\"%d\"\n", methods, fields }' > $PLOT_FILE
+```
+
+If you are counting only methods, the awk script changes slightly:
+
+```bash
+INPUT=path/to/outputs/dexcount/debug.txt
+METHOD_FILE=path/to/jenkins/report.csv
+
+tail -n +2 INPUT | awk '$2 !~ /\./ { methods += $1 } END { printf "\"methods\"\n\"%d\"\n", methods }' > $PLOT_FILE
+```
+
+Consult the plugin documentation for details on how to configure it.
+
 ## Snapshot Builds
 
 We host snapshots in the Sonatype OSS repo.  They are updated on each commit.  As snapshots, they are inherently unstable - use at your own risk!  To use them, add the Sonatype Snapshot repo to your repositories:
@@ -129,3 +153,5 @@ The Java code from the `com.android.dexdeps` package is sourced from the [Androi
 Inspired by Mihail Parparita's [`dex-method-counts`](https://github.com/mihaip/dex-method-counts) project, to whom much credit is due.
 
 Copyright 2015 KeepSafe Software, Inc
+
+[0]: https://wiki.jenkins-ci.org/display/JENKINS/Plot+Plugin
