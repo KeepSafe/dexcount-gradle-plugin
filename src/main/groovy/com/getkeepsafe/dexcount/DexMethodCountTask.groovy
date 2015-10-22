@@ -34,7 +34,10 @@ class DexMethodCountTask extends DefaultTask {
     def BaseVariantOutput apkOrDex
 
     @OutputFile
-    def File outputFile
+    def File outputFileTxt
+
+    @OutputFile
+    def File outputFileCSV
 
     def DexMethodCountExtension config
 
@@ -44,10 +47,10 @@ class DexMethodCountTask extends DefaultTask {
         def methodCount = tree.getMethodCount()
         def fieldCount = tree.getFieldCount()
 
-        if (outputFile != null) {
-            outputFile.parentFile.mkdirs()
-            outputFile.createNewFile()
-            outputFile.withOutputStream { stream ->
+        if (outputFileTxt != null) {
+            outputFileTxt.parentFile.mkdirs()
+            outputFileTxt.createNewFile()
+            outputFileTxt.withOutputStream { stream ->
                 def appendableStream = new PrintStream(stream)
                 print(tree, appendableStream)
                 appendableStream.flush()
@@ -67,6 +70,19 @@ class DexMethodCountTask extends DefaultTask {
 
         withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
             print(tree, out)
+        }
+
+        if (config.exportAsCSV && outputFileCSV != null) {
+            outputFileCSV.parentFile.mkdirs()
+            outputFileCSV.createNewFile()
+
+            if (config.includeFieldCount) {
+                outputFileCSV.println("methods,fields")
+                outputFileCSV.println("${methodCount},${fieldCount}")
+            } else {
+                outputFileCSV.println("methods")
+                outputFileCSV.println("${methodCount}")
+            }
         }
     }
 
@@ -124,10 +140,10 @@ class DexMethodCountTask extends DefaultTask {
 
     private def getPrintOptions() {
         return new PrintOptions(
-            includeMethodCount: true,
-            includeFieldCount: config.includeFieldCount,
-            orderByMethodCount: config.orderByMethodCount,
-            includeClasses: config.includeClasses,
-            printHeader: true)
+                includeMethodCount: true,
+                includeFieldCount: config.includeFieldCount,
+                orderByMethodCount: config.orderByMethodCount,
+                includeClasses: config.includeClasses,
+                printHeader: true)
     }
 }

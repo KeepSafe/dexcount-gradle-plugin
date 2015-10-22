@@ -83,6 +83,7 @@ dexcount {
     printAsTree = false
     orderByMethodCount = false
     verbose = false
+    exportAsCSV = false
 }
 ```
 
@@ -92,6 +93,7 @@ Each flag controls some aspect of the printed output:
 - `printAsTree`: When true, the output file will be formatted as a package tree, with nested packages indented, instead of the default list format.
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
+- `exportAsCSV`: When true, the task will create a csv file with the summary: number of methods plus number of fields if includeFieldCount is true.
 
 ## Use with Jenkins Plot Plugin
 
@@ -127,7 +129,7 @@ buildscript {
     // other repos should come first
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
   }
-  
+
   dependencies {
     classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.2.2-SNAPSHOT'
   }
