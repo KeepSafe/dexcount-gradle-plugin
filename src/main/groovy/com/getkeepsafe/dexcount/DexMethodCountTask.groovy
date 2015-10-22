@@ -76,12 +76,13 @@ class DexMethodCountTask extends DefaultTask {
             outputFileCSV.parentFile.mkdirs()
             outputFileCSV.createNewFile()
 
-            if (config.includeFieldCount) {
-                outputFileCSV.println("methods,fields")
-                outputFileCSV.println("${methodCount},${fieldCount}")
-            } else {
-                outputFileCSV.println("methods")
-                outputFileCSV.println("${methodCount}")
+            final String headers = config.includeFieldCount ? "methods,fields" : "methods";
+            final String counts = config.includeFieldCount ? "${methodCount},${fieldCount}" : "${methodCount}";
+
+            outputFileCSV.withOutputStream { stream ->
+                def appendableStream = new PrintStream(stream)
+                appendableStream.println(headers)
+                appendableStream.println(counts);
             }
         }
     }
