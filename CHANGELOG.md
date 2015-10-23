@@ -1,3 +1,8 @@
+0.2.2 (Unreleased)
+----------
+
+* Add `exportAsCSV` option to support Jenkins Plot Plugin
+
 0.2.1 (release 11 September 2015)
 ----------
 
