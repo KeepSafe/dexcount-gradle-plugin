@@ -14,7 +14,7 @@ in `app/build.gradle`
 ```groovy
 buildscript {
     repositories {
-        mavenCentral() // or jCenter()
+        mavenCentral() // or jcenter()
     }
 
     dependencies {
