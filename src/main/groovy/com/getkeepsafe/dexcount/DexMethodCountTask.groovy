@@ -16,6 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.annotations.Nullable
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.dexdeps.HasDeclaringClass
 import com.android.dexdeps.Output
@@ -32,6 +33,9 @@ import org.gradle.logging.StyledTextOutputFactory
 class DexMethodCountTask extends DefaultTask {
     @Input
     def BaseVariantOutput apkOrDex
+
+    @Nullable
+    def File mappingFile
 
     @OutputFile
     def File outputFileTxt
@@ -107,14 +111,18 @@ class DexMethodCountTask extends DefaultTask {
     }
 
     def getPackageTree() {
+        // Create a de-obfuscator based on the current Proguard mapping file.
+        // If none is given, we'll get a default mapping.
+        def deobs = getDeobfuscator()
+
         def dataList = DexFile.extractDexData(apkOrDex.outputFile)
         try {
             def tree = new PackageTree()
-            refListToClassNames(dataList*.getMethodRefs()).each {
+            refListToClassNames(dataList*.getMethodRefs(), deobs).each {
                 tree.addMethodRef(it)
             }
 
-            refListToClassNames(dataList*.getFieldRefs()).each {
+            refListToClassNames(dataList*.getFieldRefs(), deobs).each {
                 tree.addFieldRef(it)
             }
 
@@ -124,10 +132,11 @@ class DexMethodCountTask extends DefaultTask {
         }
     }
 
-    static refListToClassNames(List<List<HasDeclaringClass>> refs) {
+    static refListToClassNames(List<List<HasDeclaringClass>> refs, Deobfuscator deobfuscator) {
         return refs.flatten().collect { ref ->
             def descriptor = ref.getDeclClassName()
             def dot = Output.descriptorToDot(descriptor)
+            dot = deobfuscator.deobfuscate(dot)
             if (dot.indexOf('.') == -1) {
                 // Classes in the unnamed package (e.g. primitive arrays)
                 // will not appear in the output in the current PackageTree
@@ -146,5 +155,15 @@ class DexMethodCountTask extends DefaultTask {
                 orderByMethodCount: config.orderByMethodCount,
                 includeClasses: config.includeClasses,
                 printHeader: true)
+    }
+
+    private def getDeobfuscator() {
+        if (mappingFile != null && !mappingFile.exists()) {
+            withStyledOutput(StyledTextOutput.Style.Error, LogLevel.WARN) {
+                it.println("Mapping file specified at ${mappingFile.absolutePath} does not exist, output will be obfuscated")
+            }
+        }
+
+        return Deobfuscator.create(mappingFile)
     }
 }
