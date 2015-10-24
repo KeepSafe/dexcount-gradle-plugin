@@ -1,6 +1,7 @@
 0.2.2 (Unreleased)
 ----------
 
+* Use Proguard mappings to de-obfuscate class and package names
 * Add `exportAsCSV` option to support Jenkins Plot Plugin
 
 0.2.1 (release 11 September 2015)
