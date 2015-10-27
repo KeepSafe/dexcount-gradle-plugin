@@ -50,8 +50,8 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 DexMethodCountTask task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
                 task.apkOrDex = output
                 task.mappingFile = variant.mappingFile
-                task.outputFileTxt = project.file(path + '.txt')
-                task.outputFileCSV = project.file(path + '.csv')
+                task.outputFile = project.file(path + '.txt')
+                task.summaryFile = project.file(path + '.csv')
                 task.config = ext as DexMethodCountExtension
                 variant.assemble.doLast { task.countMethods() }
             }

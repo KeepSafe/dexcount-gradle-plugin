@@ -1,6 +1,7 @@
 0.3.0 (Unreleased)
 ----------
 
+* Remove `exportAsCSV` and just print the file unconditionally
 * CHANGED: field counts are enabled by default
 * Use Proguard mappings to de-obfuscate class and package names
 * Add `exportAsCSV` option to support Jenkins Plot Plugin
