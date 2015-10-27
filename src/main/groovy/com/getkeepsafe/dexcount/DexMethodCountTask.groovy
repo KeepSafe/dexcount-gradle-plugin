@@ -159,9 +159,10 @@ class DexMethodCountTask extends DefaultTask {
 
     private def getDeobfuscator() {
         if (mappingFile != null && !mappingFile.exists()) {
-            withStyledOutput(StyledTextOutput.Style.Error, LogLevel.WARN) {
-                it.println("Mapping file specified at ${mappingFile.absolutePath} does not exist, output will be obfuscated")
+            withStyledOutput(StyledTextOutput.Style.Normal, LogLevel.DEBUG) {
+                it.println("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
             }
+            mappingFile = null
         }
 
         return Deobfuscator.create(mappingFile)
