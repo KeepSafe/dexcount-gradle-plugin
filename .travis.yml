@@ -7,6 +7,8 @@ groovy:
 jdk:
   - oraclejdk8
 
+install: true
+
 script: ./gradlew check
 
 after_success:
