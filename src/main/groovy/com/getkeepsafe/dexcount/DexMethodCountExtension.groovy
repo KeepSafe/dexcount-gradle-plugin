@@ -22,7 +22,7 @@ package com.getkeepsafe.dexcount
 class DexMethodCountExtension {
     private boolean includeClasses
     private boolean orderByMethodCount
-    private boolean includeFieldCount
+    private boolean includeFieldCount = true
     private boolean printAsTree
     private boolean verbose
     private boolean exportAsCSV
