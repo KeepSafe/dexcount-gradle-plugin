@@ -1,4 +1,4 @@
-0.3.0 (Unreleased)
+0.3.0 (released 27 October 2015)
 ----------
 
 * Remove `exportAsCSV` and just print the file unconditionally
@@ -6,7 +6,7 @@
 * Use Proguard mappings to de-obfuscate class and package names
 * Add `exportAsCSV` option to support Jenkins Plot Plugin
 
-0.2.1 (release 11 September 2015)
+0.2.1 (released 11 September 2015)
 ----------
 
 * BUG: Fix invalid bytecode (issue #11)
