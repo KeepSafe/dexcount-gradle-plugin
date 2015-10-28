@@ -31,7 +31,7 @@ import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
 
 class DexMethodCountTask extends DefaultTask {
-    private PackageTree tree;
+    def PackageTree tree;
 
     @Input
     def BaseVariantOutput apkOrDex
