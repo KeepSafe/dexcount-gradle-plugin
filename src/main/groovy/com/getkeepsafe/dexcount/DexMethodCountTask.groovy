@@ -31,6 +31,8 @@ import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
 
 class DexMethodCountTask extends DefaultTask {
+    private PackageTree tree;
+
     @Input
     def BaseVariantOutput apkOrDex
 
@@ -38,56 +40,74 @@ class DexMethodCountTask extends DefaultTask {
     def File mappingFile
 
     @OutputFile
-    def File outputFileTxt
+    def File outputFile
 
     @OutputFile
-    def File outputFileCSV
+    def File summaryFile
 
     def DexMethodCountExtension config
 
     @TaskAction
     void countMethods() {
-        def tree = getPackageTree()
-        def methodCount = tree.getMethodCount()
-        def fieldCount = tree.getFieldCount()
+        generatePackageTree()
+        printSummary()
+        printFullTree()
+        printTaskDiagnosticData()
+    }
 
-        if (outputFileTxt != null) {
-            outputFileTxt.parentFile.mkdirs()
-            outputFileTxt.createNewFile()
-            outputFileTxt.withOutputStream { stream ->
+    /**
+     * Prints a summary of method and field counts
+     * @return
+     */
+    def printSummary() {
+        def filename = apkOrDex.outputFile.name
+        withStyledOutput(StyledTextOutput.Style.Info) { out ->
+            out.println("Total methods in ${filename}: ${tree.methodCount}")
+            out.println("Total fields in ${filename}:  ${tree.fieldCount}")
+        }
+
+        if (summaryFile != null) {
+            summaryFile.parentFile.mkdirs()
+            summaryFile.createNewFile()
+
+            final String headers = "methods,fields";
+            final String counts = "${tree.methodCount},${tree.fieldCount}";
+
+            summaryFile.withOutputStream { stream ->
+                def appendableStream = new PrintStream(stream)
+                appendableStream.println(headers)
+                appendableStream.println(counts);
+            }
+        }
+    }
+
+    /**
+     * Prints the package tree to the usual outputs/dexcount/variant.txt file.
+     */
+    def printFullTree() {
+        if (outputFile != null) {
+            outputFile.parentFile.mkdirs()
+            outputFile.createNewFile()
+            outputFile.withOutputStream { stream ->
                 def appendableStream = new PrintStream(stream)
                 print(tree, appendableStream)
                 appendableStream.flush()
                 appendableStream.close()
             }
         }
+    }
 
-        def filename = apkOrDex.outputFile.name
-        withStyledOutput(StyledTextOutput.Style.Info) { out ->
-            out.println("Total methods in ${filename}: ${methodCount}")
-            out.println("Total fields in ${filename}:  ${fieldCount}")
-        }
-
+    /**
+     * Logs the package tree to stdout at {@code LogLevel.DEBUG}, or at the
+     * default level if verbose-mode is configured.
+     */
+    def printTaskDiagnosticData() {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
         def level = config.verbose ? null : LogLevel.DEBUG
 
         withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
             print(tree, out)
-        }
-
-        if (config.exportAsCSV && outputFileCSV != null) {
-            outputFileCSV.parentFile.mkdirs()
-            outputFileCSV.createNewFile()
-
-            final String headers = config.includeFieldCount ? "methods,fields" : "methods";
-            final String counts = config.includeFieldCount ? "${methodCount},${fieldCount}" : "${methodCount}";
-
-            outputFileCSV.withOutputStream { stream ->
-                def appendableStream = new PrintStream(stream)
-                appendableStream.println(headers)
-                appendableStream.println(counts);
-            }
         }
     }
 
@@ -110,14 +130,19 @@ class DexMethodCountTask extends DefaultTask {
         closure(output.withStyle(style))
     }
 
-    def getPackageTree() {
+    /**
+     * Creates a new PackageTree and populates it with the method and field
+     * counts of the current dex/apk file.
+     */
+    private def generatePackageTree() {
         // Create a de-obfuscator based on the current Proguard mapping file.
         // If none is given, we'll get a default mapping.
         def deobs = getDeobfuscator()
 
         def dataList = DexFile.extractDexData(apkOrDex.outputFile)
         try {
-            def tree = new PackageTree()
+            tree = new PackageTree()
+
             refListToClassNames(dataList*.getMethodRefs(), deobs).each {
                 tree.addMethodRef(it)
             }
@@ -125,8 +150,6 @@ class DexMethodCountTask extends DefaultTask {
             refListToClassNames(dataList*.getFieldRefs(), deobs).each {
                 tree.addFieldRef(it)
             }
-
-            return tree
         } finally {
             dataList*.dispose()
         }

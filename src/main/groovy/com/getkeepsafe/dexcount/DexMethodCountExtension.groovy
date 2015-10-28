@@ -25,7 +25,6 @@ class DexMethodCountExtension {
     private boolean includeFieldCount = true
     private boolean printAsTree
     private boolean verbose
-    private boolean exportAsCSV
 
     /**
      * When true, includes individual classes in task output.
@@ -85,16 +84,5 @@ class DexMethodCountExtension {
 
     public void setOrderByMethodCount(boolean orderByMethodCount) {
         this.orderByMethodCount = orderByMethodCount
-    }
-
-    /**
-     * When true, the task will create a csv file with the summary: number of methods plus number of fields if includeFieldCount is true.
-     */
-    public boolean getExportAsCSV() {
-        return this.exportAsCSV
-    }
-
-    public void setExportAsCSV(boolean exportAsCSV) {
-        this.exportAsCSV = exportAsCSV
     }
 }
