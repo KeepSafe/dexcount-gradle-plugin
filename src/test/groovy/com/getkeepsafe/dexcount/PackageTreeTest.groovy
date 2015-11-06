@@ -205,4 +205,37 @@ methods  fields   package/class name
 
         trimmed == expected
     }
+
+    def "package list can include total method count"() {
+        setup:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.includeTotalMethodCount = true
+        opts.includeClasses = false
+        opts.printHeader = false
+
+        when:
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Qux")
+        tree.addMethodRef("com.alpha.Beta")
+        tree.addMethodRef("org.whatever.Foo")
+        tree.addMethodRef("org.foo.Whatever")
+
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim();
+        def expected = """
+Total methods: 5
+3        com
+1        com.alpha
+2        com.foo
+2        org
+1        org.foo
+1        org.whatever
+""".trim()
+
+        trimmed == expected
+    }
 }

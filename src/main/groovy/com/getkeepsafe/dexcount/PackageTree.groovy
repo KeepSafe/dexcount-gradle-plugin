@@ -109,6 +109,10 @@ class PackageTree {
     void printPackageList(Appendable out, PrintOptions opts) {
         def sb = new StringBuilder(64)
 
+        if (opts.includeTotalMethodCount) {
+            out.append("Total methods: ${this.getMethodCount()}\n")
+        }
+
         if (opts.printHeader) {
             printPackageListHeader(out, opts)
         }

@@ -175,6 +175,7 @@ class DexMethodCountTask extends DefaultTask {
         return new PrintOptions(
                 includeMethodCount: true,
                 includeFieldCount: config.includeFieldCount,
+                includeTotalMethodCount: config.includeTotalMethodCount,
                 orderByMethodCount: config.orderByMethodCount,
                 includeClasses: config.includeClasses,
                 printHeader: true)

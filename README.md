@@ -74,6 +74,7 @@ in `app/build.gradle`:
 dexcount {
     includeClasses = false
     includeFieldCount = true
+    includeTotalMethodCount = false
     printAsTree = false
     orderByMethodCount = false
     verbose = false
@@ -81,8 +82,9 @@ dexcount {
 ```
 
 Each flag controls some aspect of the printed output:
-- `includeClasses`: When true, individual classes will be include in the pacage list - otherwise, only packages are included.
+- `includeClasses`: When true, individual classes will be include in the package list - otherwise, only packages are included.
 - `includeFieldCount`: When true, the number of fields in a package or class will be included in the printed output.
+- `includeTotalMethodCount`: When true, the total number of methods in the application will be included in the printed output.
 - `printAsTree`: When true, the output file will be formatted as a package tree, with nested packages indented, instead of the default list format.
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
