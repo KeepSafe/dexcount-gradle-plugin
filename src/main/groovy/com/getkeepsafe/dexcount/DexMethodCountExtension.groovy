@@ -23,6 +23,7 @@ class DexMethodCountExtension {
     private boolean includeClasses
     private boolean orderByMethodCount
     private boolean includeFieldCount = true
+    private boolean includeTotalMethodCount = false
     private boolean printAsTree
     private boolean verbose
 
@@ -72,6 +73,17 @@ class DexMethodCountExtension {
 
     public void setIncludeFieldCount(boolean countFields) {
         this.includeFieldCount = countFields
+    }
+
+    /**
+     * When true, includes the total number of methods in the task's output.
+     */
+    public boolean getIncludeTotalMethodCount() {
+        return includeTotalMethodCount
+    }
+
+    public void setIncludeTotalMethodCount(boolean includeTotalMethodCount) {
+        this.includeTotalMethodCount = includeTotalMethodCount;
     }
 
     /**

@@ -20,6 +20,7 @@ class PrintOptions {
     def includeClasses = false
     def includeMethodCount = true
     def includeFieldCount = false
+    def includeTotalMethodCount = false
     def printHeader = false
     def orderByMethodCount = false
 }
