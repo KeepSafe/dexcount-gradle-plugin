@@ -1,3 +1,8 @@
+Unreleased
+----------
+
+* Add `includeTotalMethodCount` config option to print total count in the PackageTree output
+
 0.3.0 (released 27 October 2015)
 ----------
 
