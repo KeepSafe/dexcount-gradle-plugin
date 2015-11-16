@@ -34,7 +34,7 @@ class DexMethodCountTask extends DefaultTask {
     def PackageTree tree;
 
     @Input
-    def BaseVariantOutput apkOrDex
+    def File apkOrDexFile
 
     @Nullable
     def File mappingFile
@@ -60,7 +60,7 @@ class DexMethodCountTask extends DefaultTask {
      * @return
      */
     def printSummary() {
-        def filename = apkOrDex.outputFile.name
+        def filename = apkOrDexFile.name
         withStyledOutput(StyledTextOutput.Style.Info) { out ->
             out.println("Total methods in ${filename}: ${tree.methodCount}")
             out.println("Total fields in ${filename}:  ${tree.fieldCount}")
@@ -139,7 +139,7 @@ class DexMethodCountTask extends DefaultTask {
         // If none is given, we'll get a default mapping.
         def deobs = getDeobfuscator()
 
-        def dataList = DexFile.extractDexData(apkOrDex.outputFile)
+        def dataList = DexFile.extractDexData(apkOrDexFile)
         try {
             tree = new PackageTree()
 
