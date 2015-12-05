@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Report number of methods/fields remaining in console output
+* Add description and group to Gradle tasks
 * Add `includeTotalMethodCount` config option to print total count in the PackageTree output
 
 0.3.0 (released 27 October 2015)
