@@ -1,4 +1,4 @@
-Unreleased
+0.3.1 (released 5 December 2015)
 ----------
 
 * Report number of methods/fields remaining in console output
