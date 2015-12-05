@@ -29,7 +29,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         } else if (project.plugins.hasPlugin('com.android.library')) {
             applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.libraryVariants);
         } else {
-            throw new IllegalArgumentException("Dexcount plugin requires the Android plugin to be configured");
+            throw new IllegalArgumentException('Dexcount plugin requires the Android plugin to be configured');
         }
     }
 
@@ -47,7 +47,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
                 def ext = project.extensions['dexcount']
 
-                DexMethodCountTask task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
+                DexMethodCountTask task = project.task("count${slug}DexMethods", type: DexMethodCountTask, description: "Outputs dex method count for ${variant.name} variant.", group: 'Reporting')
                 task.apkOrDexFile = output.outputFile
                 task.mappingFile = variant.mappingFile
                 task.outputFile = project.file(path + '.txt')
