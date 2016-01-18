@@ -26,6 +26,7 @@ class DexMethodCountExtension {
     private boolean includeTotalMethodCount = false
     private boolean printAsTree
     private boolean verbose
+    private boolean cssFormat
 
     /**
      * When true, includes individual classes in task output.
@@ -96,5 +97,16 @@ class DexMethodCountExtension {
 
     public void setOrderByMethodCount(boolean orderByMethodCount) {
         this.orderByMethodCount = orderByMethodCount
+    }
+
+    /**
+     * When true, prints output in DSL format to support folding in editor.
+     */
+    public boolean getCssFormat() {
+        return cssFormat
+    }
+
+    public void setCssFormat(boolean dslFormat) {
+        this.cssFormat = dslFormat
     }
 }

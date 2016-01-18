@@ -52,9 +52,13 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 task.group = 'Reporting'
                 task.apkOrDexFile = output.outputFile
                 task.mappingFile = variant.mappingFile
-                task.outputFile = project.file(path + '.txt')
-                task.summaryFile = project.file(path + '.csv')
                 task.config = ext as DexMethodCountExtension
+                if (task.config.cssFormat){
+                    task.outputFile = project.file(path + '.css')
+                } else {
+                    task.outputFile = project.file(path + '.txt')
+                }
+                task.summaryFile = project.file(path + '.csv')
                 variant.assemble.doLast { task.countMethods() }
             }
         }

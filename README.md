@@ -78,6 +78,7 @@ dexcount {
     printAsTree = false
     orderByMethodCount = false
     verbose = false
+    cssFormat = false
 }
 ```
 
@@ -88,6 +89,7 @@ Each flag controls some aspect of the printed output:
 - `printAsTree`: When true, the output file will be formatted as a package tree, with nested packages indented, instead of the default list format.
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
+- `cssFormat`: When true, the output file will be formatted as CSS file to enable blocks folding/unfolding in Intellij or other editors.
 
 ## Use with Jenkins Plot Plugin
 

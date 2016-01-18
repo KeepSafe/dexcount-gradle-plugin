@@ -161,6 +161,8 @@ class PackageTree {
     }
 
     private void printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
+        def children = getChildren(opts)
+
         if (opts.includeClasses || !isClass_) {
             indent.times { out.append("  ") }
             out.append(name_)
@@ -171,8 +173,10 @@ class PackageTree {
                 def appended = false
                 if (opts.includeMethodCount) {
                     out.append(String.valueOf(getMethodCount()))
-                    out.append(" ")
-                    out.append(pluralizedMethods(getMethodCount()))
+                    if (!opts.CSSFormat) {
+                        out.append(" ")
+                        out.append(pluralizedMethods(getMethodCount()))
+                    }
                     appended = true
                 }
 
@@ -181,17 +185,25 @@ class PackageTree {
                         out.append(", ")
                     }
                     out.append(String.valueOf(getFieldCount()))
-                    out.append(" ")
-                    out.append(pluralizeFields(getFieldCount()))
+                    if (!opts.CSSFormat) {
+                        out.append(" ")
+                        out.append(pluralizeFields(getFieldCount()))
+                    }
                 }
 
                 out.append(")")
             }
-
+            if (opts.CSSFormat && !children.isEmpty()) {
+                out.append(" {")
+            }
             out.append("\n")
         }
 
-        getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
+        children.each { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
+        if (opts.CSSFormat && !children.isEmpty()) {
+            indent.times { out.append("  ") }
+            out.append("}\n")
+        }
     }
 
     private Collection<PackageTree> getChildren(PrintOptions opts) {
