@@ -72,20 +72,20 @@ Dexcount is configurable via a Gradle extension (shown with default values):
 in `app/build.gradle`:
 ```groovy
 dexcount {
+    format = "list"
     includeClasses = false
     includeFieldCount = true
     includeTotalMethodCount = false
-    printAsTree = false
     orderByMethodCount = false
     verbose = false
 }
 ```
 
 Each flag controls some aspect of the printed output:
+- `format`: The format of the method count output, either "list" or "tree".  "list" is a flat text file, while "tree" is pretty-printed.
 - `includeClasses`: When true, individual classes will be include in the package list - otherwise, only packages are included.
 - `includeFieldCount`: When true, the number of fields in a package or class will be included in the printed output.
 - `includeTotalMethodCount`: When true, the total number of methods in the application will be included in the printed output.
-- `printAsTree`: When true, the output file will be formatted as a package tree, with nested packages indented, instead of the default list format.
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
 

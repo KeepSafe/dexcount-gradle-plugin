@@ -121,10 +121,17 @@ class DexMethodCountTask extends DefaultTask {
 
     def print(tree, writer) {
         def opts = getPrintOptions()
-        if (config.printAsTree) {
-            tree.printTree(writer, opts)
-        } else {
-            tree.printPackageList(writer, opts)
+        switch (config.format) {
+            case OutputFormat.LIST:
+                tree.printPackageList(writer, opts)
+                break;
+
+            case OutputFormat.TREE:
+                tree.printTree(writer, opts)
+                break;
+
+            default:
+                throw new AssertionError("FIXME: Unrecognized output format should have been caught by now!")
         }
     }
 

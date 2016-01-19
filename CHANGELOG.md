@@ -1,3 +1,7 @@
+0.4.0 (Unreleased)
+
+* Replace `printAsTree` with `format` and associated enum
+
 0.3.1 (released 5 December 2015)
 ----------
 
