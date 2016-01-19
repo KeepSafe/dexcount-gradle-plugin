@@ -44,14 +44,12 @@ dependencies {
     compile 'com.android.tools.build:gradle:1.5.0'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.3'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.10'
-    distributionUrl = 'http://services.gradle.org/distributions/gradle-2.10-all.zip'
+    gradleVersion = '2.4'
+    distributionUrl = 'http://services.gradle.org/distributions/gradle-2.4-all.zip'
 }
 
 task groovydocJar(type: Jar, dependsOn: groovydoc) {
