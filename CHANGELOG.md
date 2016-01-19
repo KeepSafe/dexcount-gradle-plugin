@@ -1,3 +1,8 @@
+0.4.0 (Unreleased)
+
+* Add JSON as a format option
+* Replace `printAsTree` with `format` and associated enum
+
 0.3.1 (released 5 December 2015)
 ----------
 

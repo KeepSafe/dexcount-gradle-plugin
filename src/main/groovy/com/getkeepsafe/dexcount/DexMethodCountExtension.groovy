@@ -24,7 +24,7 @@ class DexMethodCountExtension {
     private boolean orderByMethodCount
     private boolean includeFieldCount = true
     private boolean includeTotalMethodCount = false
-    private boolean printAsTree
+    private OutputFormat format = OutputFormat.LIST
     private boolean verbose
 
     /**
@@ -37,18 +37,6 @@ class DexMethodCountExtension {
 
     public void setIncludeClasses(boolean includeClasses) {
         this.includeClasses = includeClasses
-    }
-
-    /**
-     * When true, the task output is formatted as a package tree, with
-     * indentation indicating the package hierarchy.
-     */
-    public boolean getPrintAsTree() {
-        return printAsTree
-    }
-
-    public void setPrintAsTree(boolean printAsTree) {
-        this.printAsTree = printAsTree
     }
 
     /**
@@ -96,5 +84,22 @@ class DexMethodCountExtension {
 
     public void setOrderByMethodCount(boolean orderByMethodCount) {
         this.orderByMethodCount = orderByMethodCount
+    }
+
+    public OutputFormat getFormat() {
+        return format;
+    }
+
+    public void setFormat(Object format) {
+        if (format instanceof OutputFormat) {
+            this.format = (OutputFormat) format;
+        } else {
+            try {
+                def formatName = "$format".toUpperCase(Locale.US)
+                this.format = OutputFormat.valueOf(formatName)
+            } catch (IllegalArgumentException ignored) {
+                throw new IllegalArgumentException("Unrecognized output format '$format'")
+            }
+        }
     }
 }
