@@ -130,6 +130,10 @@ class DexMethodCountTask extends DefaultTask {
                 tree.printTree(writer, opts)
                 break;
 
+            case OutputFormat.JSON:
+                tree.printJson(writer, opts)
+                break;
+
             default:
                 throw new AssertionError("FIXME: Unrecognized output format should have been caught by now!")
         }

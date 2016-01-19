@@ -16,7 +16,10 @@
 
 package com.getkeepsafe.dexcount
 
+import com.google.gson.stream.JsonWriter
 import groovy.transform.CompileStatic
+
+import java.nio.CharBuffer
 
 @CompileStatic  // necessary to avoid JDK verifier bugs (issues #11 and #12)
 class PackageTree {
@@ -139,7 +142,7 @@ class PackageTree {
         }
         sb.append(name_)
 
-        if (!isClass_ || opts.includeClasses) {
+        if (isPrintable(opts)) {
             if (opts.includeMethodCount) {
                 out.append(String.format("%-8d ", getMethodCount()))
             }
@@ -161,7 +164,7 @@ class PackageTree {
     }
 
     private void printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
-        if (opts.includeClasses || !isClass_) {
+        if (isPrintable(opts)) {
             indent.times { out.append("  ") }
             out.append(name_)
 
@@ -194,6 +197,56 @@ class PackageTree {
         getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
     }
 
+    void printJson(Appendable out, PrintOptions opts) {
+        def json = new JsonWriter(new Writer() {
+            @Override
+            void write(char[] cbuf, int off, int len) throws IOException {
+                CharSequence seq = CharBuffer.wrap(cbuf, off, len)
+                out.append(seq)
+            }
+
+            @Override
+            void flush() throws IOException {
+
+            }
+
+            @Override
+            void close() throws IOException {
+
+            }
+        })
+
+        // Setting an indentation enables pretty-printing
+        json.indent = "  "
+
+        printJsonRecursively(json, opts)
+    }
+
+    private void printJsonRecursively(JsonWriter json, PrintOptions opts) {
+        if (isPrintable(opts)) {
+            json.beginObject()
+
+            json.name("name").value(name_)
+
+            if (opts.includeMethodCount) {
+                json.name("methods").value(methodCount)
+            }
+
+            if (opts.includeFieldCount) {
+                json.name("fields").value(fieldCount)
+            }
+
+            json.name("children")
+            json.beginArray()
+
+            getChildren(opts).each { PackageTree it -> it.printJsonRecursively(json, opts) }
+
+            json.endArray()
+
+            json.endObject()
+        }
+    }
+
     private Collection<PackageTree> getChildren(PrintOptions opts) {
         if (opts.orderByMethodCount) {
             // Return the child nodes sorted in descending order by method count.
@@ -201,6 +254,10 @@ class PackageTree {
         } else {
             return children_.values()
         }
+    }
+
+    private boolean isPrintable(PrintOptions opts) {
+        return opts.includeClasses || !isClass_
     }
 
     private static String pluralizedMethods(int n) {

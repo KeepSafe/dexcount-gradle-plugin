@@ -82,7 +82,7 @@ dexcount {
 ```
 
 Each flag controls some aspect of the printed output:
-- `format`: The format of the method count output, either "list" or "tree".  "list" is a flat text file, while "tree" is pretty-printed.
+- `format`: The format of the method count output, either "list", "tree", or "json".
 - `includeClasses`: When true, individual classes will be include in the package list - otherwise, only packages are included.
 - `includeFieldCount`: When true, the number of fields in a package or class will be included in the printed output.
 - `includeTotalMethodCount`: When true, the total number of methods in the application will be included in the printed output.

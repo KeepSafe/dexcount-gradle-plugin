@@ -13,4 +13,9 @@ public enum OutputFormat {
      * Specifies that the output will be pretty-printed as an tree.
      */
     TREE,
+
+    /**
+     * Specifies that the output will be a pretty-printed JSON object.
+     */
+    JSON,
 }
