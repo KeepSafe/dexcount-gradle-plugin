@@ -109,6 +109,29 @@ class PackageTree {
         return fieldTotal_
     }
 
+    void print(Appendable out, OutputFormat format, PrintOptions opts) {
+        switch (format) {
+            case OutputFormat.LIST:
+                printPackageList(out, opts)
+                break;
+
+            case OutputFormat.TREE:
+                printTree(out, opts)
+                break;
+
+            case OutputFormat.JSON:
+                printJson(out, opts)
+                break;
+
+            case OutputFormat.YAML:
+                printYaml(out, opts)
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown format: $format")
+        }
+    }
+
     void printPackageList(Appendable out, PrintOptions opts) {
         def sb = new StringBuilder(64)
 
@@ -164,35 +187,33 @@ class PackageTree {
     }
 
     private void printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
-        if (isPrintable(opts)) {
-            indent.times { out.append("  ") }
-            out.append(name_)
+        indent.times { out.append("  ") }
+        out.append(name_)
 
-            if (opts.includeFieldCount || opts.includeMethodCount) {
-                out.append(" (")
+        if (opts.includeFieldCount || opts.includeMethodCount) {
+            out.append(" (")
 
-                def appended = false
-                if (opts.includeMethodCount) {
-                    out.append(String.valueOf(getMethodCount()))
-                    out.append(" ")
-                    out.append(pluralizedMethods(getMethodCount()))
-                    appended = true
-                }
-
-                if (opts.includeFieldCount) {
-                    if (appended) {
-                        out.append(", ")
-                    }
-                    out.append(String.valueOf(getFieldCount()))
-                    out.append(" ")
-                    out.append(pluralizeFields(getFieldCount()))
-                }
-
-                out.append(")")
+            def appended = false
+            if (opts.includeMethodCount) {
+                out.append(String.valueOf(getMethodCount()))
+                out.append(" ")
+                out.append(pluralizedMethods(getMethodCount()))
+                appended = true
             }
 
-            out.append("\n")
+            if (opts.includeFieldCount) {
+                if (appended) {
+                    out.append(", ")
+                }
+                out.append(String.valueOf(getFieldCount()))
+                out.append(" ")
+                out.append(pluralizeFields(getFieldCount()))
+            }
+
+            out.append(")")
         }
+
+        out.append("\n")
 
         getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
     }
@@ -223,37 +244,86 @@ class PackageTree {
     }
 
     private void printJsonRecursively(JsonWriter json, PrintOptions opts) {
-        if (isPrintable(opts)) {
-            json.beginObject()
+        json.beginObject()
 
-            json.name("name").value(name_)
+        json.name("name").value(name_)
 
-            if (opts.includeMethodCount) {
-                json.name("methods").value(methodCount)
-            }
+        if (opts.includeMethodCount) {
+            json.name("methods").value(methodCount)
+        }
 
-            if (opts.includeFieldCount) {
-                json.name("fields").value(fieldCount)
-            }
+        if (opts.includeFieldCount) {
+            json.name("fields").value(fieldCount)
+        }
 
-            json.name("children")
-            json.beginArray()
+        json.name("children")
+        json.beginArray()
 
-            getChildren(opts).each { PackageTree it -> it.printJsonRecursively(json, opts) }
+        getChildren(opts).each { PackageTree it -> it.printJsonRecursively(json, opts) }
 
-            json.endArray()
+        json.endArray()
 
-            json.endObject()
+        json.endObject()
+    }
+
+    void printYaml(Appendable out, PrintOptions opts) {
+        out.append("---\n")
+
+        if (opts.includeMethodCount) {
+            out.append("methods: " + methodCount + "\n")
+        }
+
+        if (opts.includeFieldCount) {
+            out.append("fields: " + fieldCount + "\n")
+        }
+
+        out.append("counts:\n")
+
+        getChildren(opts).each { it.printYamlRecursively(out, 1, opts) }
+    }
+
+    private void printYamlRecursively(Appendable out, int indent, PrintOptions opts) {
+        String indentText = "  " * indent
+
+        out.append(indentText + "- name: ")
+        out.append(name_)
+        out.append("\n")
+
+        if (opts.includeMethodCount) {
+            indentText += "  "
+            out.append(indentText)
+            out.append("methods: " + methodCount)
+            out.append("\n")
+        }
+
+        if (opts.includeFieldCount) {
+            out.append(indentText)
+            out.append("fields: " + fieldCount)
+            out.append("\n")
+        }
+
+        def children = getChildren(opts)
+        if (children.empty) {
+            out.append(indentText)
+            out.append("children: []\n")
+        } else {
+            out.append(indentText)
+            out.append("children:\n")
+            children.each { PackageTree child -> child.printYamlRecursively(out, indent + 2, opts) }
         }
     }
 
     private Collection<PackageTree> getChildren(PrintOptions opts) {
+        def printableChildren = children_.values().findAll {
+            it.isPrintable(opts)
+        }
+
         if (opts.orderByMethodCount) {
             // Return the child nodes sorted in descending order by method count.
-            return children_.values().sort(false) { PackageTree it -> -it.getMethodCount() }
-        } else {
-            return children_.values()
+            printableChildren = printableChildren.sort(false) { PackageTree it -> -it.methodCount }
         }
+
+        return printableChildren
     }
 
     private boolean isPrintable(PrintOptions opts) {

@@ -18,4 +18,9 @@ public enum OutputFormat {
      * Specifies that the output will be a pretty-printed JSON object.
      */
     JSON,
+
+    /**
+     * Specifies that output will be a YAML document.
+     */
+    YAML,
 }

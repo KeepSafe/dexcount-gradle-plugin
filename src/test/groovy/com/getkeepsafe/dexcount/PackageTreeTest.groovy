@@ -238,4 +238,48 @@ Total methods: 5
 
         trimmed == expected
     }
+
+    def "packages can be YAML-formatted"() {
+        setup:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.includeTotalMethodCount = true
+
+        when:
+        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef("com.foo.Qux")
+        tree.addMethodRef("com.alpha.Beta")
+        tree.addMethodRef("org.whatever.Foo")
+        tree.addMethodRef("org.foo.Whatever")
+
+        tree.printYaml(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        def expected = """
+---
+methods: 5
+counts:
+  - name: com
+    methods: 3
+    children:
+      - name: alpha
+        methods: 1
+        children: []
+      - name: foo
+        methods: 2
+        children: []
+  - name: org
+    methods: 2
+    children:
+      - name: foo
+        methods: 1
+        children: []
+      - name: whatever
+        methods: 1
+        children: []""".trim()
+
+        trimmed == expected
+    }
 }
