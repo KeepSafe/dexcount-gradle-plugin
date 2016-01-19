@@ -57,12 +57,12 @@ class Deobfuscator {
         }
 
         @Override
-        void processFieldMapping(String className, String fieldType, String fieldName, String newFieldName) {
+        void processMethodMapping(String className, int firstLineNumber, int lastLineNumber, String methodReturnType, String methodName, String methodArguments, String newClassName, int newFirstLineNumber, int newLastLineNumber, String newMethodName) {
             // nothing
         }
 
         @Override
-        void processMethodMapping(String className, int firstLineNumber, int lastLineNumber, String methodReturnType, String methodName, String methodArguments, String newMethodName) {
+        void processFieldMapping(String className, String fieldType, String fieldName, String newClassName, String newFieldName) {
             // nothing
         }
     }
