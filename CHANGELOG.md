@@ -1,4 +1,5 @@
 0.4.0 (released 23 January 2016)
+----------
 
 * BUG: Fix incorrect indentation on field-count-only YAML output
 * Add YAML as a format option
