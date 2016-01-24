@@ -107,7 +107,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.3.1-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.0-SNAPSHOT'
   }
 }
 ```
@@ -130,6 +130,6 @@ This plugin creates a task per output file, per variant, and configures each tas
 The Java code from the `com.android.dexdeps` package is sourced from the [Android source tree](https://android.googlesource.com/platform/dalvik.git/+/master/tools/dexdeps/).
 Inspired by Mihail Parparita's [`dex-method-counts`](https://github.com/mihaip/dex-method-counts) project, to whom much credit is due.
 
-Copyright 2015 KeepSafe Software, Inc
+Copyright 2015-2016 KeepSafe Software, Inc
 
 [0]: https://wiki.jenkins-ci.org/display/JENKINS/Plot+Plugin
