@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 KeepSafe Software
+ * Copyright (C) 2015-2016 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,8 +289,9 @@ class PackageTree {
         out.append(name_)
         out.append("\n")
 
+        indentText += "  "
+
         if (opts.includeMethodCount) {
-            indentText += "  "
             out.append(indentText)
             out.append("methods: " + methodCount)
             out.append("\n")
