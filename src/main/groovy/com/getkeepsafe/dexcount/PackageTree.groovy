@@ -289,8 +289,9 @@ class PackageTree {
         out.append(name_)
         out.append("\n")
 
+        indentText += "  "
+
         if (opts.includeMethodCount) {
-            indentText += "  "
             out.append(indentText)
             out.append("methods: " + methodCount)
             out.append("\n")

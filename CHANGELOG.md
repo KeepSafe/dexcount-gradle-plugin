@@ -1,5 +1,6 @@
 0.4.0 (Unreleased)
 
+* BUG: Fix incorrect indentation on field-count-only YAML output
 * Add YAML as a format option
 * Add JSON as a format option
 * Replace `printAsTree` with `format` and associated enum
