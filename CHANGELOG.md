@@ -1,3 +1,9 @@
+0.4.1 (unreleased)
+----------
+
+* Change output-file extensions to '.json' and '.yml' for JSON and YAML outputs.
+* Revert pull request #32 and remove `@Input` from `apkOrDex` (issues #40 and #46)
+
 0.4.0 (released 23 January 2016)
 ----------
 

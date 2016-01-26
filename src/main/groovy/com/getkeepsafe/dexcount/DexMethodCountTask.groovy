@@ -39,8 +39,7 @@ class DexMethodCountTask extends DefaultTask {
 
     def PackageTree tree;
 
-    @Input
-    def File apkOrDexFile
+    def BaseVariantOutput apkOrDex
 
     @Nullable
     def File mappingFile
@@ -52,6 +51,11 @@ class DexMethodCountTask extends DefaultTask {
     def File summaryFile
 
     def DexMethodCountExtension config
+
+    def long startTime
+    def long ioTime
+    def long treegenTime
+    def long outputTime
 
     @TaskAction
     void countMethods() {
@@ -66,7 +70,7 @@ class DexMethodCountTask extends DefaultTask {
      * @return
      */
     def printSummary() {
-        def filename = apkOrDexFile.name
+        def filename = apkOrDex.outputFile.name
         withStyledOutput(StyledTextOutput.Style.Info) { out ->
             out.println("Total methods in ${filename}: ${tree.methodCount}")
             out.println("Total fields in ${filename}:  ${tree.fieldCount}")
@@ -103,6 +107,8 @@ class DexMethodCountTask extends DefaultTask {
                 appendableStream.close()
             }
         }
+
+        outputTime = System.currentTimeMillis()
     }
 
     /**
@@ -116,6 +122,13 @@ class DexMethodCountTask extends DefaultTask {
 
         withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
             print(tree, out)
+
+            out.format("\n\nTask runtimes:\n")
+            out.format("--------------\n")
+            out.format("parsing:    ${ioTime - startTime} ms\n")
+            out.format("counting:   ${treegenTime - ioTime} ms\n")
+            out.format("printing:   ${outputTime - treegenTime} ms\n")
+            out.format("total:      ${outputTime - startTime} ms\n")
         }
     }
 
@@ -138,11 +151,15 @@ class DexMethodCountTask extends DefaultTask {
      * counts of the current dex/apk file.
      */
     private def generatePackageTree() {
+        startTime = System.currentTimeMillis()
+
         // Create a de-obfuscator based on the current Proguard mapping file.
         // If none is given, we'll get a default mapping.
         def deobs = getDeobfuscator()
 
-        def dataList = DexFile.extractDexData(apkOrDexFile)
+        def dataList = DexFile.extractDexData(apkOrDex.outputFile)
+
+        ioTime = System.currentTimeMillis()
         try {
             tree = new PackageTree()
 
@@ -156,6 +173,8 @@ class DexMethodCountTask extends DefaultTask {
         } finally {
             dataList*.dispose()
         }
+
+        treegenTime = System.currentTimeMillis()
     }
 
     static refListToClassNames(List<List<HasDeclaringClass>> refs, Deobfuscator deobfuscator) {
