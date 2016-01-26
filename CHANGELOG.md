@@ -1,3 +1,8 @@
+0.4.1 (unreleased)
+----------
+
+* Revert pull request #32 and remove `@Input` from `apkOrDex` (issues #35 and #46)
+
 0.4.0 (released 23 January 2016)
 ----------
 
