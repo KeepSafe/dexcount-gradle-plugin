@@ -20,9 +20,3 @@ env:
     - secure: Y3UuQXQ6+NQQa7RMp7hf88Biv5VfcPmdz/y1hPaNWg/Ux5xKV9E3CqTCbjJs+dZP8xKo/DLARnDQxUEiBTzmAXOvCGinI9iYgW2zRohhKWWKQ9a/O2cIevXgOJ5pIMTCAEac68ysQpHRw6MtSg/Ha3rGDr0INtghDkvmv4Kn55fz7lun7Pp0koCufyZl1/NE0BgOS556Px4ZbPH4PpdNuD86Xxg2NJam26dPLu8jFvC4JxPfdylQEsR/fBmQtGRk9GLQOqYKH2scA3sipWTBI6SAMHVJScte5FKcnClump8My7NjrZCMT97rk7iETN97/IxWe2yVdFEqQOptYWzUMUJT3AppqtlvMxm5kTzPt5kLY2Xl8AITvOW3BCkmaTa4x3dQtu+fNf4jyFONSOuv/x4O0oTLOC3C8E5BmsGJsp+rok2Nbv6yFF3etj9ENH54jO9cpo4xFfDeSuvqi9pP5CsBQHzVt9Vi/3KafK+a1JvauskICI3+CcyKXLDZho2VNFFdRE/mqRcFBXa2wr7tzs7ic1P9nVRisv/PxmHBQeNsnYyiJUUVIh3jFN6M0VZPnRkE20YLwdWs7jqlsL+voipGkqSn1TGYj4wCt7H/+f6Om2mdnmcdrRVZ2kMyW6E0kILHdSiygPbEaaXpKZckQwr+Vku+zMck/OjvvpQRqqc=
 
 sudo: false
-
-cache:
-  directories:
-    - $HOME/.m2
-    - $HOME/.gradle/caches
-    - $HOME/.gradle/wrapper/dists
