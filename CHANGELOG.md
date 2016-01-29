@@ -1,4 +1,4 @@
-0.4.1 (unreleased)
+0.4.1 (released 29 January 2016)
 ----------
 
 * Change output-file extensions to '.json' and '.yml' for JSON and YAML outputs.
