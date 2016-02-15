@@ -67,16 +67,19 @@ class DexMethodCountTask extends DefaultTask {
         printTaskDiagnosticData()
     }
 
+    private def getPercentageRemainingUntilMaxDefRefs(int count) {
+        return new DecimalFormat("##.##").format((count / MAX_DEX_REFS) * 100);
+    }
+
     /**
      * Prints a summary of method and field counts
      * @return
      */
     def printSummary() {
         def filename = apkOrDex.outputFile.name
-        def percentageRemaining = new DecimalFormat("##.##").format((tree.methodCount / MAX_DEX_REFS) * 100);
         withStyledOutput(StyledTextOutput.Style.Info) { out ->
-            out.println("Total methods in ${filename}: ${tree.methodCount}  (${percentageRemaining}%)")
-            out.println("Total fields in ${filename}:  ${tree.fieldCount}")
+            out.println("Total methods in ${filename}: ${tree.methodCount} (${getPercentageRemainingUntilMaxDefRefs(tree.methodCount)}%)")
+            out.println("Total fields in ${filename}:  ${tree.fieldCount} (${getPercentageRemainingUntilMaxDefRefs(tree.fieldCount)}%)")
             out.println("Methods remaining in ${filename}: ${MAX_DEX_REFS - tree.methodCount}")
             out.println("Fields remaining in ${filename}:  ${MAX_DEX_REFS - tree.fieldCount}")
         }
