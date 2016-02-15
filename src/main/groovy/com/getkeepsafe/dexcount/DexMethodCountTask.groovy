@@ -30,6 +30,8 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
 
+import java.text.DecimalFormat
+
 class DexMethodCountTask extends DefaultTask {
     /**
      * The maximum number of method refs and field refs allowed in a single Dex
@@ -71,8 +73,9 @@ class DexMethodCountTask extends DefaultTask {
      */
     def printSummary() {
         def filename = apkOrDex.outputFile.name
+        def percentageRemaining = new DecimalFormat("##.##").format((tree.methodCount / MAX_DEX_REFS) * 100);
         withStyledOutput(StyledTextOutput.Style.Info) { out ->
-            out.println("Total methods in ${filename}: ${tree.methodCount}")
+            out.println("Total methods in ${filename}: ${tree.methodCount}  (${percentageRemaining}%)")
             out.println("Total fields in ${filename}:  ${tree.fieldCount}")
             out.println("Methods remaining in ${filename}: ${MAX_DEX_REFS - tree.methodCount}")
             out.println("Fields remaining in ${filename}:  ${MAX_DEX_REFS - tree.fieldCount}")
