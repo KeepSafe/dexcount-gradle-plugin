@@ -24,13 +24,10 @@ import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
-
-import java.text.DecimalFormat
 
 class DexMethodCountTask extends DefaultTask {
     /**
@@ -67,8 +64,9 @@ class DexMethodCountTask extends DefaultTask {
         printTaskDiagnosticData()
     }
 
-    private def getPercentageRemainingUntilMaxDefRefs(int count) {
-        return new DecimalFormat("##.##").format((count / MAX_DEX_REFS) * 100);
+    static def percentUsed(int count) {
+        def used = ((double) count / MAX_DEX_REFS) * 100.0
+        return sprintf("%.2f", used)
     }
 
     /**
@@ -78,8 +76,11 @@ class DexMethodCountTask extends DefaultTask {
     def printSummary() {
         def filename = apkOrDex.outputFile.name
         withStyledOutput(StyledTextOutput.Style.Info) { out ->
-            out.println("Total methods in ${filename}: ${tree.methodCount} (${getPercentageRemainingUntilMaxDefRefs(tree.methodCount)}%)")
-            out.println("Total fields in ${filename}:  ${tree.fieldCount} (${getPercentageRemainingUntilMaxDefRefs(tree.fieldCount)}%)")
+            def percentMethodsUsed = percentUsed(tree.methodCount)
+            def percentFieldsUsed = percentUsed(tree.fieldCount)
+
+            out.println("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
+            out.println("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
             out.println("Methods remaining in ${filename}: ${MAX_DEX_REFS - tree.methodCount}")
             out.println("Fields remaining in ${filename}:  ${MAX_DEX_REFS - tree.fieldCount}")
         }
