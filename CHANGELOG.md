@@ -1,3 +1,8 @@
+0.4.2 (released 16 February 2016)
+---------
+
+* Add percentage-used for method and field counts to Gradle output
+
 0.4.1 (released 29 January 2016)
 ----------
 

@@ -18,7 +18,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.1'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.2'
     }
 }
 
@@ -107,7 +107,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.2-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.3-SNAPSHOT'
   }
 }
 ```
