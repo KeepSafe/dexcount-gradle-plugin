@@ -55,6 +55,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 task.mappingFile = variant.mappingFile
                 task.outputFile = project.file(path + format.extension)
                 task.summaryFile = project.file(path + '.csv')
+                task.chartDir = project.file(path + 'Chart')
                 task.config = ext
                 variant.assemble.doLast { task.countMethods() }
             }
