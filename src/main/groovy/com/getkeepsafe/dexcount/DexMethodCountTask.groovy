@@ -49,6 +49,9 @@ class DexMethodCountTask extends DefaultTask {
     @OutputFile
     def File summaryFile
 
+    @OutputFile
+    def File chartDir
+
     def DexMethodCountExtension config
 
     def long startTime
@@ -61,6 +64,7 @@ class DexMethodCountTask extends DefaultTask {
         generatePackageTree()
         printSummary()
         printFullTree()
+        printChart()
         printTaskDiagnosticData()
     }
 
@@ -104,18 +108,28 @@ class DexMethodCountTask extends DefaultTask {
      * Prints the package tree to the usual outputs/dexcount/variant.txt file.
      */
     def printFullTree() {
-        if (outputFile != null) {
-            outputFile.parentFile.mkdirs()
-            outputFile.createNewFile()
-            outputFile.withOutputStream { stream ->
-                def appendableStream = new PrintStream(stream)
-                print(tree, appendableStream)
-                appendableStream.flush()
-                appendableStream.close()
-            }
+        printToFile(outputFile) { PrintStream out ->
+            print(tree, out)
+        }
+        outputTime = System.currentTimeMillis()
+    }
+
+    /**
+     * Prints the package tree as chart to the outputs/dexcount/${variant}Chart directory.
+     */
+    def printChart() {
+        def printOptions = getPrintOptions()
+        printOptions.includeClasses = true
+        printToFile(new File(chartDir, "data.js")) { PrintStream out ->
+            out.print("var data = ")
+            tree.printJson(out, printOptions);
         }
 
-        outputTime = System.currentTimeMillis()
+        ["chart-builder.js", "d3.v3.min.js", "index.html", "styles.css"].each { String resourceName ->
+            def resource = getClass().getResourceAsStream("/com/getkeepsafe/dexcount/" + resourceName);
+            def targetFile = new File(chartDir, resourceName)
+            targetFile.write resource.text
+        }
     }
 
     /**
@@ -153,10 +167,25 @@ class DexMethodCountTask extends DefaultTask {
         closure(output.withStyle(style))
     }
 
-    /**
-     * Creates a new PackageTree and populates it with the method and field
-     * counts of the current dex/apk file.
-     */
+    private void printToFile(
+            File file,
+            @ClosureParams(value = SimpleType, options = ['java.io.PrintStream']) Closure closure) {
+        if (outputFile != null) {
+            file.parentFile.mkdirs()
+            file.createNewFile()
+            file.withOutputStream { stream ->
+                def out = new PrintStream(stream)
+                closure(out)
+                out.flush()
+                out.close()
+            }
+        }
+    }
+
+/**
+ * Creates a new PackageTree and populates it with the method and field
+ * counts of the current dex/apk file.
+ */
     private def generatePackageTree() {
         startTime = System.currentTimeMillis()
 
