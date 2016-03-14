@@ -1,3 +1,8 @@
+0.4.3 (released 14 March 2016)
+---------
+
+* Add sunburst chart generation (issue #57)
+
 0.4.2 (released 16 February 2016)
 ---------
 
