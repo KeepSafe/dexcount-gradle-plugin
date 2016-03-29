@@ -236,7 +236,8 @@ class DexMethodCountTask extends DefaultTask {
                 includeTotalMethodCount: config.includeTotalMethodCount,
                 orderByMethodCount: config.orderByMethodCount,
                 includeClasses: config.includeClasses,
-                printHeader: true)
+                printHeader: true,
+                maxTreeDepth: config.maxTreeDepth)
     }
 
     private def getDeobfuscator() {
