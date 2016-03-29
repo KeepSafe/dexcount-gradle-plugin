@@ -26,6 +26,7 @@ class DexMethodCountExtension {
     private boolean includeTotalMethodCount = false
     private OutputFormat format = OutputFormat.LIST
     private boolean verbose
+    private int maxTreeDepth = Integer.MAX_VALUE
 
     /**
      * When true, includes individual classes in task output.
@@ -88,6 +89,14 @@ class DexMethodCountExtension {
 
     public OutputFormat getFormat() {
         return format;
+    }
+
+    public void setMaxTreeDepth(int maxTreeDepth) {
+        this.maxTreeDepth = maxTreeDepth
+    }
+
+    public int getMaxTreeDepth() {
+        return this.maxTreeDepth
     }
 
     public void setFormat(Object format) {

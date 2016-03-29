@@ -23,4 +23,5 @@ class PrintOptions {
     def includeTotalMethodCount = false
     def printHeader = false
     def orderByMethodCount = false
+    def int maxTreeDepth = Integer.MAX_VALUE
 }

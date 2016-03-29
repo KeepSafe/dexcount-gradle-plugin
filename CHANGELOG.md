@@ -1,3 +1,8 @@
+0.4.4 (unreleased)
+---------
+
+* Add 'maxTreeDepth' config option (issue #54)
+
 0.4.3 (released 14 March 2016)
 ---------
 

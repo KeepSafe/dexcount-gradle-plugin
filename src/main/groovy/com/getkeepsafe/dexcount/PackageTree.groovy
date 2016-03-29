@@ -143,7 +143,7 @@ class PackageTree {
             printPackageListHeader(out, opts)
         }
 
-        getChildren(opts).each { it -> it.printPackageListRecursively(out, sb, opts) }
+        getChildren(opts).each { it -> it.printPackageListRecursively(out, sb, 0, opts) }
     }
 
     private static def printPackageListHeader(Appendable out, PrintOptions opts) {
@@ -158,7 +158,11 @@ class PackageTree {
         out.append("package/class name\n")
     }
 
-    private void printPackageListRecursively(Appendable out, StringBuilder sb, PrintOptions opts) {
+    private void printPackageListRecursively(Appendable out, StringBuilder sb, int depth, PrintOptions opts) {
+        if (depth >= opts.maxTreeDepth) {
+            return
+        }
+
         def len = sb.length()
         if (len > 0) {
             sb.append(".")
@@ -178,7 +182,7 @@ class PackageTree {
             out.append('\n')
         }
 
-        getChildren(opts).each { PackageTree it -> it.printPackageListRecursively(out, sb, opts) }
+        getChildren(opts).each { PackageTree it -> it.printPackageListRecursively(out, sb, depth + 1, opts) }
         sb.setLength(len)
     }
 
@@ -187,6 +191,11 @@ class PackageTree {
     }
 
     private void printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
+        // 'indent' here is equal to the current tree depth
+        if (indent >= opts.maxTreeDepth) {
+            return
+        }
+
         indent.times { out.append("  ") }
         out.append(name_)
 
@@ -240,10 +249,14 @@ class PackageTree {
         // Setting an indentation enables pretty-printing
         json.indent = "  "
 
-        printJsonRecursively(json, opts)
+        printJsonRecursively(json, 0, opts)
     }
 
-    private void printJsonRecursively(JsonWriter json, PrintOptions opts) {
+    private void printJsonRecursively(JsonWriter json, int depth, PrintOptions opts) {
+        if (depth >= opts.maxTreeDepth) {
+            return
+        }
+
         json.beginObject()
 
         json.name("name").value(name_)
@@ -259,7 +272,7 @@ class PackageTree {
         json.name("children")
         json.beginArray()
 
-        getChildren(opts).each { PackageTree it -> it.printJsonRecursively(json, opts) }
+        getChildren(opts).each { PackageTree it -> it.printJsonRecursively(json, depth + 1, opts) }
 
         json.endArray()
 
@@ -279,11 +292,15 @@ class PackageTree {
 
         out.append("counts:\n")
 
-        getChildren(opts).each { it.printYamlRecursively(out, 1, opts) }
+        getChildren(opts).each { it.printYamlRecursively(out, 0, opts) }
     }
 
-    private void printYamlRecursively(Appendable out, int indent, PrintOptions opts) {
-        String indentText = "  " * indent
+    private void printYamlRecursively(Appendable out, int depth, PrintOptions opts) {
+        if (depth > opts.maxTreeDepth) {
+            return
+        }
+
+        String indentText = "  " * ((depth * 2) + 1)
 
         out.append(indentText + "- name: ")
         out.append(name_)
@@ -303,14 +320,14 @@ class PackageTree {
             out.append("\n")
         }
 
-        def children = getChildren(opts)
+        def children = (depth + 1) == opts.maxTreeDepth ? (Collection<PackageTree>) [] : getChildren(opts)
         if (children.empty) {
             out.append(indentText)
             out.append("children: []\n")
         } else {
             out.append(indentText)
             out.append("children:\n")
-            children.each { PackageTree child -> child.printYamlRecursively(out, indent + 2, opts) }
+            children.each { PackageTree child -> child.printYamlRecursively(out, depth + 1, opts) }
         }
     }
 
