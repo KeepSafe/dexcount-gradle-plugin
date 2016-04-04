@@ -1,6 +1,7 @@
-0.4.4 (unreleased)
+0.4.4 (released 4 April 2016)
 ---------
 
+* Fix display of methods-remaining for multidex builds (don't show negative numbers) (issue #64)
 * Add 'maxTreeDepth' config option (issue #54)
 
 0.4.3 (released 14 March 2016)
