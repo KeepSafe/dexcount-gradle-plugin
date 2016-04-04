@@ -37,7 +37,11 @@ apply plugin: 'com.getkeepsafe.dexcount'
 :app:packageDebug
 :app:zipalignDebug
 :app:assembleDebug
-Total methods in MyApp-debug-5.3.14.apk: 56538
+Total methods in MyApp-debug.apk: 58930 (89.92% used)
+Total fields in MyApp-debug.apk:  27507 (41.97% used)
+Methods remaining in MyApp-debug.apk: 6605
+Fields remaining in MyApp-debug.apk:  38028
+
 
 BUILD SUCCESSFUL
 
@@ -78,6 +82,7 @@ dexcount {
     includeTotalMethodCount = false
     orderByMethodCount = false
     verbose = false
+    maxTreeDepth = Integer.MAX_VALUE
 }
 ```
 
@@ -88,6 +93,7 @@ Each flag controls some aspect of the printed output:
 - `includeTotalMethodCount`: When true, the total number of methods in the application will be included in the printed output.
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
+- `maxTreeDepth`: Sets the max number of package segments in the output - i.e. when set to 2, counts stop at `com.google`, when set to 3 you get `com.google.android`, etc.  "Unlimited" by default.
 
 ## Use with Jenkins Plot Plugin
 
