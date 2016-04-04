@@ -83,10 +83,13 @@ class DexMethodCountTask extends DefaultTask {
             def percentMethodsUsed = percentUsed(tree.methodCount)
             def percentFieldsUsed = percentUsed(tree.fieldCount)
 
+            def methodsRemaining = Math.max(MAX_DEX_REFS - tree.methodCount, 0)
+            def fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
+
             out.println("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
             out.println("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
-            out.println("Methods remaining in ${filename}: ${MAX_DEX_REFS - tree.methodCount}")
-            out.println("Fields remaining in ${filename}:  ${MAX_DEX_REFS - tree.fieldCount}")
+            out.println("Methods remaining in ${filename}: $methodsRemaining")
+            out.println("Fields remaining in ${filename}:  $fieldsRemaining")
         }
 
         if (summaryFile != null) {
