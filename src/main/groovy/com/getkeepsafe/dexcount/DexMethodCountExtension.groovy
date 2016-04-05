@@ -24,6 +24,7 @@ class DexMethodCountExtension {
     private boolean orderByMethodCount
     private boolean includeFieldCount = true
     private boolean includeTotalMethodCount = false
+    private boolean teamCityIntegration = false
     private OutputFormat format = OutputFormat.LIST
     private boolean verbose
     private int maxTreeDepth = Integer.MAX_VALUE
@@ -73,6 +74,17 @@ class DexMethodCountExtension {
 
     public void setIncludeTotalMethodCount(boolean includeTotalMethodCount) {
         this.includeTotalMethodCount = includeTotalMethodCount;
+    }
+
+    /**
+     * When true, includes output for team city statistic integration
+     */
+    public boolean getTeamCityIntegration() {
+        return teamCityIntegration
+    }
+
+    public void setTeamCityIntegration(boolean teamCityIntegration) {
+        this.teamCityIntegration = teamCityIntegration;
     }
 
     /**

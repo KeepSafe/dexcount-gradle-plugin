@@ -21,6 +21,7 @@ class PrintOptions {
     def includeMethodCount = true
     def includeFieldCount = false
     def includeTotalMethodCount = false
+    def teamCityIntegration = false
     def printHeader = false
     def orderByMethodCount = false
     def int maxTreeDepth = Integer.MAX_VALUE
