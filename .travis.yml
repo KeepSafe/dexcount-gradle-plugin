@@ -33,7 +33,7 @@ env:
 sudo: false
 
 -cache:
-  - directories:
+  directories:
     - $HOME/.gradle/caches/2.4
     - $HOME/.gradle/caches/jars-1
     - $HOME/.gradle/daemon
