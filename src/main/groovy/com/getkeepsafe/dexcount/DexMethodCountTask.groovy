@@ -105,6 +105,21 @@ class DexMethodCountTask extends DefaultTask {
                 appendableStream.println(counts);
             }
         }
+
+        if (getPrintOptions().teamCityIntegration) {
+            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
+                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_MethodCount", tree.methodCount.toString())
+                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_FieldCount", tree.methodCount.toString())
+            }
+        }
+    }
+
+    /**
+     * Reports to Team City statistic value
+     * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
+     */
+    def printTeamCityStatisticValue(StyledTextOutput out, String key, String value) {
+        out.println("##teamcity[buildStatisticValue key='${key}' value='${value}']")
     }
 
     /**
@@ -237,6 +252,7 @@ class DexMethodCountTask extends DefaultTask {
                 includeMethodCount: true,
                 includeFieldCount: config.includeFieldCount,
                 includeTotalMethodCount: config.includeTotalMethodCount,
+                teamCityIntegration: config.teamCityIntegration,
                 orderByMethodCount: config.orderByMethodCount,
                 includeClasses: config.includeClasses,
                 printHeader: true,
