@@ -83,7 +83,7 @@ class DexFile {
         if (androidSdkHome == null) {
             throw new Exception("ANDROID_HOME env variable not defined!")
         }
-        def buildToolsSubDirs = new File(androidSdkHome + File.separatorChar + "build-tools")
+        def buildToolsSubDirs = new File(androidSdkHome, "build-tools")
         def dirs = buildToolsSubDirs.listFiles()
         if (dirs.length == 0) {
             throw new Exception("No Build Tools found in " + buildToolsSubDirs.absolutePath)
@@ -95,13 +95,13 @@ class DexFile {
         // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
         def tempDex = File.createTempFile("classes", ".dex")
         tempDex.deleteOnExit()
-        def sout = new StringBuffer(), serr = new StringBuffer()
+        def sout = new StringBuilder(), serr = new StringBuilder()
         def dxCmd = dxExe.absolutePath + " --dex --output=" + tempDex.absolutePath + " " + tempClasses.absolutePath
         def proc = dxCmd.execute()
         proc.consumeProcessOutput(sout, serr)
         proc.waitForOrKill(5000)    // shouldn't take more than 5 seconds
         if (!tempDex.exists()) {
-            println("Error converting classes.jar into classes.dex: $serr")
+            throw new Exception("Error converting classes.jar into classes.dex: $serr")
         }
         // return resulting dex file in a list
         return [ new DexFile(tempDex, true) ]
