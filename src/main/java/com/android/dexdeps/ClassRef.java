@@ -35,6 +35,7 @@ public class ClassRef {
 
     /**
      * Adds the field to the field list.
+     * @param fref field reference
      */
     public void addField(FieldRef fref) {
         mFieldRefs.add(fref);

@@ -39,6 +39,7 @@ public class DexData {
 
     /**
      * Constructs a new DexData for this file.
+     * @param raf file to get dexdata from
      */
     public DexData(RandomAccessFile raf) {
         mDexFile = raf;
@@ -358,6 +359,7 @@ public class DexData {
      * correspond to classes in the DEX file.  Each class reference has
      * a list of the referenced fields and methods associated with
      * that class.
+     * @return external class references
      */
     public ClassRef[] getExternalReferences() {
         // create a sparse array of ClassRef that parallels mTypeIds
