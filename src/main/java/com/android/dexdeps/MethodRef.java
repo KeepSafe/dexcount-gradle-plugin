@@ -25,6 +25,10 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Initializes a new field reference.
+     * @param declClass class name
+     * @param argTypes arg types
+     * @param returnType return type
+     * @param methodName method name
      */
     public MethodRef(String declClass, String[] argTypes, String returnType,
             String methodName) {
@@ -36,6 +40,7 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Gets the name of the method's declaring class.
+     * @return class name
      */
     public String getDeclClassName() {
         return mDeclClass;
@@ -43,6 +48,7 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Gets the method's descriptor.
+     * @return descriptor name
      */
     public String getDescriptor() {
         return descriptorFromProtoArray(mArgTypes, mReturnType);
@@ -50,6 +56,7 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Gets the method's name.
+     * @return method name
      */
     public String getName() {
         return mMethodName;
@@ -57,6 +64,7 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Gets an array of method argument types.
+     * @return arg types
      */
     public String[] getArgumentTypeNames() {
         return mArgTypes;
@@ -64,6 +72,7 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Gets the method's return type.  Examples: "Ljava/lang/String;", "[I".
+     * @return method's type name
      */
     public String getReturnTypeName() {
         return mReturnType;
@@ -72,6 +81,9 @@ public class MethodRef implements HasDeclaringClass {
     /**
      * Returns the method descriptor, given the argument and return type
      * prototype strings.
+     * @param protos prototype strings
+     * @param returnType return type
+     * @return method name
      */
     private static String descriptorFromProtoArray(String[] protos,
             String returnType) {

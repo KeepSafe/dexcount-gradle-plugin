@@ -28,6 +28,7 @@ class DexMethodCountExtension {
     private OutputFormat format = OutputFormat.LIST
     private boolean verbose
     private int maxTreeDepth = Integer.MAX_VALUE
+    private int dxTimeoutSec = 60;
 
     /**
      * When true, includes individual classes in task output.
@@ -109,6 +110,14 @@ class DexMethodCountExtension {
 
     public int getMaxTreeDepth() {
         return this.maxTreeDepth
+    }
+
+    int getDxTimeoutSec() {
+        return dxTimeoutSec
+    }
+
+    void setDxTimeoutSec(int dxTimeoutSec) {
+        this.dxTimeoutSec = dxTimeoutSec
     }
 
     public void setFormat(Object format) {

@@ -39,6 +39,7 @@ public class DexData {
 
     /**
      * Constructs a new DexData for this file.
+     * @param raf file to get dexdata from
      */
     public DexData(RandomAccessFile raf) {
         mDexFile = raf;
@@ -65,6 +66,8 @@ public class DexData {
 
     /**
      * Verifies the given magic number.
+     * @param magic number
+     * @return true if valie
      */
     private static boolean verifyMagic(byte[] magic) {
         return Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC) ||
@@ -206,7 +209,6 @@ public class DexData {
 
             if (offset == 0) {
                 protoId.types = new int[0];
-                continue;
             } else {
                 seek(offset);
                 int size = readInt();       // #of entries in list
@@ -327,6 +329,8 @@ public class DexData {
     /**
      * Returns an array of method argument type strings, given an index
      * into the proto_ids table.
+     * @param idx index of prototype IDs
+     * @return array of method type strings
      */
     private String[] argArrayFromProtoIndex(int idx) {
         ProtoIdItem protoId = mProtoIds[idx];
@@ -342,6 +346,8 @@ public class DexData {
     /**
      * Returns a string representing the method's return type, given an
      * index into the proto_ids table.
+     * @param idx index of prototype IDs
+     * @return array of method type strings
      */
     private String returnTypeFromProtoIndex(int idx) {
         ProtoIdItem protoId = mProtoIds[idx];
@@ -353,6 +359,7 @@ public class DexData {
      * correspond to classes in the DEX file.  Each class reference has
      * a list of the referenced fields and methods associated with
      * that class.
+     * @return external class references
      */
     public ClassRef[] getExternalReferences() {
         // create a sparse array of ClassRef that parallels mTypeIds
@@ -388,6 +395,7 @@ public class DexData {
     /**
      * Runs through the list of field references, inserting external
      * references into the appropriate ClassRef.
+     * @param sparseRefs class refs
      */
     private void addExternalFieldReferences(ClassRef[] sparseRefs) {
         for (int i = 0; i < mFieldIds.length; i++) {
@@ -405,6 +413,7 @@ public class DexData {
     /**
      * Runs through the list of method references, inserting external
      * references into the appropriate ClassRef.
+     * @param sparseRefs class refs
      */
     private void addExternalMethodReferences(ClassRef[] sparseRefs) {
         for (int i = 0; i < mMethodIds.length; i++) {
@@ -422,6 +431,7 @@ public class DexData {
 
     /**
      * Returns the list of all method references.
+     * @return method refs
      */
     public MethodRef[] getMethodRefs() {
         MethodRef[] methodRefs = new MethodRef[mMethodIds.length];
