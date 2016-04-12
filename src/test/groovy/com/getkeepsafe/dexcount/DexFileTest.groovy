@@ -17,7 +17,7 @@ class DexFileTest extends Specification {
             aarFile = File.createTempFile("test", ".aar")
             aarFile.deleteOnExit()
             def buf = new byte[4096]
-            Thread.currentThread().getContextClassLoader().getResourceAsStream('android-beacon-library-2.7.aar').withStream { input ->
+            getClass().getResourceAsStream('android-beacon-library-2.7.aar').withStream { input ->
                 aarFile.withOutputStream { output ->
                     def read
                     while ((read = input.read(buf)) != -1) {
