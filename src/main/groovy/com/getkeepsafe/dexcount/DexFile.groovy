@@ -76,6 +76,7 @@ class DexFile {
                     output.write(buf, 0, read)
                 }
                 output.flush()
+                output.close()
             }
         }
         // convert it to DEX format by using the Android dx tool
@@ -133,6 +134,7 @@ class DexFile {
                         output.write(buf, 0, read)
                     }
                     output.flush()
+                    output.close()
                 }
             }
 
