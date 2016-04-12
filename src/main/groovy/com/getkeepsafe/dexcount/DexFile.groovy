@@ -100,7 +100,7 @@ class DexFile {
         def dxCmd = dxExe.absolutePath + " --dex --output=" + tempDex.absolutePath + " " + tempClasses.absolutePath
         def proc = dxCmd.execute()
         proc.consumeProcessOutput(sout, serr)
-        proc.waitForOrKill(5000)    // shouldn't take more than 5 seconds
+        proc.waitForOrKill(60000)    // shouldn't take more than 60 seconds
         if (!tempDex.exists()) {
             throw new Exception("Error converting classes.jar into classes.dex: $serr")
         }
