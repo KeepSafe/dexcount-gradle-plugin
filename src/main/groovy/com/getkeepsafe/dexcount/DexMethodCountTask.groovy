@@ -109,7 +109,7 @@ class DexMethodCountTask extends DefaultTask {
         if (getPrintOptions().teamCityIntegration) {
             withStyledOutput(StyledTextOutput.Style.Normal) { out ->
                 printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_MethodCount", tree.methodCount.toString())
-                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_FieldCount", tree.methodCount.toString())
+                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_FieldCount", tree.fieldCount.toString())
             }
         }
     }
