@@ -29,6 +29,7 @@ class DexFileTest extends Specification {
                         output.write(buf, 0, read)
                     }
                     output.flush()
+                    output.close()
                 }
             }
         }
