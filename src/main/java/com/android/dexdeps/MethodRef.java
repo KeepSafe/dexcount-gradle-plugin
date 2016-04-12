@@ -72,6 +72,7 @@ public class MethodRef implements HasDeclaringClass {
 
     /**
      * Gets the method's return type.  Examples: "Ljava/lang/String;", "[I".
+     * @return method's type name
      */
     public String getReturnTypeName() {
         return mReturnType;
