@@ -43,13 +43,14 @@ class DexFile {
      * {@code classes.dex} file.
      *
      * @param file the APK or dex file.
+     * @param dxTimeoutSecs timeout when running Dx in seconds
      * @return a list of DexFile objects representing data in the given file.
      */
-    static List<DexFile> extractDexData(File file) {
+    static List<DexFile> extractDexData(File file, int dxTimeoutSecs) {
         try {
             // AAR files need special treatment
             if (file.name.endsWith(".aar")) {
-                return extractDexFromAar(file);
+                return extractDexFromAar(file, dxTimeoutSecs);
             }
 
             return extractDexFromZip(file)
@@ -60,7 +61,7 @@ class DexFile {
         return [new DexFile(file, false)]
     }
 
-    private static List<DexFile> extractDexFromAar(File file) {
+    private static List<DexFile> extractDexFromAar(File file, int dxTimeoutSecs) {
         // unzip classes.jar from the AAR
         def zipfile = new ZipFile(file)
         def entries = Collections.list(zipfile.entries())
@@ -99,7 +100,7 @@ class DexFile {
         def dxCmd = dxExe.absolutePath + " --dex --output=" + tempDex.absolutePath + " " + tempClasses.absolutePath
         def proc = dxCmd.execute()
         proc.consumeProcessOutput(sout, serr)
-        proc.waitForOrKill(60000)    // shouldn't take more than 60 seconds
+        proc.waitForOrKill(dxTimeoutSecs * 1000)
         if (!tempDex.exists()) {
             throw new Exception("Error converting classes.jar into classes.dex: $serr")
         }

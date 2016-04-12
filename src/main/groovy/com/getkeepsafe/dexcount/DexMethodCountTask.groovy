@@ -211,7 +211,7 @@ class DexMethodCountTask extends DefaultTask {
         // If none is given, we'll get a default mapping.
         def deobs = getDeobfuscator()
 
-        def dataList = DexFile.extractDexData(apkOrDex.outputFile)
+        def dataList = DexFile.extractDexData(apkOrDex.outputFile, config.dxTimeoutSec)
 
         ioTime = System.currentTimeMillis()
         try {

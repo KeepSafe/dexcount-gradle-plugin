@@ -27,7 +27,7 @@ class DexFileTest extends Specification {
                 }
             }
         }
-        def dexFiles = DexFile.extractDexData(aarFile)
+        def dexFiles = DexFile.extractDexData(aarFile, 60)
 
         then:
         dexFiles != null
