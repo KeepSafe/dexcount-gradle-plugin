@@ -14,7 +14,7 @@ class DexFileTest extends Specification {
         def url = Thread.currentThread().getContextClassLoader().getResource("./")
         def files = new File(url.toURI()).listFiles()
         for (file in files) {
-            println(file.absolutePath)
+            System.err.println(file.absolutePath)
         }
         if (!aarFile.exists()) {
             // couldn't read directly off file system if we're in a jar, so pull resources and drop them into a temp file
