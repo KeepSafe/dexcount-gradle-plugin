@@ -12,7 +12,8 @@ import static com.android.SdkConstants.SDK_DIR_PROPERTY
 import static com.android.SdkConstants.currentPlatform
 
 /**
- * This was lifted and modified from Jake Wharton's SDK Manager gradle plugin
+ * This was lifted and modified from Jake Wharton's SDK Manager gradle plugin:
+ * https://github.com/JakeWharton/sdk-manager-plugin
  */
 class SdkResolver {
     static File resolve(Project project) {

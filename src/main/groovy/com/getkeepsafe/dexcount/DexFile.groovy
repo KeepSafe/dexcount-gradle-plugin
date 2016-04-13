@@ -82,22 +82,16 @@ class DexFile {
         // convert it to DEX format by using the Android dx tool
         def androidSdkHome = DexMethodCountPlugin.sdkLocation
         if (androidSdkHome == null) {
-            throw new Exception("ANDROID_HOME env variable not defined!")
+            throw new Exception("Android SDK not found!")
         }
 
         def buildToolsSubDirs = new File(androidSdkHome, "build-tools")
-        def dirs = buildToolsSubDirs.listFiles()
+        // get latest Dx tool by sorting by name
+        def dirs = buildToolsSubDirs.listFiles().sort { it.name }.reverse()
         if (dirs.length == 0) {
             throw new Exception("No Build Tools found in " + buildToolsSubDirs.absolutePath)
         }
-        def latestDxPath = dirs[0].absolutePath;
-        // look for the latest version of the Dx tool by comparing all the names
-        for (dir in dirs) {
-            if (dir.absolutePath.compareTo(latestDxPath)) {
-                latestDxPath = dir.absolutePath;
-            }
-        }
-        def dxExe = new File(latestDxPath + File.separatorChar + "dx")
+        def dxExe = new File(dirs[0], "dx")
         if (!dxExe.exists()) {
             throw new Exception("dx tool not found at " + dxExe.absolutePath)
         }

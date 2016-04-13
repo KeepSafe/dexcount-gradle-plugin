@@ -1,5 +1,9 @@
 package com.getkeepsafe.dexcount
 
+/**
+ * This is from Jake Wharton's SDK manager:
+ * https://github.com/JakeWharton/sdk-manager-plugin
+ */
 interface System {
     String env(String name);
     String property(String key);
