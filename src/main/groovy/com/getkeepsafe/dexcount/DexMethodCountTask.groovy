@@ -129,7 +129,7 @@ class DexMethodCountTask extends DefaultTask {
         printToFile(outputFile) { PrintStream out ->
             print(tree, out)
         }
-        outputTime = System.currentTimeMillis()
+        outputTime = java.lang.System.currentTimeMillis()
     }
 
     /**
@@ -205,7 +205,7 @@ class DexMethodCountTask extends DefaultTask {
  * counts of the current dex/apk file.
  */
     private def generatePackageTree() {
-        startTime = System.currentTimeMillis()
+        startTime = java.lang.System.currentTimeMillis()
 
         // Create a de-obfuscator based on the current Proguard mapping file.
         // If none is given, we'll get a default mapping.
@@ -213,7 +213,7 @@ class DexMethodCountTask extends DefaultTask {
 
         def dataList = DexFile.extractDexData(apkOrDex.outputFile, config.dxTimeoutSec)
 
-        ioTime = System.currentTimeMillis()
+        ioTime = java.lang.System.currentTimeMillis()
         try {
             tree = new PackageTree()
 
@@ -228,7 +228,7 @@ class DexMethodCountTask extends DefaultTask {
             dataList*.dispose()
         }
 
-        treegenTime = System.currentTimeMillis()
+        treegenTime = java.lang.System.currentTimeMillis()
     }
 
     static refListToClassNames(List<List<HasDeclaringClass>> refs, Deobfuscator deobfuscator) {
