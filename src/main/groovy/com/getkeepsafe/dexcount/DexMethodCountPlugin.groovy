@@ -22,8 +22,12 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class DexMethodCountPlugin implements Plugin<Project> {
+    public static File sdkLocation = SdkResolver.resolve(null)
+
     @Override
     void apply(Project project) {
+        sdkLocation = SdkResolver.resolve(project)
+
         if (project.plugins.hasPlugin('com.android.application')) {
             applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants);
         } else if (project.plugins.hasPlugin('com.android.library')) {

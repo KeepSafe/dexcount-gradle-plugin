@@ -80,16 +80,24 @@ class DexFile {
             }
         }
         // convert it to DEX format by using the Android dx tool
-        def androidSdkHome = System.getenv("ANDROID_HOME")
+        def androidSdkHome = DexMethodCountPlugin.sdkLocation
         if (androidSdkHome == null) {
             throw new Exception("ANDROID_HOME env variable not defined!")
         }
+
         def buildToolsSubDirs = new File(androidSdkHome, "build-tools")
         def dirs = buildToolsSubDirs.listFiles()
         if (dirs.length == 0) {
             throw new Exception("No Build Tools found in " + buildToolsSubDirs.absolutePath)
         }
-        def dxExe = new File(dirs[0].absolutePath + File.separatorChar + "dx")
+        def latestDxPath = dirs[0].absolutePath;
+        // look for the latest version of the Dx tool by comparing all the names
+        for (dir in dirs) {
+            if (dir.absolutePath.compareTo(latestDxPath)) {
+                latestDxPath = dir.absolutePath;
+            }
+        }
+        def dxExe = new File(latestDxPath + File.separatorChar + "dx")
         if (!dxExe.exists()) {
             throw new Exception("dx tool not found at " + dxExe.absolutePath)
         }
