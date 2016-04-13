@@ -17,6 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariant
+import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project

@@ -1,4 +1,4 @@
-package com.getkeepsafe.dexcount
+package com.getkeepsafe.dexcount.sdkresolver
 
 /**
  * This is from Jake Wharton's SDK manager:

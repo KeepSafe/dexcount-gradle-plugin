@@ -1,4 +1,4 @@
-package com.getkeepsafe.dexcount
+package com.getkeepsafe.dexcount.sdkresolver
 
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
