@@ -23,6 +23,9 @@ import com.android.dexdeps.MethodRef
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
+import static com.android.SdkConstants.PLATFORM_WINDOWS
+import static com.android.SdkConstants.currentPlatform
+
 /**
  * A physical file and the {@link DexData} contained therein.
  *
@@ -91,7 +94,14 @@ class DexFile {
         if (dirs.length == 0) {
             throw new Exception("No Build Tools found in " + buildToolsSubDirs.absolutePath)
         }
-        def dxExe = new File(dirs[0], "dx")
+
+        def dxExe
+        if (currentPlatform() == PLATFORM_WINDOWS) {
+            dxExe = new File(dirs[0], "dx.bat")
+        } else {
+            dxExe = new File(dirs[0], "dx")
+        }
+
         if (!dxExe.exists()) {
             throw new Exception("dx tool not found at " + dxExe.absolutePath)
         }
