@@ -22,6 +22,7 @@ buildscript {
     }
 }
 
+// make sure this line comes *after* you apply the Android plugin
 apply plugin: 'com.getkeepsafe.dexcount'
 ```
 
