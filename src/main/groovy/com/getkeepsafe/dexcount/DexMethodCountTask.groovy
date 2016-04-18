@@ -17,6 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.annotations.Nullable
+import com.android.annotations.VisibleForTesting
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.dexdeps.HasDeclaringClass
 import com.android.dexdeps.Output
@@ -200,11 +201,12 @@ class DexMethodCountTask extends DefaultTask {
         }
     }
 
-/**
- * Creates a new PackageTree and populates it with the method and field
- * counts of the current dex/apk file.
- */
-    private def generatePackageTree() {
+    /**
+     * Creates a new PackageTree and populates it with the method and field
+     * counts of the current dex/apk file.
+     */
+    @VisibleForTesting
+    def generatePackageTree() {
         startTime = System.currentTimeMillis()
 
         // Create a de-obfuscator based on the current Proguard mapping file.

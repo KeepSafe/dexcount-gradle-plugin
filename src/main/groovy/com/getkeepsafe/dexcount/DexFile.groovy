@@ -20,6 +20,7 @@ import com.android.dexdeps.DexData
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 
+import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
@@ -72,15 +73,8 @@ class DexFile {
         def tempClasses = File.createTempFile("classes", ".jar")
         tempClasses.deleteOnExit()
 
-        def buf = new byte[4096]
         zipfile.getInputStream(jarFile).withStream { input ->
-            tempClasses.withOutputStream { output ->
-                def read
-                while ((read = input.read(buf)) != -1) {
-                    output.write(buf, 0, read)
-                }
-                output.flush()
-            }
+            IOUtil.drainToFile(input, tempClasses)
         }
         // convert it to DEX format by using the Android dx tool
         def androidSdkHome = DexMethodCountPlugin.sdkLocation
@@ -134,19 +128,58 @@ class DexFile {
         def zipfile = new ZipFile(file)
         def entries = Collections.list(zipfile.entries())
         def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
-        def buf = new byte[4096]
-        return dexEntries.collect { entry ->
+
+        def instantRunDexFiles = extractIncrementalDexFiles(zipfile, entries)
+
+        def mainDexFiles = dexEntries.collect { entry ->
             def temp = File.createTempFile("dexcount", ".dex")
             temp.deleteOnExit()
 
             zipfile.getInputStream(entry).withStream { input ->
-                temp.withOutputStream { output ->
-                    def read
-                    while ((read = input.read(buf)) != -1) {
-                        output.write(buf, 0, read)
-                    }
-                    output.flush()
-                }
+                IOUtil.drainToFile(input, temp)
+            }
+
+            return new DexFile(temp, true)
+        }
+
+        mainDexFiles.addAll(instantRunDexFiles)
+
+        return mainDexFiles
+    }
+
+    /**
+     * Attempts to extract dex files embedded in a nested instant-run.zip file
+     * produced by Android Studio 2.0.  If present, such files are extracted to
+     * temporary files on disk and returned as a list.  If not, an empty mutable
+     * list is returned.
+     *
+     * @param apk the APK file from which to extract dex data.
+     * @param zipEntries a list of ZipEntry objects inside of the APK.
+     * @return a list, possibly empty, of instant-run dex data.
+     */
+    private static List<DexFile> extractIncrementalDexFiles(ZipFile apk, List<ZipEntry> zipEntries) {
+        def incremental = zipEntries.findAll { it.name.equals('instant-run.zip') }
+        if (incremental.size() != 1) {
+            return []
+        }
+
+        def instantRunFile = File.createTempFile("instant-run", ".zip")
+        instantRunFile.deleteOnExit()
+
+        apk.getInputStream(incremental.get(0)).withStream { input ->
+            IOUtil.drainToFile(input, instantRunFile)
+        }
+
+        def instantRunZip = new ZipFile(instantRunFile)
+        def entries = Collections.list(instantRunZip.entries())
+        def dexEntries = entries.findAll { it.name.endsWith(".dex") }
+
+        return dexEntries.collect { entry ->
+            def temp = File.createTempFile("dexcount", ".dex")
+            temp.deleteOnExit()
+
+            instantRunZip.getInputStream(entry).withStream { input ->
+                IOUtil.drainToFile(input, temp)
             }
 
             return new DexFile(temp, true)
