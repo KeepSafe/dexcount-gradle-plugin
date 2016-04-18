@@ -5,6 +5,8 @@ android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
+    publishNonDefault true
+
     defaultConfig {
         applicationId "com.getkeepsafe.dexcount.integration"
         minSdkVersion 16
@@ -16,6 +18,9 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
         }
     }
 }
