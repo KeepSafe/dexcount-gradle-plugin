@@ -31,6 +31,8 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
         if (project.plugins.hasPlugin('com.android.application')) {
             applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants);
+        } else if (project.plugins.hasPlugin('com.android.test')) {
+            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants);
         } else if (project.plugins.hasPlugin('com.android.library')) {
             applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.libraryVariants);
         } else {
