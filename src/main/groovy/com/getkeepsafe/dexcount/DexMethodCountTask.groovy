@@ -60,6 +60,8 @@ class DexMethodCountTask extends DefaultTask {
     def long treegenTime
     def long outputTime
 
+    def boolean isInstantRun
+
     @TaskAction
     void countMethods() {
         generatePackageTree()
@@ -80,7 +82,23 @@ class DexMethodCountTask extends DefaultTask {
      */
     def printSummary() {
         def filename = apkOrDex.outputFile.name
-        withStyledOutput(StyledTextOutput.Style.Info) { out ->
+
+        if (isInstantRun) {
+            // Despite the name, 'Failure' here just means that the printed
+            // text will be red.
+            withStyledOutput(StyledTextOutput.Style.Failure) { out ->
+                out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
+            }
+        }
+
+        def style
+        if (tree.methodCount < 50000) {
+            style = StyledTextOutput.Style.Identifier // green
+        } else {
+            style = StyledTextOutput.Style.Info       // yellow
+        }
+
+        withStyledOutput(style) { out ->
             def percentMethodsUsed = percentUsed(tree.methodCount)
             def percentFieldsUsed = percentUsed(tree.fieldCount)
 
@@ -231,6 +249,8 @@ class DexMethodCountTask extends DefaultTask {
         }
 
         treegenTime = System.currentTimeMillis()
+
+        isInstantRun = dataList.any { it.isInstantRun }
     }
 
     private def getPrintOptions() {
