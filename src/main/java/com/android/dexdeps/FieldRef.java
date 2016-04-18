@@ -55,4 +55,22 @@ public class FieldRef implements HasDeclaringClass {
     public String getName() {
         return mFieldName;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof FieldRef)) {
+            return false;
+        }
+        FieldRef that = (FieldRef) obj;
+        return this.mDeclClass.equals(that.mDeclClass)
+                && this.mFieldName.equals(that.mFieldName)
+                && this.mFieldType.equals(that.mFieldType);
+    }
+
+    @Override
+    public int hashCode() {
+        return mDeclClass.hashCode()
+                ^ mFieldName.hashCode()
+                ^ mFieldType.hashCode();
+    }
 }

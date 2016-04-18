@@ -18,17 +18,32 @@ package com.getkeepsafe.dexcount
 
 import spock.lang.Specification
 
+import static com.getkeepsafe.dexcount.RefHelpers.fieldRef;
+import static com.getkeepsafe.dexcount.RefHelpers.methodRef;
+
 class PackageTreeTest extends Specification {
-    def "adding duplicates increments count"() {
+    def "adding different methods increments count"() {
         setup:
         def tree = new PackageTree()
-        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"));
 
         when:
-        tree.addMethodRef("com.foo.Bar")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "bar"))
 
         then:
         tree.getMethodCount() == 2
+    }
+
+    def "adding duplicate methods does not increment count"() {
+        setup:
+        def tree = new PackageTree()
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"));
+
+        when:
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"));
+
+        then:
+        tree.getMethodCount() == 1
     }
 
     def "can print a package list with classes included"() {
@@ -37,10 +52,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
         tree.printPackageList(writer, new PrintOptions(includeClasses: true))
 
@@ -60,10 +75,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
         tree.printPackageList(writer, new PrintOptions(includeClasses: false))
 
@@ -80,10 +95,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
         tree.printTree(sb, new PrintOptions(includeClasses: true))
 
@@ -103,10 +118,10 @@ class PackageTreeTest extends Specification {
         def tree = new PackageTree()
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
         tree.printTree(sb, new PrintOptions(
                 includeClasses: true,
@@ -128,7 +143,7 @@ com (4 methods)
         def tree = new PackageTree()
 
         when:
-        tree.addMethodRef('com.foo.bar.$$Generated$Class$$')
+        tree.addMethodRef(methodRef('Lcom/foo/bar/$$Generated$Class$$;'))
 
         tree.printPackageList(sb, new PrintOptions(includeClasses: true))
 
@@ -179,12 +194,12 @@ com (4 methods)
         opts.includeClasses = true
 
         when:
-        tree.addMethodRef("x.y.Z")
-        tree.addMethodRef("x.y.Z")
-        tree.addMethodRef("x.y.Z")
-        tree.addFieldRef("x.y.Z")
-        tree.addFieldRef("x.y.Z")
-        tree.addFieldRef("x.y.W")
+        tree.addMethodRef(methodRef("Lx/y/Z;"))
+        tree.addMethodRef(methodRef("Lx/y/Z;"))
+        tree.addMethodRef(methodRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/W;"))
         tree.printPackageList(sb, opts)
 
         then:
@@ -210,12 +225,12 @@ methods  fields   package/class name
         opts.orderByMethodCount = true
 
         when:
-        tree.addMethodRef("x.y.Z")
-        tree.addMethodRef("x.y.Z")
-        tree.addMethodRef("x.y.Z")
-        tree.addFieldRef("x.y.Z")
-        tree.addFieldRef("x.y.Z")
-        tree.addFieldRef("x.y.W")
+        tree.addMethodRef(methodRef("Lx/y/Z;"))
+        tree.addMethodRef(methodRef("Lx/y/Z;"))
+        tree.addMethodRef(methodRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/W;"))
         tree.printPackageList(sb, opts)
 
         then:
@@ -241,11 +256,11 @@ methods  fields   package/class name
         opts.printHeader = false
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
-        tree.addMethodRef("org.whatever.Foo")
-        tree.addMethodRef("org.foo.Whatever")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
+        tree.addMethodRef(methodRef("Lorg/whatever/Foo;"))
+        tree.addMethodRef(methodRef("Lorg/foo/Whatever;"))
 
         tree.printPackageList(sb, opts)
 
@@ -275,11 +290,11 @@ Total methods: 5
         opts.maxTreeDepth = 1
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
-        tree.addMethodRef("org.whatever.Foo")
-        tree.addMethodRef("org.foo.Whatever")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
+        tree.addMethodRef(methodRef("Lorg/whatever/Foo;"))
+        tree.addMethodRef(methodRef("Lorg/foo/Whatever;"))
 
         tree.printPackageList(sb, opts)
 
@@ -302,11 +317,11 @@ Total methods: 5
         opts.includeTotalMethodCount = true
 
         when:
-        tree.addMethodRef("com.foo.Bar")
-        tree.addMethodRef("com.foo.Qux")
-        tree.addMethodRef("com.alpha.Beta")
-        tree.addMethodRef("org.whatever.Foo")
-        tree.addMethodRef("org.foo.Whatever")
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
+        tree.addMethodRef(methodRef("Lorg/whatever/Foo;"))
+        tree.addMethodRef(methodRef("Lorg/foo/Whatever;"))
 
         tree.printYaml(sb, opts)
 
@@ -347,11 +362,11 @@ counts:
         opts.includeFieldCount = true
         opts.includeMethodCount = false
 
-        tree.addFieldRef("com.foo.Bar")
-        tree.addFieldRef("com.foo.Qux")
-        tree.addFieldRef("com.alpha.Beta")
-        tree.addFieldRef("org.whatever.Foo")
-        tree.addFieldRef("org.foo.Whatever")
+        tree.addFieldRef(fieldRef("Lcom/foo/Bar;"))
+        tree.addFieldRef(fieldRef("Lcom/foo/Qux;"))
+        tree.addFieldRef(fieldRef("Lcom/alpha/Beta;"))
+        tree.addFieldRef(fieldRef("Lorg/whatever/Foo;"))
+        tree.addFieldRef(fieldRef("Lorg/foo/Whatever;"))
 
         when:
         tree.printYaml(sb, opts)
@@ -394,11 +409,11 @@ counts:
         opts.includeMethodCount = false
         opts.maxTreeDepth = 1
 
-        tree.addFieldRef("com.foo.Bar")
-        tree.addFieldRef("com.foo.Qux")
-        tree.addFieldRef("com.alpha.Beta")
-        tree.addFieldRef("org.whatever.Foo")
-        tree.addFieldRef("org.foo.Whatever")
+        tree.addFieldRef(fieldRef("Lcom/foo/Bar;"))
+        tree.addFieldRef(fieldRef("Lcom/foo/Qux;"))
+        tree.addFieldRef(fieldRef("Lcom/alpha/Beta;"))
+        tree.addFieldRef(fieldRef("Lorg/whatever/Foo;"))
+        tree.addFieldRef(fieldRef("Lorg/foo/Whatever;"))
 
         when:
         tree.printYaml(sb, opts)
