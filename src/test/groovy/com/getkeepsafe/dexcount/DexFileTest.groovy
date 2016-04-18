@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2016 KeepSafe Software
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.getkeepsafe.dexcount;
 
 import spock.lang.Specification
@@ -5,28 +21,14 @@ import spock.lang.Specification
 class DexFileTest extends Specification {
     def "test AAR dexcount"() {
         setup:
-        def currentDir = new File(".").getAbsolutePath()
+        def aarFile = File.createTempFile("test", ".aar")
+        aarFile.deleteOnExit()
+
+        getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
+            IOUtil.drainToFile(input, aarFile)
+        }
 
         when:
-        def aarFile = new File(currentDir + File.separatorChar + "src"
-                + File.separatorChar + "test" + File.separatorChar + "resources"
-                + File.separatorChar + "android-beacon-library-2.7.aar")
-        if (!aarFile.exists()) {
-            // couldn't read directly off file system if we're in a jar, so pull resources and drop them into a temp file
-            // This is for TravisCI, specifically
-            aarFile = File.createTempFile("test", ".aar")
-            aarFile.deleteOnExit()
-            def buf = new byte[4096]
-            getClass().getResourceAsStream('android-beacon-library-2.7.aar').withStream { input ->
-                aarFile.withOutputStream { output ->
-                    def read
-                    while ((read = input.read(buf)) != -1) {
-                        output.write(buf, 0, read)
-                    }
-                    output.flush()
-                }
-            }
-        }
         def dexFiles = DexFile.extractDexData(aarFile, 60)
 
         then:

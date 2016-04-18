@@ -35,7 +35,8 @@ import static com.android.SdkConstants.currentPlatform
  * {@link DexFile#dispose()}.
  */
 class DexFile {
-    public DexData data
+    public final DexData data
+    public final boolean isInstantRun
     private RandomAccessFile raf
     private File file
     private boolean isTemp
@@ -182,13 +183,14 @@ class DexFile {
                 IOUtil.drainToFile(input, temp)
             }
 
-            return new DexFile(temp, true)
+            return new DexFile(temp, true, true)
         }
     }
 
-    private DexFile(File file, boolean isTemp) {
+    private DexFile(File file, boolean isTemp, boolean isInstantRun = false) {
         this.file = file
         this.isTemp = isTemp
+        this.isInstantRun = isInstantRun
         this.raf = new RandomAccessFile(file, 'r')
         this.data = new DexData(raf)
         data.load()
