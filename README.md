@@ -18,7 +18,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.4'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.5.0'
     }
 }
 
@@ -111,6 +111,10 @@ _Technically special strings like `##teamcity[buildStatisticValue key='DexCount_
 
 [More about integration in Team City doc][1]
 
+## Note on Instant Run
+
+Instant Run is a new feature in Android Studio 2.0, which performs fast partial compilations of your app and deploys them in an incremental fashion.  `dexcount-gradle-plugin` will work with these builds, but with an important caveat.  If your app normally uses Proguard, *Instant Run method counts will be inaccurate*.  Instant Run sidesteps Proguard, and so the reported totals will in fact be greater than what normally goes in to your APK.  This is inherent to the implementation of Instant Run.
+
 ## Snapshot Builds
 
 We host snapshots in the Sonatype OSS repo.  They are updated on each commit.  As snapshots, they are inherently unstable - use at your own risk!  To use them, add the Sonatype Snapshot repo to your repositories:
@@ -123,7 +127,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.4.5-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.5.1-SNAPSHOT'
   }
 }
 ```

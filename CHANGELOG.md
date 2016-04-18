@@ -1,3 +1,11 @@
+0.5.0 (released 18 April 2016)
+---------
+
+* Add Android Test Module support (#81)
+* Add Instant Run support (#78)
+* Add AAR support (#70)
+* Add TeamCity support (#68)
+
 0.4.4 (released 4 April 2016)
 ---------
 
