@@ -16,6 +16,10 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.dexdeps.FieldRef
+import com.android.dexdeps.HasDeclaringClass
+import com.android.dexdeps.MethodRef
+import com.android.dexdeps.Output
 import com.google.gson.stream.JsonWriter
 import groovy.transform.CompileStatic
 
@@ -28,60 +32,62 @@ class PackageTree {
     // invalidated by adding new nodes.
     private int methodTotal_ = -1
 
-    // The local count of method refs.  Will be zero for package nodes and
-    // non-zero for class nodes.
-    private int methodCount_ = 0
-
     // A cached sum of this node and all children's field-ref counts.
     // Same semantics as methodTotal_.
     private int fieldTotal_ = -1
 
-    // The local count of field refs.  Will be zero for package nodes and
-    // possibly non-zero for class nodes.
-    private int fieldCount_ = 0
-
     private final boolean isClass_
     private final String name_
     private final SortedMap<String, PackageTree> children_ = new TreeMap<>()
+    private final Deobfuscator deobfuscator_;
 
-    PackageTree() {
-        this("", false)
+    // The set of methods declared on this node.  Will be empty for package
+    // nodes and possibly non-empty for class nodes.
+    private final Set<HasDeclaringClass> methods_ = new HashSet<>();
+
+    // The set of fields declared on this node.  Will be empty for package
+    // nodes and possibly non-empty for class nodes.
+    private final Set<HasDeclaringClass> fields_ = new HashSet<>()
+
+    PackageTree(Deobfuscator deobfuscator = null) {
+        this("", false, deobfuscator)
     }
 
-    PackageTree(String name) {
-        this(name, isClassName(name))
+    PackageTree(String name, Deobfuscator deobfuscator = null) {
+        this(name, isClassName(name), deobfuscator)
     }
 
-    private PackageTree(name, isClass) {
+    private PackageTree(name, isClass, Deobfuscator deobfuscator) {
         this.name_ = name
         this.isClass_ = isClass
+        this.deobfuscator_ = (deobfuscator ?: new Deobfuscator(null))
     }
 
     private static boolean isClassName(String name) {
         return Character.isUpperCase(name.charAt(0)) || name.contains("[]")
     }
 
-    public void addMethodRef(String fullyQualifiedClassName) {
-        addInternal(fullyQualifiedClassName, 0, true)
+    public void addMethodRef(MethodRef method) {
+        addInternal(descriptorToDot(method), 0, true, method)
     }
 
-    public void addFieldRef(String fullyQualifiedClassName) {
-        addInternal(fullyQualifiedClassName, 0, false)
+    public void addFieldRef(FieldRef field) {
+        addInternal(descriptorToDot(field), 0, false, field)
     }
 
-    private void addInternal(String name, int startIndex, boolean isMethod) {
+    private void addInternal(String name, int startIndex, boolean isMethod, HasDeclaringClass ref) {
         def ix = name.indexOf('.', startIndex)
         def segment = ix == -1 ? name.substring(startIndex) : name.substring(startIndex, ix)
         def child = children_[segment]
         if (child == null) {
-            child = children_[segment] = new PackageTree(segment)
+            child = children_[segment] = new PackageTree(segment, deobfuscator_)
         }
 
         if (ix == -1) {
             if (isMethod) {
-                child.methodCount_++
+                child.methods_.add((MethodRef) ref)
             } else {
-                child.fieldCount_++
+                child.fields_.add((FieldRef) ref)
             }
         } else {
             if (isMethod) {
@@ -89,13 +95,13 @@ class PackageTree {
             } else {
                 fieldTotal_ = -1
             }
-            child.addInternal(name, ix + 1, isMethod)
+            child.addInternal(name, ix + 1, isMethod, ref)
         }
     }
 
     int getMethodCount() {
         if (methodTotal_ == -1) {
-            methodTotal_ = (int) children_.values().inject(methodCount_) {
+            methodTotal_ = (int) children_.values().inject(methods_.size()) {
                 int sum, PackageTree child -> sum + child.getMethodCount() }
         }
         return methodTotal_
@@ -103,7 +109,7 @@ class PackageTree {
 
     int getFieldCount() {
         if (fieldTotal_ == -1) {
-            fieldTotal_ = (int) children_.values().inject(fieldCount_) {
+            fieldTotal_ = (int) children_.values().inject(fields_.size()) {
                 int sum, PackageTree child -> sum + child.getFieldCount() }
         }
         return fieldTotal_
@@ -354,5 +360,19 @@ class PackageTree {
 
     private static String pluralizeFields(int n) {
         return n == 1 ? "field" : "fields"
+    }
+
+    private String descriptorToDot(HasDeclaringClass ref) {
+        def descriptor = ref.getDeclClassName()
+        def dot = Output.descriptorToDot(descriptor)
+        dot = deobfuscator_.deobfuscate(dot)
+        if (dot.indexOf('.') == -1) {
+            // Classes in the unnamed package (e.g. primitive arrays)
+            // will not appear in the output in the current PackageTree
+            // implementation if classes are not included.  To work around,
+            // we make an artificial package named "<unnamed>".
+            dot = "<unnamed>." + dot
+        }
+        return dot
     }
 }

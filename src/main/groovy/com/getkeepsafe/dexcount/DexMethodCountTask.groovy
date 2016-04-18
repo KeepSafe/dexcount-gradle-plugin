@@ -17,6 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.annotations.Nullable
+import com.android.annotations.VisibleForTesting
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.dexdeps.HasDeclaringClass
 import com.android.dexdeps.Output
@@ -200,11 +201,12 @@ class DexMethodCountTask extends DefaultTask {
         }
     }
 
-/**
- * Creates a new PackageTree and populates it with the method and field
- * counts of the current dex/apk file.
- */
-    private def generatePackageTree() {
+    /**
+     * Creates a new PackageTree and populates it with the method and field
+     * counts of the current dex/apk file.
+     */
+    @VisibleForTesting
+    def generatePackageTree() {
         startTime = System.currentTimeMillis()
 
         // Create a de-obfuscator based on the current Proguard mapping file.
@@ -215,13 +217,13 @@ class DexMethodCountTask extends DefaultTask {
 
         ioTime = System.currentTimeMillis()
         try {
-            tree = new PackageTree()
+            tree = new PackageTree(deobs)
 
-            refListToClassNames(dataList*.getMethodRefs(), deobs).each {
+            dataList*.getMethodRefs().flatten().each {
                 tree.addMethodRef(it)
             }
 
-            refListToClassNames(dataList*.getFieldRefs(), deobs).each {
+            dataList*.getFieldRefs().flatten().each {
                 tree.addFieldRef(it)
             }
         } finally {
@@ -229,22 +231,6 @@ class DexMethodCountTask extends DefaultTask {
         }
 
         treegenTime = System.currentTimeMillis()
-    }
-
-    static refListToClassNames(List<List<HasDeclaringClass>> refs, Deobfuscator deobfuscator) {
-        return refs.flatten().collect { ref ->
-            def descriptor = ref.getDeclClassName()
-            def dot = Output.descriptorToDot(descriptor)
-            dot = deobfuscator.deobfuscate(dot)
-            if (dot.indexOf('.') == -1) {
-                // Classes in the unnamed package (e.g. primitive arrays)
-                // will not appear in the output in the current PackageTree
-                // implementation if classes are not included.  To work around,
-                // we make an artificial package named "<unnamed>".
-                dot = "<unnamed>." + dot
-            }
-            return dot
-        }
     }
 
     private def getPrintOptions() {
