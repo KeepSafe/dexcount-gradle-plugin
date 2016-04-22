@@ -49,11 +49,15 @@ class PackageTree {
     // nodes and possibly non-empty for class nodes.
     private final Set<HasDeclaringClass> fields_ = new HashSet<>()
 
-    PackageTree(Deobfuscator deobfuscator = null) {
+    PackageTree() {
+        this("", false, null)
+    }
+
+    PackageTree(Deobfuscator deobfuscator) {
         this("", false, deobfuscator)
     }
 
-    PackageTree(String name, Deobfuscator deobfuscator = null) {
+    PackageTree(String name, Deobfuscator deobfuscator) {
         this(name, isClassName(name), deobfuscator)
     }
 
