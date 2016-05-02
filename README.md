@@ -96,7 +96,7 @@ Each flag controls some aspect of the printed output:
 - `orderByMethodCount`: When true, packages will be sorted in descending order by the number of methods they contain.
 - `verbose`: When true, the output file will also be printed to the build's standard output.
 - `maxTreeDepth`: Sets the max number of package segments in the output - i.e. when set to 2, counts stop at `com.google`, when set to 3 you get `com.google.android`, etc.  "Unlimited" by default.
-- `teamCityIntegration`: When true, Team City integration strings will be printed 
+- `teamCityIntegration`: When true, Team City integration strings will be printed.
 
 ## Use with Jenkins Plot Plugin
 
@@ -143,7 +143,7 @@ GPG signing configuration.
 
 ## Minutia
 
-This plugin creates a task per output file, per variant, and configures each task to run after that variant's `assemble` task.  This means that if the `assemble` task does not run, no method count will be reported.
+This plugin creates a task per output file, per variant, and configures each task to run after that variant's `assemble` task.  This means that if the `assemble` task does not run, no method count will be reported.  This also means that counts are done after Proguard is run, if minification is enabled.  Dexcount will use the resulting mapping file to de-obfuscate class and package names.
 
 ## Credits
 
