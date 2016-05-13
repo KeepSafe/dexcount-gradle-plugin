@@ -17,9 +17,11 @@
 package com.getkeepsafe.dexcount
 
 import com.android.dexdeps.DexData
+import com.android.dexdeps.DexDataException
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
@@ -52,12 +54,12 @@ class DexFile {
      * @return a list of DexFile objects representing data in the given file.
      */
     static List<DexFile> extractDexData(File file, int dxTimeoutSecs) {
-        try {
-            // AAR files need special treatment
-            if (file.name.endsWith(".aar")) {
-                return extractDexFromAar(file, dxTimeoutSecs);
-            }
+        // AAR files need special treatment
+        if (file.name.endsWith(".aar")) {
+            return extractDexFromAar(file, dxTimeoutSecs);
+        }
 
+        try {
             return extractDexFromZip(file)
         } catch (ZipException ignored) {
             // not a zip, no problem
@@ -103,14 +105,26 @@ class DexFile {
         // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
         def tempDex = File.createTempFile("classes", ".dex")
         tempDex.deleteOnExit()
+
         def sout = new StringBuilder(), serr = new StringBuilder()
         def dxCmd = dxExe.absolutePath + " --dex --output=" + tempDex.absolutePath + " " + tempClasses.absolutePath
         def proc = dxCmd.execute()
         proc.consumeProcessOutput(sout, serr)
-        proc.waitForOrKill(dxTimeoutSecs * 1000)
-        if (!tempDex.exists()) {
-            throw new Exception("Error converting classes.jar into classes.dex: $serr")
+
+        if (!proc.waitFor(dxTimeoutSecs, TimeUnit.SECONDS)) {
+            proc.destroyForcibly()
+            throw new DexCountException("dx timed out after $dxTimeoutSecs seconds")
         }
+
+        def exitCode = proc.exitValue()
+        if (exitCode != 0) {
+            throw new DexCountException("dx exited with exit code $exitCode\nstderr=$serr")
+        }
+
+        if (!tempDex.exists()) {
+            throw new DexCountException("Error converting classes.jar into classes.dex: $serr")
+        }
+
         // return resulting dex file in a list
         return [ new DexFile(tempDex, true) ]
     }
@@ -193,7 +207,12 @@ class DexFile {
         this.isInstantRun = isInstantRun
         this.raf = new RandomAccessFile(file, 'r')
         this.data = new DexData(raf)
-        data.load()
+
+        try {
+            data.load()
+        } catch (EOFException | DexDataException e) {
+            throw new DexCountException("Error loading dex file", e)
+        }
     }
 
     def List<MethodRef> getMethodRefs() {
