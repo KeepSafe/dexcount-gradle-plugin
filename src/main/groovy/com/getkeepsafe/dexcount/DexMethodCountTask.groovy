@@ -64,11 +64,18 @@ class DexMethodCountTask extends DefaultTask {
 
     @TaskAction
     void countMethods() {
-        generatePackageTree()
-        printSummary()
-        printFullTree()
-        printChart()
-        printTaskDiagnosticData()
+        try {
+            generatePackageTree()
+            printSummary()
+            printFullTree()
+            printChart()
+            printTaskDiagnosticData()
+        } catch (DexCountException e) {
+            withStyledOutput(StyledTextOutput.Style.Error, LogLevel.ERROR) { out ->
+                out.println("Error counting dex methods.  Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues")
+                out.exception(e)
+            }
+        }
     }
 
     static def percentUsed(int count) {
