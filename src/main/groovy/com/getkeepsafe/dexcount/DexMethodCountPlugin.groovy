@@ -64,7 +64,13 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 task.summaryFile = project.file(path + '.csv')
                 task.chartDir = project.file(path + 'Chart')
                 task.config = ext
-                variant.assemble.doLast { task.countMethods() }
+
+                // Dexcount tasks require that assemble has been run...
+                task.dependsOn(variant.assemble)
+                task.mustRunAfter(variant.assemble)
+
+                // But assemble should always imply that dexcount runs, too.
+                variant.assemble.finalizedBy(task)
             }
         }
     }
