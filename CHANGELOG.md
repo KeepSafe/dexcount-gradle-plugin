@@ -1,4 +1,5 @@
 0.5.1 (released 16 May 2016)
+---------
 
 * Fix duplicate task invocation when `assemble` and `countDexMethods` are named on the command line (#97)
 * Fix crash when `chartDir` already exists (#94)
