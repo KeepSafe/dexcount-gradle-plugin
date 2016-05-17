@@ -111,7 +111,12 @@ class DexFile {
         def proc = dxCmd.execute()
         proc.consumeProcessOutput(sout, serr)
 
-        if (!proc.waitFor(dxTimeoutSecs, TimeUnit.SECONDS)) {
+        try {
+            TimeUnit.SECONDS.sleep(dxTimeoutSecs);
+        } catch (InterruptedException e) {
+            // No big deal
+        }
+        if (proc.isAlive()) {
             proc.destroyForcibly()
             throw new DexCountException("dx timed out after $dxTimeoutSecs seconds")
         }
