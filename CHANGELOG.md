@@ -1,3 +1,7 @@
+0.5.2 (released 17 May 2016)
+---------
+* Un-break for JVM 7 and below (PR #99)
+
 0.5.1 (released 16 May 2016)
 ---------
 
