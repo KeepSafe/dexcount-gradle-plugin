@@ -66,6 +66,7 @@ class DexMethodCountTask extends DefaultTask {
     @TaskAction
     void countMethods() {
         try {
+            printPreamble()
             generatePackageTree()
             printSummary()
             printFullTree()
@@ -82,6 +83,18 @@ class DexMethodCountTask extends DefaultTask {
     static def percentUsed(int count) {
         def used = ((double) count / MAX_DEX_REFS) * 100.0
         return sprintf("%.2f", used)
+    }
+
+    def printPreamble() {
+        if (config.printVersion) {
+            def projectName = getClass().package.implementationTitle
+            def projectVersion = getClass().package.implementationVersion
+
+            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
+                out.println("Dexcount name:    $projectName")
+                out.println("Dexcount version: $projectVersion")
+            }
+        }
     }
 
     /**

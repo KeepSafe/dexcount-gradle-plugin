@@ -27,6 +27,7 @@ class DexMethodCountExtension {
     private boolean teamCityIntegration = false
     private OutputFormat format = OutputFormat.LIST
     private boolean verbose
+    private boolean printVersion
     private int maxTreeDepth = Integer.MAX_VALUE
     private int dxTimeoutSec = 60;
 
@@ -118,6 +119,14 @@ class DexMethodCountExtension {
 
     void setDxTimeoutSec(int dxTimeoutSec) {
         this.dxTimeoutSec = dxTimeoutSec
+    }
+
+    boolean getPrintVersion() {
+        return this.printVersion
+    }
+
+    void setPrintVersion(boolean printVersion) {
+        this.printVersion = printVersion;
     }
 
     public void setFormat(Object format) {
