@@ -34,6 +34,14 @@ sourceSets {
     }
 }
 
+jar {
+    manifest {
+        attributes(
+                'Implementation-Title':   POM_ARTIFACT_ID,
+                'Implementation-Version': VERSION_NAME)
+    }
+}
+
 repositories {
     mavenCentral()
 }

@@ -21,6 +21,7 @@ import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.logging.ShowStacktrace
 
 class DexMethodCountPlugin implements Plugin<Project> {
     public static File sdkLocation = SdkResolver.resolve(null)
@@ -54,6 +55,13 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
                 def ext = project.extensions['dexcount'] as DexMethodCountExtension
                 def format = ext.format
+
+                // If the user has passed '--stacktrace' or '--full-stacktrace', assume
+                // that they are trying to report a dexcount bug.  Help us help them out
+                // by printing the current plugin title and version.
+                if (project.gradle.startParameter.showStacktrace != ShowStacktrace.INTERNAL_EXCEPTIONS) {
+                    ext.printVersion = true
+                }
 
                 def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
                 task.description = "Outputs dex method count for ${variant.name}."
