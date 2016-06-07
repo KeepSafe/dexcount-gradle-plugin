@@ -75,7 +75,7 @@ class DexMethodCountTask extends DefaultTask {
         } catch (DexCountException e) {
             withStyledOutput(StyledTextOutput.Style.Error, LogLevel.ERROR) { out ->
                 out.println("Error counting dex methods.  Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues")
-                out.exception(e)
+                e.printStackTrace(out)
             }
         }
     }
