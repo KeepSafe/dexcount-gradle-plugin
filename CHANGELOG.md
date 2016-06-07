@@ -1,3 +1,8 @@
+0.5.3 (release 7 June 2016)
+---------
+* Fix crash when logging a crash (thanks, Gradle) (#105)
+* Add extra diagonistics when running with `--stacktrace` (#102)
+
 0.5.2 (released 17 May 2016)
 ---------
 * Un-break for JVM 7 and below (PR #99)
