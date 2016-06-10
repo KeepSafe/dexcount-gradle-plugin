@@ -12,8 +12,8 @@ VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 
 echo "Building integration test project..."
 cd integration
-./gradlew -PdexcountVersion="$VERSION" :app:assembleDebug > app.log
-./gradlew -PdexcountVersion="$VERSION" :tests:assembleDebug > tests.log
+./gradlew clean -PdexcountVersion="$VERSION" :app:assembleDebug > app.log
+./gradlew clean -PdexcountVersion="$VERSION" :tests:assembleDebug > tests.log
 
 echo "Integration build done!  Running tests..."
 

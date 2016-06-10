@@ -6,7 +6,6 @@ android:
     - tools
     - build-tools-23.0.3
     - android-23
-
     - extra-google-m2repository
     - extra-android-m2repository
     - extra-android-support
@@ -20,10 +19,11 @@ jdk:
 
 install: true
 
-script: ./test.sh
+script:
+  - ./.buildscript/test.sh
 
 after_success:
-  - .buildscript/deploy_snapshot.sh
+  - ./.buildscript/deploy_snapshot.sh
 
 env:
   global:
@@ -32,10 +32,11 @@ env:
 
 sudo: false
 
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
 cache:
   directories:
-    - $HOME/.gradle/caches/2.4
-    - $HOME/.gradle/caches/jars-1
-    - $HOME/.gradle/daemon
-    - $HOME/.gradle/wrapper
-    - $HOME/.gradle/caches/2.12
+    - $HOME/.gradle
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/

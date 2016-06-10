@@ -16,50 +16,45 @@
 
 apply plugin: 'groovy'
 apply plugin: 'java'
+apply plugin: 'com.github.ben-manes.versions'
 
-sourceCompatibility = 1.7
+sourceCompatibility = JavaVersion.VERSION_1_7
 
 group = GROUP
 version = VERSION_NAME
 
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-
-        groovy {
-            srcDir 'src/main/groovy'
-        }
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
     }
+
+    dependencies {
+        // Check for plugin updates
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.12.0"
+    }
+}
+
+repositories {
+    maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
 }
 
 jar {
     manifest {
         attributes(
-                'Implementation-Title':   POM_ARTIFACT_ID,
+                'Implementation-Title': POM_ARTIFACT_ID,
                 'Implementation-Version': VERSION_NAME)
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:1.5.0'
-    compile 'com.google.code.gson:gson:2.5'
+    compile 'com.android.tools.build:gradle:2.1.0'
+    compile 'com.google.code.gson:gson:2.6.2'
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile ('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testCompile 'junit:junit:4.12'
+    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.12'
-    distributionUrl = 'http://services.gradle.org/distributions/gradle-2.12-all.zip'
 }
 
 task groovydocJar(type: Jar, dependsOn: groovydoc) {
