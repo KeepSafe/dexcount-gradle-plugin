@@ -1,6 +1,6 @@
 package com.getkeepsafe.dexcount
 
-import org.gradle.logging.StyledTextOutput
+import org.gradle.internal.logging.text.StyledTextOutput
 import spock.lang.Specification
 
 
