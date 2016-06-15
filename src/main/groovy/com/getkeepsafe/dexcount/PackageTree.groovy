@@ -22,6 +22,8 @@ import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
 import com.google.gson.stream.JsonWriter
 import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.FirstParam
 
 import java.nio.CharBuffer
 
@@ -153,7 +155,7 @@ class PackageTree {
             printPackageListHeader(out, opts)
         }
 
-        getChildren(opts).each { it -> it.printPackageListRecursively(out, sb, 0, opts) }
+        forEach(getChildren(opts)) { it -> it.printPackageListRecursively(out, sb, 0, opts) }
     }
 
     private static def printPackageListHeader(Appendable out, PrintOptions opts) {
@@ -192,12 +194,12 @@ class PackageTree {
             out.append('\n')
         }
 
-        getChildren(opts).each { PackageTree it -> it.printPackageListRecursively(out, sb, depth + 1, opts) }
+        forEach(getChildren(opts)) { PackageTree it -> it.printPackageListRecursively(out, sb, depth + 1, opts) }
         sb.setLength(len)
     }
 
     void printTree(Appendable out, PrintOptions opts) {
-        getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, 0, opts) }
+        forEach(getChildren(opts)) { PackageTree it -> it.printTreeRecursively(out, 0, opts) }
     }
 
     private void printTreeRecursively(Appendable out, int indent, PrintOptions opts) {
@@ -234,7 +236,7 @@ class PackageTree {
 
         out.append("\n")
 
-        getChildren(opts).each { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
+        forEach(getChildren(opts)) { PackageTree it -> it.printTreeRecursively(out, indent + 1, opts) }
     }
 
     void printJson(Appendable out, PrintOptions opts) {
@@ -282,7 +284,7 @@ class PackageTree {
         json.name("children")
         json.beginArray()
 
-        getChildren(opts).each { PackageTree it -> it.printJsonRecursively(json, depth + 1, opts) }
+        forEach(getChildren(opts)) { PackageTree it -> it.printJsonRecursively(json, depth + 1, opts) }
 
         json.endArray()
 
@@ -302,7 +304,7 @@ class PackageTree {
 
         out.append("counts:\n")
 
-        getChildren(opts).each { it.printYamlRecursively(out, 0, opts) }
+        forEach(getChildren(opts)) { it.printYamlRecursively(out, 0, opts) }
     }
 
     private void printYamlRecursively(Appendable out, int depth, PrintOptions opts) {
@@ -337,7 +339,7 @@ class PackageTree {
         } else {
             out.append(indentText)
             out.append("children:\n")
-            children.each { PackageTree child -> child.printYamlRecursively(out, depth + 1, opts) }
+            forEach(children) { PackageTree child -> child.printYamlRecursively(out, depth + 1, opts) }
         }
     }
 
@@ -378,5 +380,28 @@ class PackageTree {
             dot = "<unnamed>." + dot
         }
         return dot
+    }
+
+    /**
+     * Iterates through the elements of a collection, applying the given
+     * closure to each element.
+     *
+     * Workaround for old versions of Gradle that do not have the method
+     * {@link org.codehaus.groovy.runtime.DefaultGroovyMethods#each(Collection, Closure)}.
+     *
+     * Without any workaround, projects building using these versions of Groovy,
+     * we will fail with a MethodMissingException.
+     *
+     * This is observed in projects using Gradle 2.2.1, which bundles Groovy 2.3.7.
+     *
+     * @param collection
+     * @param closure
+     */
+    private static <E> void forEach(
+            Collection<E> collection,
+            @ClosureParams(FirstParam.FirstGenericType.class) Closure closure) {
+        for (E element : collection) {
+            closure.call(element);
+        }
     }
 }
