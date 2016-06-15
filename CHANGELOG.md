@@ -1,4 +1,9 @@
-0.5.3 (release 7 June 2016)
+0.5.4 (released 15 June 2016)
+---------
+* Fix crash on old versions Gradle (#112)
+* Fix plugin for Gradle 2.14 (#110)
+
+0.5.3 (released 7 June 2016)
 ---------
 * Fix crash when logging a crash (thanks, Gradle) (#105)
 * Add extra diagonistics when running with `--stacktrace` (#102)
