@@ -1,3 +1,8 @@
+0.5.5 (released 30 June 2016)
+---------
+* Warn when building with Java 7 and below (#120)
+* Don't count Instant Run builds by default (#119)
+
 0.5.4 (released 15 June 2016)
 ---------
 * Fix crash on old versions Gradle (#112)
