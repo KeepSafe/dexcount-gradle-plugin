@@ -28,6 +28,10 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        if (!isAtLeastJavaEight()) {
+            project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
+        }
+
         sdkLocation = SdkResolver.resolve(project)
 
         if (project.plugins.hasPlugin('com.android.application')) {
@@ -38,6 +42,31 @@ class DexMethodCountPlugin implements Plugin<Project> {
             applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.libraryVariants);
         } else {
             throw new IllegalArgumentException('Dexcount plugin requires the Android plugin to be configured');
+        }
+    }
+
+    private static boolean isAtLeastJavaEight() {
+        String version = System.properties["java.version"]
+        if (version == null) {
+            // All JVMs provide this property... what's going on?
+            return false
+        }
+
+        // Java version strings are something like 1.8.0_65; we don't
+        // care about the third component, if it exists.  Skip it.
+        def indexOfDecimal = version.indexOf('.')
+        indexOfDecimal = version.indexOf('.', indexOfDecimal + 1)
+
+        if (indexOfDecimal != -1) {
+            version = version.substring(0, indexOfDecimal)
+        }
+
+        try {
+            def numericVersion = Double.parseDouble(version)
+            return numericVersion >= 1.8
+        } catch (NumberFormatException ignored) {
+            // Invalid Java version number; who knows.
+            return false;
         }
     }
 
