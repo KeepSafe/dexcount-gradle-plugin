@@ -88,6 +88,7 @@ dexcount {
     verbose = false
     maxTreeDepth = Integer.MAX_VALUE
     teamCityIntegration = false
+    enableForInstantRun = false
 }
 ```
 
@@ -100,6 +101,7 @@ Each flag controls some aspect of the printed output:
 - `verbose`: When true, the output file will also be printed to the build's standard output.
 - `maxTreeDepth`: Sets the max number of package segments in the output - i.e. when set to 2, counts stop at `com.google`, when set to 3 you get `com.google.android`, etc.  "Unlimited" by default.
 - `teamCityIntegration`: When true, Team City integration strings will be printed.
+- `enableForInstantRun`: When true, count methods even for Instant Run builds.  False by default.
 
 ## Use with Jenkins Plot Plugin
 
@@ -117,7 +119,9 @@ _Technically special strings like_ `##teamcity[buildStatisticValue key='DexCount
 
 ## Note on Instant Run
 
-Instant Run is a new feature in Android Studio 2.0, which performs fast partial compilations of your app and deploys them in an incremental fashion.  `dexcount-gradle-plugin` will work with these builds, but with an important caveat.  If your app normally uses Proguard, *Instant Run method counts will be inaccurate*.  Instant Run sidesteps Proguard, and so the reported totals will in fact be greater than what normally goes in to your APK.  This is inherent to the implementation of Instant Run.
+By default, `dexcount-gradle-plugin` does not apply to Instant Run builds in Android Studio.  Instant Run is implemented in such a way that it makes method counts very inaccurate: it adds generated code to your APK as well as disabling Proguard.  Additionally, method counting can take anywhere from half a second to several seconds.  A drop in the bucket for full builds, but Instant Run builds can take as little as three seconds, making `dexcount` relatively quite expensive.  For these reason, the plugin is disabled by default.
+
+If, *bearing in mind that counts will be wrong*, you still wish to count methods on Instant Run, setting `enableForInstantRun` in the plugin configuration will make that happen.
 
 ## Snapshot Builds
 
