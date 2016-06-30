@@ -25,6 +25,7 @@ class DexMethodCountExtension {
     private boolean includeFieldCount = true
     private boolean includeTotalMethodCount = false
     private boolean teamCityIntegration = false
+    private boolean enableForInstantRun = false
     private OutputFormat format = OutputFormat.LIST
     private boolean verbose
     private boolean printVersion
@@ -140,5 +141,13 @@ class DexMethodCountExtension {
                 throw new IllegalArgumentException("Unrecognized output format '$format'")
             }
         }
+    }
+
+    public boolean getEnableForInstantRun() {
+        return enableForInstantRun;
+    }
+
+    public void setEnableForInstantRun(boolean enableForInstantRun) {
+        this.enableForInstantRun = enableForInstantRun;
     }
 }

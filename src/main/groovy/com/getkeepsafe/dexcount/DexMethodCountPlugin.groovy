@@ -17,6 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariant
+import com.android.build.gradle.api.BaseVariantOutput
 import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
@@ -45,40 +46,49 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
         variants.all { variant ->
             variant.outputs.each { output ->
-                def slug = variant.name.capitalize()
-                def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
-                if (variant.outputs.size() > 1) {
-                    slug += output.name.capitalize()
-                    path += "/${output.name}"
-                }
-
-                def ext = project.extensions['dexcount'] as DexMethodCountExtension
-                def format = ext.format
-
-                // If the user has passed '--stacktrace' or '--full-stacktrace', assume
-                // that they are trying to report a dexcount bug.  Help us help them out
-                // by printing the current plugin title and version.
-                if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
-                    ext.printVersion = true
-                }
-
-                def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
-                task.description = "Outputs dex method count for ${variant.name}."
-                task.group = 'Reporting'
-                task.apkOrDex = output
-                task.mappingFile = variant.mappingFile
-                task.outputFile = project.file(path + format.extension)
-                task.summaryFile = project.file(path + '.csv')
-                task.chartDir = project.file(path + 'Chart')
-                task.config = ext
-
-                // Dexcount tasks require that assemble has been run...
-                task.dependsOn(variant.assemble)
-                task.mustRunAfter(variant.assemble)
-
-                // But assemble should always imply that dexcount runs, too.
-                variant.assemble.finalizedBy(task)
+                applyToVariantOutput(project, variant, output)
             }
         }
+    }
+
+    private static void applyToVariantOutput(Project project, BaseVariant variant, BaseVariantOutput output) {
+        def slug = variant.name.capitalize()
+        def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
+        if (variant.outputs.size() > 1) {
+            slug += output.name.capitalize()
+            path += "/${output.name}"
+        }
+
+        def ext = project.extensions['dexcount'] as DexMethodCountExtension
+        def format = ext.format
+
+        def isInstantRun = project.properties["android.optional.compilation"] == "INSTANT_DEV"
+        if (isInstantRun && !ext.enableForInstantRun) {
+            return
+        }
+
+        // If the user has passed '--stacktrace' or '--full-stacktrace', assume
+        // that they are trying to report a dexcount bug.  Help us help them out
+        // by printing the current plugin title and version.
+        if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
+            ext.printVersion = true
+        }
+
+        def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
+        task.description = "Outputs dex method count for ${variant.name}."
+        task.group = 'Reporting'
+        task.apkOrDex = output
+        task.mappingFile = variant.mappingFile
+        task.outputFile = project.file(path + format.extension)
+        task.summaryFile = project.file(path + '.csv')
+        task.chartDir = project.file(path + 'Chart')
+        task.config = ext
+
+        // Dexcount tasks require that assemble has been run...
+        task.dependsOn(variant.assemble)
+        task.mustRunAfter(variant.assemble)
+
+        // But assemble should always imply that dexcount runs, too.
+        variant.assemble.finalizedBy(task)
     }
 }
