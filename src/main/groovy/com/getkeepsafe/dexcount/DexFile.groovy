@@ -22,6 +22,7 @@ import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
@@ -102,22 +103,31 @@ class DexFile {
         if (!dxExe.exists()) {
             throw new Exception("dx tool not found at " + dxExe.absolutePath)
         }
+
         // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
         def tempDex = File.createTempFile("classes", ".dex")
         tempDex.deleteOnExit()
 
-        def sout = new StringBuilder(), serr = new StringBuilder()
         def dxCmd = dxExe.absolutePath + " --dex --output=" + tempDex.absolutePath + " " + tempClasses.absolutePath
-        def proc = dxCmd.execute()
-        proc.consumeProcessOutput(sout, serr)
+
+        final def sout = new StringBuilder()
+        final def serr = new StringBuilder()
+        final def proc = dxCmd.execute()
+        final def finished = new AtomicBoolean(false)
+        def thread = Thread.start {
+            proc.waitForProcessOutput(sout, serr)
+            finished.set(true)
+        }
 
         try {
-            TimeUnit.SECONDS.sleep(dxTimeoutSecs);
-        } catch (InterruptedException e) {
-            // No big deal
+            thread.join(TimeUnit.SECONDS.toMillis(dxTimeoutSecs))
+        } catch (InterruptedException ignored) {
+            // oh well
         }
-        if (proc.isAlive()) {
-            proc.destroyForcibly()
+
+        if (!finished.get()) {
+            thread.interrupt()
+            proc.destroy()
             throw new DexCountException("dx timed out after $dxTimeoutSecs seconds")
         }
 
