@@ -1,3 +1,8 @@
+0.5.6 (released 17 August 2016)
+---------
+* Remove StyledTextOutput use to un-break Gradle 3.0 (#126)
+* Remove use of JDK-8-only methods on Process (#122)
+
 0.5.5 (released 30 June 2016)
 ---------
 * Warn when building with Java 7 and below (#120)
