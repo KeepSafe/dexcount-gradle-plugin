@@ -16,19 +16,8 @@
 
 package com.getkeepsafe.dexcount
 
-import org.gradle.logging.StyledTextOutput
-
 class DexCountException extends RuntimeException {
     DexCountException() {}
     DexCountException(String message) { super(message) }
     DexCountException(String message, Throwable cause) { super(message, cause) }
-
-    def printStackTrace(StyledTextOutput output) {
-        def sw = new StringWriter(512)
-        sw.withPrintWriter { pw ->
-            printStackTrace(pw)
-            pw.flush()
-        }
-        output.println(sw.toString())
-    }
 }
