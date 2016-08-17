@@ -27,9 +27,9 @@ grep -F 'Total fields in app-debug.apk:  7093 (10.82% used)' app.log || die "Inc
 grep -F 'Methods remaining in app-debug.apk: 49361' app.log || die "Incorrect remaining-method value in app-debug.apk"
 grep -F 'Fields remaining in app-debug.apk:  58442' app.log || die "Incorrect remaining-field value in app-debug.apk"
 
-grep -F 'Total methods in tests-debug.apk: 3085 (4.71% used)' tests.log || die "Incorrect method count in tests-debug.apk"
-grep -F 'Total fields in tests-debug.apk:  774 (1.18% used)' tests.log || die "Incorrect field count in tests-debug.apk"
-grep -F 'Methods remaining in tests-debug.apk: 62450' tests.log || die "Incorrect remaining-method value in tests-debug.apk"
-grep -F 'Fields remaining in tests-debug.apk:  64761' tests.log || die "Incorrect remaining-field value in tests-debug.apk"
+grep -F 'Total methods in tests-debug.apk: 3065 (4.68% used)' tests.log || die "Incorrect method count in tests-debug.apk"
+grep -F 'Total fields in tests-debug.apk:  771 (1.18% used)' tests.log || die "Incorrect field count in tests-debug.apk"
+grep -F 'Methods remaining in tests-debug.apk: 62470' tests.log || die "Incorrect remaining-method value in tests-debug.apk"
+grep -F 'Fields remaining in tests-debug.apk:  64764' tests.log || die "Incorrect remaining-field value in tests-debug.apk"
 
 echo "Tests complete."
