@@ -19,6 +19,9 @@ android {
     // test should run against.
     targetProjectPath ':app'
     targetVariant 'debug'
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
