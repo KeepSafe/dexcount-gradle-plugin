@@ -19,17 +19,14 @@ package com.getkeepsafe.dexcount
 import com.android.annotations.Nullable
 import com.android.annotations.VisibleForTesting
 import com.android.build.gradle.api.BaseVariantOutput
-import com.android.dexdeps.HasDeclaringClass
-import com.android.dexdeps.Output
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.logging.StyledTextOutput
-import org.gradle.logging.StyledTextOutputFactory
 
 class DexMethodCountTask extends DefaultTask {
     /**
@@ -73,9 +70,8 @@ class DexMethodCountTask extends DefaultTask {
             printChart()
             printTaskDiagnosticData()
         } catch (DexCountException e) {
-            withStyledOutput(StyledTextOutput.Style.Error, LogLevel.ERROR) { out ->
-                out.println("Error counting dex methods.  Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues")
-                e.printStackTrace(out)
+            withStyledOutput() { out ->
+                out.error("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues", e)
             }
         }
     }
@@ -90,9 +86,9 @@ class DexMethodCountTask extends DefaultTask {
             def projectName = getClass().package.implementationTitle
             def projectVersion = getClass().package.implementationVersion
 
-            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
-                out.println("Dexcount name:    $projectName")
-                out.println("Dexcount version: $projectVersion")
+            withStyledOutput() { out ->
+                out.lifecycle("Dexcount name:    $projectName")
+                out.lifecycle("Dexcount version: $projectVersion")
             }
         }
     }
@@ -105,31 +101,22 @@ class DexMethodCountTask extends DefaultTask {
         def filename = apkOrDex.outputFile.name
 
         if (isInstantRun) {
-            // Despite the name, 'Failure' here just means that the printed
-            // text will be red.
-            withStyledOutput(StyledTextOutput.Style.Failure) { out ->
-                out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
+            withStyledOutput() { out ->
+                out.warn("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
             }
         }
 
-        def style
-        if (tree.methodCount < 50000) {
-            style = StyledTextOutput.Style.Identifier // green
-        } else {
-            style = StyledTextOutput.Style.Info       // yellow
-        }
-
-        withStyledOutput(style) { out ->
+        withStyledOutput() { out ->
             def percentMethodsUsed = percentUsed(tree.methodCount)
             def percentFieldsUsed = percentUsed(tree.fieldCount)
 
             def methodsRemaining = Math.max(MAX_DEX_REFS - tree.methodCount, 0)
             def fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
 
-            out.println("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
-            out.println("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
-            out.println("Methods remaining in ${filename}: $methodsRemaining")
-            out.println("Fields remaining in ${filename}:  $fieldsRemaining")
+            out.warn("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
+            out.warn("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
+            out.warn("Methods remaining in ${filename}: $methodsRemaining")
+            out.warn("Fields remaining in ${filename}:  $fieldsRemaining")
         }
 
         if (summaryFile != null) {
@@ -147,7 +134,7 @@ class DexMethodCountTask extends DefaultTask {
         }
 
         if (getPrintOptions().teamCityIntegration) {
-            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
+            withStyledOutput() { out ->
                 printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_MethodCount", tree.methodCount.toString())
                 printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_FieldCount", tree.fieldCount.toString())
             }
@@ -158,8 +145,8 @@ class DexMethodCountTask extends DefaultTask {
      * Reports to Team City statistic value
      * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
      */
-    def printTeamCityStatisticValue(StyledTextOutput out, String key, String value) {
-        out.println("##teamcity[buildStatisticValue key='${key}' value='${value}']")
+    def printTeamCityStatisticValue(Logger out, String key, String value) {
+        out.lifecycle("##teamcity[buildStatisticValue key='${key}' value='${value}']")
     }
 
     /**
@@ -197,32 +184,29 @@ class DexMethodCountTask extends DefaultTask {
     def printTaskDiagnosticData() {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
-        def level = config.verbose ? null : LogLevel.DEBUG
+        def level = config.verbose ? LogLevel.LIFECYCLE : LogLevel.DEBUG
 
-        withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
-            print(tree, out)
+        withStyledOutput() { out ->
+            def strBuilder = new StringBuilder()
+            print(tree, strBuilder)
 
-            out.format("\n\nTask runtimes:\n")
-            out.format("--------------\n")
-            out.format("parsing:    ${ioTime - startTime} ms\n")
-            out.format("counting:   ${treegenTime - ioTime} ms\n")
-            out.format("printing:   ${outputTime - treegenTime} ms\n")
-            out.format("total:      ${outputTime - startTime} ms\n")
+            out.log(level, strBuilder.toString())
+            out.log(level, "\n\nTask runtimes:")
+            out.log(level, "--------------")
+            out.log(level, "parsing:    ${ioTime - startTime} ms")
+            out.log(level, "counting:   ${treegenTime - ioTime} ms")
+            out.log(level, "printing:   ${outputTime - treegenTime} ms")
+            out.log(level, "total:      ${outputTime - startTime} ms")
         }
     }
 
-    def print(PackageTree tree, Appendable writer) {
-        tree.print(writer, config.format, getPrintOptions())
+    def print(PackageTree tree, Appendable out) {
+        tree.print(out, config.format, getPrintOptions())
     }
 
-    private void withStyledOutput(
-            StyledTextOutput.Style style,
-            LogLevel level = null,
-            @ClosureParams(value = SimpleType, options = ['org.gradle.logging.StyledTextOutput']) Closure closure) {
-        def factory = services.get(StyledTextOutputFactory)
-        def output = level == null ? factory.create('dexcount') : factory.create('dexcount', level)
-
-        closure(output.withStyle(style))
+    private void withStyledOutput(@ClosureParams(value = SimpleType, options = ['org.gradle.api.logging.Logger']) Closure closure) {
+        // TODO: Actually make this stylized when we have our own solution: https://github.com/KeepSafe/dexcount-gradle-plugin/issues/124
+        closure(getLogger())
     }
 
     private void printToFile(
@@ -288,8 +272,8 @@ class DexMethodCountTask extends DefaultTask {
 
     private def getDeobfuscator() {
         if (mappingFile != null && !mappingFile.exists()) {
-            withStyledOutput(StyledTextOutput.Style.Normal, LogLevel.DEBUG) {
-                it.println("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
+            withStyledOutput() {
+                it.debug("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
             }
             mappingFile = null
         }
