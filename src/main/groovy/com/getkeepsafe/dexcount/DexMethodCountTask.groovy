@@ -19,6 +19,7 @@ package com.getkeepsafe.dexcount
 import com.android.annotations.Nullable
 import com.android.annotations.VisibleForTesting
 import com.android.build.gradle.api.BaseVariantOutput
+import com.getkeepsafe.dexcount.ANSIConsole.Color
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
@@ -27,6 +28,13 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+
+import static com.getkeepsafe.dexcount.ANSIConsole.Color.*
+import static com.getkeepsafe.dexcount.ANSIConsole.colorize
+import static org.gradle.api.logging.LogLevel.DEBUG
+import static org.gradle.api.logging.LogLevel.ERROR
+import static org.gradle.api.logging.LogLevel.LIFECYCLE
+import static org.gradle.api.logging.LogLevel.WARN
 
 class DexMethodCountTask extends DefaultTask {
     /**
@@ -70,9 +78,7 @@ class DexMethodCountTask extends DefaultTask {
             printChart()
             printTaskDiagnosticData()
         } catch (DexCountException e) {
-            withStyledOutput() { out ->
-                out.error("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues", e)
-            }
+            log(ERROR, RED, "Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues", e)
         }
     }
 
@@ -86,10 +92,8 @@ class DexMethodCountTask extends DefaultTask {
             def projectName = getClass().package.implementationTitle
             def projectVersion = getClass().package.implementationVersion
 
-            withStyledOutput() { out ->
-                out.lifecycle("Dexcount name:    $projectName")
-                out.lifecycle("Dexcount version: $projectVersion")
-            }
+            log("Dexcount name:    $projectName")
+            log("Dexcount version: $projectVersion")
         }
     }
 
@@ -98,26 +102,31 @@ class DexMethodCountTask extends DefaultTask {
      * @return
      */
     def printSummary() {
-        def filename = apkOrDex.outputFile.name
+        def filename = colorize(CYAN, apkOrDex.outputFile.name)
 
         if (isInstantRun) {
-            withStyledOutput() { out ->
-                out.warn("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
-            }
+            log(WARN, YELLOW, "Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
         }
 
-        withStyledOutput() { out ->
-            def percentMethodsUsed = percentUsed(tree.methodCount)
-            def percentFieldsUsed = percentUsed(tree.fieldCount)
-
-            def methodsRemaining = Math.max(MAX_DEX_REFS - tree.methodCount, 0)
-            def fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
-
-            out.warn("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
-            out.warn("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
-            out.warn("Methods remaining in ${filename}: $methodsRemaining")
-            out.warn("Fields remaining in ${filename}:  $fieldsRemaining")
+        Color color
+        if (tree.methodCount < 50000) {
+            color = GREEN
+        } else {
+            color = RED
         }
+
+        def percentMethodsUsed = colorize(YELLOW, percentUsed(tree.methodCount))
+        def percentFieldsUsed = colorize(YELLOW, percentUsed(tree.fieldCount))
+
+        def methodsRemaining = colorize(color, "${Math.max(MAX_DEX_REFS - tree.methodCount, 0)}")
+        def fieldsRemaining = colorize(color, "${Math.max(MAX_DEX_REFS - tree.fieldCount, 0)}")
+
+        def methodCount = colorize(color, "$tree.methodCount")
+        def fieldCount = colorize(color, "$tree.fieldCount")
+        log(WARN, YELLOW, "Total methods in $filename: $methodCount ($percentMethodsUsed% used)")
+        log(WARN, YELLOW, "Total fields in $filename:  $fieldCount ($percentFieldsUsed% used)")
+        log(WARN, YELLOW, "Methods remaining in $filename: $methodsRemaining")
+        log(WARN, YELLOW, "Fields remaining in $filename:  $fieldsRemaining")
 
         if (summaryFile != null) {
             summaryFile.parentFile.mkdirs()
@@ -134,10 +143,8 @@ class DexMethodCountTask extends DefaultTask {
         }
 
         if (getPrintOptions().teamCityIntegration) {
-            withStyledOutput() { out ->
-                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_MethodCount", tree.methodCount.toString())
-                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_FieldCount", tree.fieldCount.toString())
-            }
+            printTeamCityStatisticValue(getLogger(), "DexCount_${apkOrDex.name}_MethodCount", tree.methodCount.toString())
+            printTeamCityStatisticValue(getLogger(), "DexCount_${apkOrDex.name}_FieldCount", tree.fieldCount.toString())
         }
     }
 
@@ -184,29 +191,30 @@ class DexMethodCountTask extends DefaultTask {
     def printTaskDiagnosticData() {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
-        def level = config.verbose ? LogLevel.LIFECYCLE : LogLevel.DEBUG
+        def level = config.verbose ? LIFECYCLE : DEBUG
 
-        withStyledOutput() { out ->
-            def strBuilder = new StringBuilder()
-            print(tree, strBuilder)
+        def strBuilder = new StringBuilder()
+        print(tree, strBuilder)
 
-            out.log(level, strBuilder.toString())
-            out.log(level, "\n\nTask runtimes:")
-            out.log(level, "--------------")
-            out.log(level, "parsing:    ${ioTime - startTime} ms")
-            out.log(level, "counting:   ${treegenTime - ioTime} ms")
-            out.log(level, "printing:   ${outputTime - treegenTime} ms")
-            out.log(level, "total:      ${outputTime - startTime} ms")
-        }
+        log(level, MAGENTA, strBuilder.toString())
+        log(level, MAGENTA, "\n\nTask runtimes:")
+        log(level, MAGENTA, "--------------")
+        log(level, MAGENTA, "parsing:    ${ioTime - startTime} ms")
+        log(level, MAGENTA, "counting:   ${treegenTime - ioTime} ms")
+        log(level, MAGENTA, "printing:   ${outputTime - treegenTime} ms")
+        log(level, MAGENTA, "total:      ${outputTime - startTime} ms")
     }
 
     def print(PackageTree tree, Appendable out) {
         tree.print(out, config.format, getPrintOptions())
     }
 
-    private void withStyledOutput(@ClosureParams(value = SimpleType, options = ['org.gradle.api.logging.Logger']) Closure closure) {
-        // TODO: Actually make this stylized when we have our own solution: https://github.com/KeepSafe/dexcount-gradle-plugin/issues/124
-        closure(getLogger())
+    private void log(LogLevel level = LIFECYCLE, Color color = null, String message, Throwable t = null) {
+        if (color == null) {
+            getLogger().log(level, message, t as Throwable)
+        } else {
+            getLogger().log(level, colorize(color, message), t as Throwable)
+        }
     }
 
     private void printToFile(
@@ -272,9 +280,7 @@ class DexMethodCountTask extends DefaultTask {
 
     private def getDeobfuscator() {
         if (mappingFile != null && !mappingFile.exists()) {
-            withStyledOutput() {
-                it.debug("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
-            }
+            log(DEBUG, YELLOW, "Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
             mappingFile = null
         }
 
