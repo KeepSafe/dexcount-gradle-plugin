@@ -31,6 +31,7 @@ class DexMethodCountExtension {
     private boolean printVersion
     private int maxTreeDepth = Integer.MAX_VALUE
     private int dxTimeoutSec = 60;
+    private String teamCitySlug = null
 
     /**
      * When true, includes individual classes in task output.
@@ -149,5 +150,13 @@ class DexMethodCountExtension {
 
     public void setEnableForInstantRun(boolean enableForInstantRun) {
         this.enableForInstantRun = enableForInstantRun;
+    }
+
+    public String getTeamCitySlug() {
+        return teamCitySlug
+    }
+
+    public void setTeamCitySlug(String teamcitySlug) {
+        this.teamCitySlug = teamcitySlug
     }
 }
