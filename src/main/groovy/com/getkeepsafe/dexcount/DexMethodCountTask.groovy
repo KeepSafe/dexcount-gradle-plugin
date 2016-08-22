@@ -133,10 +133,16 @@ class DexMethodCountTask extends DefaultTask {
             }
         }
 
-        if (getPrintOptions().teamCityIntegration) {
+        if (getPrintOptions().teamCityIntegration || config.teamCitySlug != null) {
             withStyledOutput() { out ->
-                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_MethodCount", tree.methodCount.toString())
-                printTeamCityStatisticValue(out, "DexCount_${apkOrDex.name}_FieldCount", tree.fieldCount.toString())
+                def prefix = "Dexcount"
+                if (config.teamCitySlug != null) {
+                    def slug = config.teamCitySlug.replace(' ', '_') // Not sure how TeamCity would handle spaces?
+                    prefix = "${prefix}_${slug}"
+                }
+
+                printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_MethodCount", tree.methodCount)
+                printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_FieldCount", tree.fieldCount)
             }
         }
     }
@@ -145,7 +151,7 @@ class DexMethodCountTask extends DefaultTask {
      * Reports to Team City statistic value
      * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
      */
-    def printTeamCityStatisticValue(Logger out, String key, String value) {
+    def printTeamCityStatisticValue(Logger out, String key, int value) {
         out.lifecycle("##teamcity[buildStatisticValue key='${key}' value='${value}']")
     }
 
