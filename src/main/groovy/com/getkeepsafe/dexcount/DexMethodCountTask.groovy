@@ -31,6 +31,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.nativeintegration.console.ConsoleDetector
 import org.gradle.internal.nativeintegration.console.ConsoleMetaData
+import org.gradle.internal.nativeintegration.console.FallbackConsoleMetaData
 import org.gradle.internal.nativeintegration.services.NativeServices
 
 import static com.getkeepsafe.dexcount.ANSIConsole.Color.*
@@ -218,13 +219,22 @@ class DexMethodCountTask extends DefaultTask {
     }
 
     private String colorize(Color color, boolean bright = false, String str) {
-        if (project.gradle.startParameter.consoleOutput == ConsoleOutput.Plain) {
+        ConsoleOutput consoleOutput = project.gradle.startParameter.consoleOutput
+        if (consoleOutput == ConsoleOutput.Plain) {
             return str
         }
 
         ConsoleDetector consoleDetector = NativeServices.getInstance().get(ConsoleDetector.class);
         ConsoleMetaData consoleMetaData = consoleDetector.getConsole();
-        if (consoleMetaData == null || !consoleMetaData.isStdOut()) {
+        if (consoleMetaData == null) {
+            if (consoleOutput == ConsoleOutput.Auto) {
+                return str
+            }
+
+            consoleMetaData = new FallbackConsoleMetaData()
+        }
+
+        if (!consoleMetaData.isStdOut()) {
             return str
         }
 
