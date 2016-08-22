@@ -25,16 +25,16 @@ import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
+import org.gradle.api.logging.configuration.ConsoleOutput
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.nativeintegration.console.ConsoleDetector
+import org.gradle.internal.nativeintegration.console.ConsoleMetaData
+import org.gradle.internal.nativeintegration.services.NativeServices
 
 import static com.getkeepsafe.dexcount.ANSIConsole.Color.*
-import static com.getkeepsafe.dexcount.ANSIConsole.colorize
-import static org.gradle.api.logging.LogLevel.DEBUG
-import static org.gradle.api.logging.LogLevel.ERROR
-import static org.gradle.api.logging.LogLevel.LIFECYCLE
-import static org.gradle.api.logging.LogLevel.WARN
+import static org.gradle.api.logging.LogLevel.*
 
 class DexMethodCountTask extends DefaultTask {
     /**
@@ -215,6 +215,20 @@ class DexMethodCountTask extends DefaultTask {
         } else {
             getLogger().log(level, colorize(color, message), t as Throwable)
         }
+    }
+
+    private String colorize(Color color, boolean bright = false, String str) {
+        if (project.gradle.startParameter.consoleOutput == ConsoleOutput.Plain) {
+            return str
+        }
+
+        ConsoleDetector consoleDetector = NativeServices.getInstance().get(ConsoleDetector.class);
+        ConsoleMetaData consoleMetaData = consoleDetector.getConsole();
+        if (consoleMetaData == null || !consoleMetaData.isStdOut()) {
+            return str
+        }
+
+        return ANSIConsole.colorize(color, bright, str)
     }
 
     private void printToFile(
