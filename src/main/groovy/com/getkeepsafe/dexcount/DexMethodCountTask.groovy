@@ -24,8 +24,6 @@ import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 class DexMethodCountTask extends DefaultTask {
@@ -42,13 +40,8 @@ class DexMethodCountTask extends DefaultTask {
     @Nullable
     def File mappingFile
 
-    @OutputFile
     def File outputFile
-
-    @OutputFile
     def File summaryFile
-
-    @OutputDirectory
     def File chartDir
 
     def DexMethodCountExtension config
