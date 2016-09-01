@@ -22,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.5.6'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.0'
     }
 }
 
@@ -93,6 +93,7 @@ dexcount {
     maxTreeDepth = Integer.MAX_VALUE
     teamCityIntegration = false
     enableForInstantRun = false
+    teamCitySlug = null
 }
 ```
 
@@ -106,6 +107,7 @@ Each flag controls some aspect of the printed output:
 - `maxTreeDepth`: Sets the max number of package segments in the output - i.e. when set to 2, counts stop at `com.google`, when set to 3 you get `com.google.android`, etc.  "Unlimited" by default.
 - `teamCityIntegration`: When true, Team City integration strings will be printed.
 - `enableForInstantRun`: When true, count methods even for Instant Run builds.  False by default.
+- `teamCitySlug`: A string which, if specified, will be added to TeamCity stat names.  Null by default.
 
 ## Use with Jenkins Plot Plugin
 
@@ -120,6 +122,8 @@ Common case is to enable integration with `teamCityIntegration` option and add c
 _Technically special strings like_ `##teamcity[buildStatisticValue key='DexCount_universalDebug_MethodCount' value='62362']` _will be printed._ 
 
 [More about integration in Team City doc][1]
+
+If you have multiple products within one project using Dexcount, the default stat names will conflict with each other.  In this case, the `teamCitySlug` configuration option can be useful.  It is a string that, if specified, will be added to stat names according to the following scheme: `DexCount_${teamCitySlug}_${variant}_${statName}`.  Note that you can assign a dynamically-evaluated property, e.g. `teamCitySlug = project.name`.
 
 ## Note on Instant Run
 
@@ -139,7 +143,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.5.7-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.1-SNAPSHOT'
   }
 }
 ```

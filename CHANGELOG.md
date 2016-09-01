@@ -1,3 +1,8 @@
+0.6.0 (released 31 August 2016)
+---------
+* Remove output annotations to opt out of Gradle caching (#132)
+* Add configurable slug for TeamCity statistics (#129)
+
 0.5.6 (released 17 August 2016)
 ---------
 * Remove StyledTextOutput use to un-break Gradle 3.0 (#126)
