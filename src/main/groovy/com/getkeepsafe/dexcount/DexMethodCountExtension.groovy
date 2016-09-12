@@ -32,6 +32,7 @@ class DexMethodCountExtension {
     private int maxTreeDepth = Integer.MAX_VALUE
     private int dxTimeoutSec = 60;
     private String teamCitySlug = null
+    private boolean runOnEachAssemble = true
 
     /**
      * When true, includes individual classes in task output.
@@ -158,5 +159,13 @@ class DexMethodCountExtension {
 
     public void setTeamCitySlug(String teamcitySlug) {
         this.teamCitySlug = teamcitySlug
+    }
+
+    public boolean getRunOnEachAssemble() {
+        return runOnEachAssemble
+    }
+
+    public void setRunOnEachAssemble(boolean runOnEachAssemble) {
+        this.runOnEachAssemble = runOnEachAssemble
     }
 }

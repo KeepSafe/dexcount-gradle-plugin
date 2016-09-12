@@ -94,6 +94,7 @@ dexcount {
     teamCityIntegration = false
     enableForInstantRun = false
     teamCitySlug = null
+    runOnEachAssemble = true
 }
 ```
 
@@ -108,6 +109,7 @@ Each flag controls some aspect of the printed output:
 - `teamCityIntegration`: When true, Team City integration strings will be printed.
 - `enableForInstantRun`: When true, count methods even for Instant Run builds.  False by default.
 - `teamCitySlug`: A string which, if specified, will be added to TeamCity stat names.  Null by default.
+- `runOnEachAssemble`: When false, does not run count method during assemble task
 
 ## Use with Jenkins Plot Plugin
 
