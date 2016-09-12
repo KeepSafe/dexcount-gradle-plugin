@@ -117,7 +117,10 @@ class DexMethodCountPlugin implements Plugin<Project> {
         task.dependsOn(variant.assemble)
         task.mustRunAfter(variant.assemble)
 
-        // But assemble should always imply that dexcount runs, too.
-        variant.assemble.finalizedBy(task)
+        // But assemble should always imply that dexcount runs, unless configured not to.
+        def runOnEachAssemble = ext.runOnEachAssemble
+        if (runOnEachAssemble) {
+            variant.assemble.finalizedBy(task)
+        }
     }
 }
