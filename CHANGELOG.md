@@ -1,3 +1,7 @@
+0.6.1 (released 14 September 2016)
+---------
+* Add runOnEachAssemble option to prevent task from running after assemble (#133)
+
 0.6.0 (released 31 August 2016)
 ---------
 * Remove output annotations to opt out of Gradle caching (#132)
