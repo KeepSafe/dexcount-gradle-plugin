@@ -55,6 +55,10 @@ class DexFile {
      * @return a list of DexFile objects representing data in the given file.
      */
     static List<DexFile> extractDexData(File file, int dxTimeoutSecs) {
+        if (file == null || !file.exists()) {
+            return [] as ArrayList
+        }
+
         // AAR files need special treatment
         if (file.name.endsWith(".aar")) {
             return extractDexFromAar(file, dxTimeoutSecs);
