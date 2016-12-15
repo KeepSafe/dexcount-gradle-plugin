@@ -56,6 +56,10 @@ class DexMethodCountTask extends DefaultTask {
     @TaskAction
     void countMethods() {
         try {
+            if (!checkIfApkExists()) {
+                return
+            }
+
             printPreamble()
             generatePackageTree()
             printSummary()
@@ -278,5 +282,9 @@ class DexMethodCountTask extends DefaultTask {
         }
 
         return Deobfuscator.create(mappingFile)
+    }
+
+    private def checkIfApkExists() {
+        return apkOrDex != null && apkOrDex.outputFile != null && apkOrDex.outputFile.exists()
     }
 }
