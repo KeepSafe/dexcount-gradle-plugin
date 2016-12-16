@@ -1,3 +1,7 @@
+0.6.2 (released 16 December 2016)
+---------
+* Don't attempt to count methods on files that don't exist (#139)
+
 0.6.1 (released 14 September 2016)
 ---------
 * Add runOnEachAssemble option to prevent task from running after assemble (#133)
