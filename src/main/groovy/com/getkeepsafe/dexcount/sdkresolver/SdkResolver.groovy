@@ -80,7 +80,7 @@ class SdkResolver {
             log.debug "Missing $FN_LOCAL_PROPERTIES."
         }
 
-		// Look for ANDROID_NDK_HOME environment variable. it's not defined in SdkConstants unluckily, so defining here
+        // Look for ANDROID_NDK_HOME environment variable. it's not defined in SdkConstants unluckily, so defining here
         // Some people use NDK_HOME, but androidrecommended is ANDROID_NDK_HOME
         def ANDROID_NDK_HOME = "ANDROID_NDK_HOME" 
         def androidNdkHome = system.env ANDROID_NDK_HOME 
@@ -126,21 +126,24 @@ class SdkResolver {
         if (isWindows) {
             // Escape Windows file separators when writing as a sdkPath.
             sdkPath = sdkPath.replace "\\", "\\\\"
-            if (ndkPath!=null)
+            if (ndkPath!=null){
                 ndkPath = ndkPath.replace "\\", "\\\\"
+            }
         }
         if (localProperties.exists()) {
             localProperties.withWriterAppend('UTF-8') {
                 it.write "$SDK_DIR_PROPERTY=$sdkPath\n" as String
-                if (ndkPath!=null)
+                if (ndkPath!=null){
                     it.write "$NDK_DIR_PROPERTY=$ndkPath\n" as String
+                }
             }
         } else {
             localProperties.withWriter('UTF-8') {
                 it.write "# DO NOT check this file into source control.\n"
                 it.write "$SDK_DIR_PROPERTY=$sdkPath\n" as String
-                if (ndkPath!=null)
+                if (ndkPath!=null){
                     it.write "$NDK_DIR_PROPERTY=$ndkPath\n" as String
+                }
             }
         }
     }
