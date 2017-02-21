@@ -25,6 +25,7 @@ import static com.android.SdkConstants.ANDROID_HOME_ENV
 import static com.android.SdkConstants.FN_LOCAL_PROPERTIES
 import static com.android.SdkConstants.PLATFORM_WINDOWS
 import static com.android.SdkConstants.SDK_DIR_PROPERTY
+import static com.android.SdkConstants.NDK_DIR_PROPERTY 
 import static com.android.SdkConstants.currentPlatform
 
 /**
@@ -79,13 +80,28 @@ class SdkResolver {
             log.debug "Missing $FN_LOCAL_PROPERTIES."
         }
 
+        // Look for ANDROID_NDK_HOME environment variable. it's not defined in SdkConstants unluckily, so defining here
+        // Some people use NDK_HOME, but androidrecommended is ANDROID_NDK_HOME
+        def ANDROID_NDK_HOME = "ANDROID_NDK_HOME" 
+        def androidNdkHome = system.env ANDROID_NDK_HOME 
+        def ndkDir = null
+        if (androidNdkHome != null && !"".equals(androidNdkHome)) {
+            ndkDir = new File(androidNdkHome)
+            if (ndkDir.exists()) {
+                log.debug "Found $ANDROID_NDK_HOME at '$androidNdkHome'. Writing to $FN_LOCAL_PROPERTIES."
+            } else {
+                log.debug "Found $ANDROID_NDK_HOME at '$androidNdkHome' but directory is missing."
+                ndkDir = null
+            }
+        }
+		
         // Look for ANDROID_HOME environment variable.
         def androidHome = system.env ANDROID_HOME_ENV
         if (androidHome != null && !"".equals(androidHome)) {
             def sdkDir = new File(androidHome)
             if (sdkDir.exists()) {
                 log.debug "Found $ANDROID_HOME_ENV at '$androidHome'. Writing to $FN_LOCAL_PROPERTIES."
-                writeLocalProperties androidHome
+                writeLocalProperties(androidHome, ndkDir)
             } else {
                 log.debug "Found $ANDROID_HOME_ENV at '$androidHome' but directory is missing."
                 return null
@@ -99,26 +115,35 @@ class SdkResolver {
         if (userAndroid.exists()) {
             log.debug "Found existing SDK at '$userAndroid.absolutePath'. Writing to $FN_LOCAL_PROPERTIES."
 
-            writeLocalProperties userAndroid.absolutePath
+            writeLocalProperties(userAndroid.absolutePath, ndkDir)
             return userAndroid
         }
 
         return null
     }
 
-    def writeLocalProperties(String path) {
+    def writeLocalProperties(String sdkPath, String ndkPath) {
         if (isWindows) {
-            // Escape Windows file separators when writing as a path.
-            path = path.replace "\\", "\\\\"
+            // Escape Windows file separators when writing as a sdkPath.
+            sdkPath = sdkPath.replace "\\", "\\\\"
+            if (ndkPath!=null){
+                ndkPath = ndkPath.replace "\\", "\\\\"
+            }
         }
         if (localProperties.exists()) {
             localProperties.withWriterAppend('UTF-8') {
-                it.write "$SDK_DIR_PROPERTY=$path\n" as String
+                it.write "$SDK_DIR_PROPERTY=$sdkPath\n" as String
+                if (ndkPath!=null){
+                    it.write "$NDK_DIR_PROPERTY=$ndkPath\n" as String
+                }
             }
         } else {
             localProperties.withWriter('UTF-8') {
                 it.write "# DO NOT check this file into source control.\n"
-                it.write "$SDK_DIR_PROPERTY=$path\n" as String
+                it.write "$SDK_DIR_PROPERTY=$sdkPath\n" as String
+                if (ndkPath!=null){
+                    it.write "$NDK_DIR_PROPERTY=$ndkPath\n" as String
+                }
             }
         }
     }
