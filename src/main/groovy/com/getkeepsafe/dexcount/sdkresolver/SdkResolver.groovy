@@ -101,7 +101,7 @@ class SdkResolver {
             def sdkDir = new File(androidHome)
             if (sdkDir.exists()) {
                 log.debug "Found $ANDROID_HOME_ENV at '$androidHome'. Writing to $FN_LOCAL_PROPERTIES."
-                writeLocalProperties(androidHome, ndkDir)
+                writeLocalProperties(androidHome, ndkDir?.absolutePath)
             } else {
                 log.debug "Found $ANDROID_HOME_ENV at '$androidHome' but directory is missing."
                 return null
