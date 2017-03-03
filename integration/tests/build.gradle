@@ -2,12 +2,12 @@ apply plugin: 'com.android.test' // A plugin used for test-only-modules
 apply plugin: 'com.getkeepsafe.dexcount'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 23
+        targetSdkVersion 25
 
         // The package name of the test app
         testApplicationId "com.getkeepsafe.dexcount.integration.tests"
