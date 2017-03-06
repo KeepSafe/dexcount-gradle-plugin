@@ -22,6 +22,7 @@ import com.android.build.gradle.api.BaseVariantOutput
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.TaskAction
@@ -66,6 +67,7 @@ class DexMethodCountTask extends DefaultTask {
             printFullTree()
             printChart()
             printTaskDiagnosticData()
+            failBuildMaxMethods()
         } catch (DexCountException e) {
             withStyledOutput() { out ->
                 out.error("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues", e)
@@ -286,5 +288,14 @@ class DexMethodCountTask extends DefaultTask {
 
     private def checkIfApkExists() {
         return apkOrDex != null && apkOrDex.outputFile != null && apkOrDex.outputFile.exists()
+    }
+
+    /**
+     * Fails the build when a user specifies a "max method count" for their current build.
+     */
+    def failBuildMaxMethods() {
+        if (config.maxMethodCount > 0 && tree.methodCount > config.maxMethodCount) {
+            throw new GradleException(String.format("The current APK has %d methods, the current max is: %d.", tree.methodCount, config.maxMethodCount))
+        }
     }
 }
