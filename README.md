@@ -95,6 +95,7 @@ dexcount {
     enableForInstantRun = false
     teamCitySlug = null
     runOnEachAssemble = true
+    maxMethodCount = 640000
 }
 ```
 
@@ -110,6 +111,7 @@ Each flag controls some aspect of the printed output:
 - `enableForInstantRun`: When true, count methods even for Instant Run builds.  False by default.
 - `teamCitySlug`: A string which, if specified, will be added to TeamCity stat names.  Null by default.
 - `runOnEachAssemble`: When false, does not run count method during assemble task
+- `maxMethodCount`: When set, the build will fail when the APK/AAR has more methods than the max. 0 by default.
 
 ## Use with Jenkins Plot Plugin
 

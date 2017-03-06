@@ -33,8 +33,9 @@ class DexMethodCountExtension {
     private int dxTimeoutSec = 60;
     private String teamCitySlug = null
     private boolean runOnEachAssemble = true
+    int maxMethodCount = -1
 
-    /**
+  /**
      * When true, includes individual classes in task output.
      * When false, only packages are included.
      */
