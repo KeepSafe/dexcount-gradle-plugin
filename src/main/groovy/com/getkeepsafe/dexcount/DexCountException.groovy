@@ -16,7 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
-class DexCountException extends RuntimeException {
+final class DexCountException extends RuntimeException {
     DexCountException() {}
     DexCountException(String message) { super(message) }
     DexCountException(String message, Throwable cause) { super(message, cause) }

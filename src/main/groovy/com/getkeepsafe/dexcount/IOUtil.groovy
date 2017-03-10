@@ -16,8 +16,8 @@
 
 package com.getkeepsafe.dexcount
 
-class IOUtil {
-    static def drainToFile(InputStream stream, File file) {
+final class IOUtil {
+    static drainToFile(InputStream stream, File file) {
         stream.withStream { input ->
             file.withOutputStream { output ->
                 def buf = new byte[4096]

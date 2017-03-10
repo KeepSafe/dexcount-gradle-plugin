@@ -24,7 +24,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class DexMethodCountPlugin implements Plugin<Project> {
-    public static File sdkLocation = SdkResolver.resolve(null)
+    static File sdkLocation = SdkResolver.resolve(null)
 
     @Override
     void apply(Project project) {
@@ -35,17 +35,17 @@ class DexMethodCountPlugin implements Plugin<Project> {
         sdkLocation = SdkResolver.resolve(project)
 
         if (project.plugins.hasPlugin('com.android.application')) {
-            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants);
+            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants)
         } else if (project.plugins.hasPlugin('com.android.test')) {
-            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants);
+            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants)
         } else if (project.plugins.hasPlugin('com.android.library')) {
-            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.libraryVariants);
+            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.libraryVariants)
         } else {
-            throw new IllegalArgumentException('Dexcount plugin requires the Android plugin to be configured');
+            throw new IllegalArgumentException('Dexcount plugin requires the Android plugin to be configured')
         }
     }
 
-    private static boolean isAtLeastJavaEight() {
+    static boolean isAtLeastJavaEight() {
         String version = System.properties["java.version"]
         if (version == null) {
             // All JVMs provide this property... what's going on?
@@ -66,11 +66,11 @@ class DexMethodCountPlugin implements Plugin<Project> {
             return numericVersion >= 1.8
         } catch (NumberFormatException ignored) {
             // Invalid Java version number; who knows.
-            return false;
+            return false
         }
     }
 
-    private static void applyAndroid(Project project, DomainObjectCollection<BaseVariant> variants) {
+    static applyAndroid(Project project, DomainObjectCollection<BaseVariant> variants) {
         project.extensions.create('dexcount', DexMethodCountExtension)
 
         variants.all { variant ->
@@ -80,7 +80,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         }
     }
 
-    private static void applyToVariantOutput(Project project, BaseVariant variant, BaseVariantOutput output) {
+    static applyToVariantOutput(Project project, BaseVariant variant, BaseVariantOutput output) {
         def slug = variant.name.capitalize()
         def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
         if (variant.outputs.size() > 1) {

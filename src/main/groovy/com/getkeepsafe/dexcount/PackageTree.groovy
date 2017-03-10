@@ -41,11 +41,11 @@ class PackageTree {
     private final boolean isClass_
     private final String name_
     private final SortedMap<String, PackageTree> children_ = new TreeMap<>()
-    private final Deobfuscator deobfuscator_;
+    private final Deobfuscator deobfuscator_
 
     // The set of methods declared on this node.  Will be empty for package
     // nodes and possibly non-empty for class nodes.
-    private final Set<HasDeclaringClass> methods_ = new HashSet<>();
+    private final Set<HasDeclaringClass> methods_ = new HashSet<>()
 
     // The set of fields declared on this node.  Will be empty for package
     // nodes and possibly non-empty for class nodes.
@@ -73,11 +73,11 @@ class PackageTree {
         return Character.isUpperCase(name.charAt(0)) || name.contains("[]")
     }
 
-    public void addMethodRef(MethodRef method) {
+    void addMethodRef(MethodRef method) {
         addInternal(descriptorToDot(method), 0, true, method)
     }
 
-    public void addFieldRef(FieldRef field) {
+    void addFieldRef(FieldRef field) {
         addInternal(descriptorToDot(field), 0, false, field)
     }
 
@@ -125,19 +125,19 @@ class PackageTree {
         switch (format) {
             case OutputFormat.LIST:
                 printPackageList(out, opts)
-                break;
+                break
 
             case OutputFormat.TREE:
                 printTree(out, opts)
-                break;
+                break
 
             case OutputFormat.JSON:
                 printJson(out, opts)
-                break;
+                break
 
             case OutputFormat.YAML:
                 printYaml(out, opts)
-                break;
+                break
 
             default:
                 throw new IllegalArgumentException("Unknown format: $format")
@@ -158,7 +158,7 @@ class PackageTree {
         forEach(getChildren(opts)) { it -> it.printPackageListRecursively(out, sb, 0, opts) }
     }
 
-    private static def printPackageListHeader(Appendable out, PrintOptions opts) {
+    private static printPackageListHeader(Appendable out, PrintOptions opts) {
         if (opts.includeMethodCount) {
             out.append(String.format("%-8s ", "methods"))
         }
@@ -401,7 +401,7 @@ class PackageTree {
             Collection<E> collection,
             @ClosureParams(FirstParam.FirstGenericType.class) Closure closure) {
         for (E element : collection) {
-            closure.call(element);
+            closure.call(element)
         }
     }
 }
