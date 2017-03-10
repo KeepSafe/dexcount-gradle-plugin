@@ -19,8 +19,7 @@ package com.getkeepsafe.dexcount
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 
-class RefHelpers {
-
+final class RefHelpers {
     static MethodRef methodRef(String className, String methodName = null) {
         if (methodName == null) {
             methodName = randomName()
