@@ -19,9 +19,7 @@ package com.getkeepsafe.dexcount
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 
-class RefHelpers {
-
-
+final class RefHelpers {
     static MethodRef methodRef(String className, String methodName = null) {
         if (methodName == null) {
             methodName = randomName()
@@ -36,7 +34,7 @@ class RefHelpers {
         return new FieldRef(className, "Object", fieldName)
     }
 
-    private static String randomName() {
+    static String randomName() {
         def rand = new Random()
         def alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
         def len = rand.nextInt(16)

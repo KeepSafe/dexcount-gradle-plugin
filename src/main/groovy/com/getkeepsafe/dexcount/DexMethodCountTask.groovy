@@ -32,27 +32,27 @@ class DexMethodCountTask extends DefaultTask {
      * The maximum number of method refs and field refs allowed in a single Dex
      * file.
      */
-    private static final int MAX_DEX_REFS = 0xFFFF;
+    private static final int MAX_DEX_REFS = 0xFFFF
 
-    def PackageTree tree;
+    PackageTree tree
 
-    def BaseVariantOutput apkOrDex
+    BaseVariantOutput apkOrDex
 
     @Nullable
-    def File mappingFile
+    File mappingFile
 
-    def File outputFile
-    def File summaryFile
-    def File chartDir
+    File outputFile
+    File summaryFile
+    File chartDir
 
-    def DexMethodCountExtension config
+    DexMethodCountExtension config
 
-    def long startTime
-    def long ioTime
-    def long treegenTime
-    def long outputTime
+    long startTime
+    long ioTime
+    long treegenTime
+    long outputTime
 
-    def boolean isInstantRun
+    boolean isInstantRun
 
     @TaskAction
     void countMethods() {
@@ -75,7 +75,7 @@ class DexMethodCountTask extends DefaultTask {
         }
     }
 
-    static def percentUsed(int count) {
+    static percentUsed(int count) {
         def used = ((double) count / MAX_DEX_REFS) * 100.0
         return sprintf("%.2f", used)
     }
@@ -122,13 +122,13 @@ class DexMethodCountTask extends DefaultTask {
             summaryFile.parentFile.mkdirs()
             summaryFile.createNewFile()
 
-            final String headers = "methods,fields";
-            final String counts = "${tree.methodCount},${tree.fieldCount}";
+            final String headers = "methods,fields"
+            final String counts = "${tree.methodCount},${tree.fieldCount}"
 
             summaryFile.withOutputStream { stream ->
                 def appendableStream = new PrintStream(stream)
                 appendableStream.println(headers)
-                appendableStream.println(counts);
+                appendableStream.println(counts)
             }
         }
 
@@ -150,7 +150,7 @@ class DexMethodCountTask extends DefaultTask {
      * Reports to Team City statistic value
      * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
      */
-    def printTeamCityStatisticValue(Logger out, String key, int value) {
+    static printTeamCityStatisticValue(Logger out, String key, int value) {
         out.lifecycle("##teamcity[buildStatisticValue key='${key}' value='${value}']")
     }
 
@@ -172,11 +172,11 @@ class DexMethodCountTask extends DefaultTask {
         printOptions.includeClasses = true
         printToFile(new File(chartDir, "data.js")) { PrintStream out ->
             out.print("var data = ")
-            tree.printJson(out, printOptions);
+            tree.printJson(out, printOptions)
         }
 
         ["chart-builder.js", "d3.v3.min.js", "index.html", "styles.css"].each { String resourceName ->
-            def resource = getClass().getResourceAsStream("/com/getkeepsafe/dexcount/" + resourceName);
+            def resource = getClass().getResourceAsStream("/com/getkeepsafe/dexcount/" + resourceName)
             def targetFile = new File(chartDir, resourceName)
             targetFile.write resource.text
         }
@@ -209,12 +209,12 @@ class DexMethodCountTask extends DefaultTask {
         tree.print(out, config.format, getPrintOptions())
     }
 
-    private void withStyledOutput(@ClosureParams(value = SimpleType, options = ['org.gradle.api.logging.Logger']) Closure closure) {
+    def withStyledOutput(@ClosureParams(value = SimpleType, options = ['org.gradle.api.logging.Logger']) Closure closure) {
         // TODO: Actually make this stylized when we have our own solution: https://github.com/KeepSafe/dexcount-gradle-plugin/issues/124
         closure(getLogger())
     }
 
-    private void printToFile(
+    def printToFile(
             File file,
             @ClosureParams(value = SimpleType, options = ['java.io.PrintStream']) Closure closure) {
         if (outputFile != null) {
@@ -233,7 +233,6 @@ class DexMethodCountTask extends DefaultTask {
      * Creates a new PackageTree and populates it with the method and field
      * counts of the current dex/apk file.
      */
-    @VisibleForTesting
     def generatePackageTree() {
         startTime = System.currentTimeMillis()
 
@@ -263,7 +262,7 @@ class DexMethodCountTask extends DefaultTask {
         isInstantRun = dataList.any { it.isInstantRun }
     }
 
-    private def getPrintOptions() {
+    def getPrintOptions() {
         return new PrintOptions(
                 includeMethodCount: true,
                 includeFieldCount: config.includeFieldCount,
@@ -275,7 +274,7 @@ class DexMethodCountTask extends DefaultTask {
                 maxTreeDepth: config.maxTreeDepth)
     }
 
-    private def getDeobfuscator() {
+    def getDeobfuscator() {
         if (mappingFile != null && !mappingFile.exists()) {
             withStyledOutput() {
                 it.debug("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
@@ -286,7 +285,7 @@ class DexMethodCountTask extends DefaultTask {
         return Deobfuscator.create(mappingFile)
     }
 
-    private def checkIfApkExists() {
+    def checkIfApkExists() {
         return apkOrDex != null && apkOrDex.outputFile != null && apkOrDex.outputFile.exists()
     }
 

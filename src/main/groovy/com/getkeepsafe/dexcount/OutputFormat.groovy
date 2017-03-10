@@ -19,7 +19,7 @@ package com.getkeepsafe.dexcount
 /**
  * Specifies what format the task output should take.
  */
-public enum OutputFormat {
+enum OutputFormat {
     /**
      * Specifies that method counts will be printed in a flat list of packages.
      */
@@ -38,7 +38,7 @@ public enum OutputFormat {
     /**
      * Specifies that output will be a YAML document.
      */
-    YAML('.yml');
+    YAML('.yml')
 
     public String extension
 

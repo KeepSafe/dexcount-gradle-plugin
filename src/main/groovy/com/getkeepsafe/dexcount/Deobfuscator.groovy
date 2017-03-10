@@ -25,7 +25,7 @@ import proguard.obfuscate.MappingReader
  * mapping file.
  */
 class Deobfuscator {
-    private final Map<String, String> mapping;
+    final Map<String, String> mapping
 
     static Deobfuscator create(@Nullable File mappingFile) {
         if (mappingFile == null) {
@@ -35,24 +35,24 @@ class Deobfuscator {
         return new Deobfuscator(new MappingReader(mappingFile))
     }
 
-    protected Deobfuscator(@Nullable MappingReader reader) {
+    Deobfuscator(@Nullable MappingReader reader) {
         mapping = new TreeMap<>()
         if (reader != null) {
             reader.pump(new Processor())
         }
     }
 
-    public String deobfuscate(String name) {
+    String deobfuscate(String name) {
         return mapping[name] ?: name
     }
     /**
      * A Proguard MappingProcessor that builds a map from obfuscated to unobfuscated
      * class names.
      */
-    private class Processor implements MappingProcessor {
+    final class Processor implements MappingProcessor {
         @Override
         boolean processClassMapping(String className, String newClassName) {
-            mapping.put(newClassName, className);
+            mapping.put(newClassName, className)
             return false
         }
 
@@ -70,10 +70,10 @@ class Deobfuscator {
     /**
      * An always-empty deobfuscator that doesn't need to look things up.
      */
-    private static Deobfuscator EMPTY = new Deobfuscator(null) {
+    static Deobfuscator EMPTY = new Deobfuscator(null) {
         @Override
-        public String deobfuscate(String name) {
-            return name;
+        String deobfuscate(String name) {
+            return name
         }
     }
 }

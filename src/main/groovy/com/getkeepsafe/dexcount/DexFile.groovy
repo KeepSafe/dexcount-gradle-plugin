@@ -37,12 +37,12 @@ import static com.android.SdkConstants.currentPlatform
  * finished with the DexFile, it should be cleaned up with
  * {@link DexFile#dispose()}.
  */
-class DexFile {
-    public final DexData data
-    public final boolean isInstantRun
-    private RandomAccessFile raf
-    private File file
-    private boolean isTemp
+final class DexFile {
+    final DexData data
+    final boolean isInstantRun
+    RandomAccessFile raf
+    File file
+    boolean isTemp
 
     /**
      * Extracts a list of {@link DexFile} instances from the given file.
@@ -61,7 +61,7 @@ class DexFile {
 
         // AAR files need special treatment
         if (file.name.endsWith(".aar")) {
-            return extractDexFromAar(file, dxTimeoutSecs);
+            return extractDexFromAar(file, dxTimeoutSecs)
         }
 
         try {
@@ -73,7 +73,7 @@ class DexFile {
         return [new DexFile(file, false)]
     }
 
-    private static List<DexFile> extractDexFromAar(File file, int dxTimeoutSecs) {
+    static List<DexFile> extractDexFromAar(File file, int dxTimeoutSecs) {
         // unzip classes.jar from the AAR
         def zipfile = new ZipFile(file)
         def entries = Collections.list(zipfile.entries())
@@ -114,10 +114,10 @@ class DexFile {
 
         def dxCmd = dxExe.absolutePath + " --dex --output=" + tempDex.absolutePath + " " + tempClasses.absolutePath
 
-        final def sout = new StringBuilder()
-        final def serr = new StringBuilder()
-        final def proc = dxCmd.execute()
-        final def finished = new AtomicBoolean(false)
+        final sout = new StringBuilder()
+        final serr = new StringBuilder()
+        final proc = dxCmd.execute()
+        final finished = new AtomicBoolean(false)
         def thread = Thread.start {
             proc.waitForProcessOutput(sout, serr)
             finished.set(true)
@@ -158,7 +158,7 @@ class DexFile {
      * @return a list of contained dex files.
      * @throws ZipException if {@code file} is not a zip file.
      */
-    private static List<DexFile> extractDexFromZip(File file) {
+    static List<DexFile> extractDexFromZip(File file) {
         def zipfile = new ZipFile(file)
         def entries = Collections.list(zipfile.entries())
         def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
@@ -191,8 +191,8 @@ class DexFile {
      * @param zipEntries a list of ZipEntry objects inside of the APK.
      * @return a list, possibly empty, of instant-run dex data.
      */
-    private static List<DexFile> extractIncrementalDexFiles(ZipFile apk, List<ZipEntry> zipEntries) {
-        def incremental = zipEntries.findAll { it.name.equals('instant-run.zip') }
+    static List<DexFile> extractIncrementalDexFiles(ZipFile apk, List<ZipEntry> zipEntries) {
+        def incremental = zipEntries.findAll { (it.name == 'instant-run.zip') }
         if (incremental.size() != 1) {
             return []
         }
@@ -220,7 +220,7 @@ class DexFile {
         }
     }
 
-    private DexFile(File file, boolean isTemp, boolean isInstantRun = false) {
+    DexFile(File file, boolean isTemp, boolean isInstantRun = false) {
         this.file = file
         this.isTemp = isTemp
         this.isInstantRun = isInstantRun
@@ -234,11 +234,11 @@ class DexFile {
         }
     }
 
-    def List<MethodRef> getMethodRefs() {
+    List<MethodRef> getMethodRefs() {
         return data.getMethodRefs()
     }
 
-    def List<FieldRef> getFieldRefs() {
+    List<FieldRef> getFieldRefs() {
         return data.getFieldRefs()
     }
 

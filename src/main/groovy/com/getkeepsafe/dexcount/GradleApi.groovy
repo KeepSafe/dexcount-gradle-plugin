@@ -1,7 +1,7 @@
 package com.getkeepsafe.dexcount
 
-import org.codehaus.groovy.runtime.InvokerHelper;
-import org.gradle.StartParameter;
+import org.codehaus.groovy.runtime.InvokerHelper
+import org.gradle.StartParameter
 
 /**
  * Attempts to isolate our use bits of the Gradle API that have changed in
@@ -24,7 +24,7 @@ final class GradleApi {
      */
     static boolean isShowStacktrace(StartParameter startParam) {
         Enum stacktrace = (Enum) InvokerHelper.invokeMethod(
-                startParam, "getShowStacktrace", null);
-        return !"INTERNAL_EXCEPTIONS".equals(stacktrace.name());
+                startParam, "getShowStacktrace", null)
+        return "INTERNAL_EXCEPTIONS" != stacktrace.name()
     }
 }
