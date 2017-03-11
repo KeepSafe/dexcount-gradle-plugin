@@ -18,9 +18,9 @@ package com.getkeepsafe.dexcount
 
 import spock.lang.Specification
 
-class DexMethodCountExtensionTest extends Specification {
+final class DexMethodCountExtensionSpec extends Specification {
     def "format can be a String"() {
-        setup:
+        given:
         def ext = new DexMethodCountExtension()
 
         when:
@@ -31,7 +31,7 @@ class DexMethodCountExtensionTest extends Specification {
     }
 
     def "format can be an OutputFormat enum"() {
-        setup:
+        given:
         def ext = new DexMethodCountExtension()
 
         when:
@@ -42,7 +42,7 @@ class DexMethodCountExtensionTest extends Specification {
     }
 
     def "setFormat throws on invalid format class"() {
-        setup:
+        given:
         def ext = new DexMethodCountExtension()
 
         when:
@@ -54,7 +54,7 @@ class DexMethodCountExtensionTest extends Specification {
     }
 
     def "setFormat throws on invalid format name"() {
-        setup:
+        given:
         def ext = new DexMethodCountExtension()
 
         when:
