@@ -18,14 +18,14 @@ package com.getkeepsafe.dexcount
 
 import spock.lang.Specification
 
-import static com.getkeepsafe.dexcount.RefHelpers.fieldRef;
-import static com.getkeepsafe.dexcount.RefHelpers.methodRef;
+import static com.getkeepsafe.dexcount.RefHelpers.fieldRef
+import static com.getkeepsafe.dexcount.RefHelpers.methodRef
 
 final class PackageTreeSpec extends Specification {
     def "adding different methods increments count"() {
         given:
         def tree = new PackageTree()
-        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"));
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "bar"))
@@ -37,10 +37,10 @@ final class PackageTreeSpec extends Specification {
     def "adding duplicate methods does not increment count"() {
         given:
         def tree = new PackageTree()
-        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"));
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         when:
-        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"));
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         then:
         tree.getMethodCount() == 1
@@ -265,7 +265,7 @@ methods  fields   package/class name
         tree.printPackageList(sb, opts)
 
         then:
-        def trimmed = sb.toString().trim();
+        def trimmed = sb.toString().trim()
         def expected = """
 Total methods: 5
 3        com
@@ -299,7 +299,7 @@ Total methods: 5
         tree.printPackageList(sb, opts)
 
         then:
-        def trimmed = sb.toString().trim();
+        def trimmed = sb.toString().trim()
         def expected = """
 Total methods: 5
 3        com

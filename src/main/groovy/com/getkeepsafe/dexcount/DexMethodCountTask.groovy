@@ -32,7 +32,7 @@ class DexMethodCountTask extends DefaultTask {
      * The maximum number of method refs and field refs allowed in a single Dex
      * file.
      */
-    private static final int MAX_DEX_REFS = 0xFFFF
+    private static final int MAX_DEX_REFS = 0xFFFF // 65535
 
     PackageTree tree
 
@@ -54,8 +54,7 @@ class DexMethodCountTask extends DefaultTask {
 
     boolean isInstantRun
 
-    @TaskAction
-    void countMethods() {
+    @TaskAction countMethods() {
         try {
             if (!checkIfApkExists()) {
                 return

@@ -16,9 +16,90 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.gradle.api.BaseVariantOutput
+import org.gradle.api.Project
+import org.gradle.api.tasks.TaskExecutionException
+import org.gradle.testfixtures.ProjectBuilder
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DexMethodCountExtensionSpec extends Specification {
+    @Rule final TemporaryFolder tempFolder = new TemporaryFolder()
+    final static COMPILE_SDK_VERSION = 25
+    final static BUILD_TOOLS_VERSION = "25.0.2"
+    final static APPLICATION_ID = "com.example"
+    Project project
+    File apkFile
+
+    def "setup"() {
+        project = ProjectBuilder.builder().build()
+
+        apkFile = tempFolder.newFile("tiles.apk")
+        def apkResource = getClass().getResourceAsStream("/tiles.apk")
+        apkResource.withStream { input ->
+            IOUtil.drainToFile(input, apkFile)
+        }
+    }
+
+    def "maxMethodCount methods < tiles.apk methods, throw exception"() {
+        given:
+        project.apply plugin: "com.android.application"
+        project.apply plugin: "com.getkeepsafe.dexcount"
+        project.android {
+            compileSdkVersion COMPILE_SDK_VERSION
+            buildToolsVersion BUILD_TOOLS_VERSION
+
+            defaultConfig {
+                applicationId APPLICATION_ID
+            }
+        }
+        project.dexcount {
+            maxMethodCount = 100
+        }
+
+        when:
+        project.evaluate()
+
+        // Override APK file
+        DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
+        task.apkOrDex = Mock(BaseVariantOutput)
+        task.apkOrDex.outputFile >> apkFile
+        task.execute()
+
+        then:
+        thrown(TaskExecutionException) // Should be GradleException?
+    }
+
+    def "maxMethodCount methods > tiles.apk methods, no exception thrown"() {
+        given:
+        project.apply plugin: "com.android.application"
+        project.apply plugin: "com.getkeepsafe.dexcount"
+        project.android {
+            compileSdkVersion COMPILE_SDK_VERSION
+            buildToolsVersion BUILD_TOOLS_VERSION
+
+            defaultConfig {
+                applicationId APPLICATION_ID
+            }
+        }
+        project.dexcount {
+            maxMethodCount = 64000
+        }
+
+        when:
+        project.evaluate()
+
+        // Override APK file
+        DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
+        task.apkOrDex = Mock(BaseVariantOutput)
+        task.apkOrDex.outputFile >> apkFile
+        task.execute()
+
+        then:
+        noExceptionThrown()
+    }
+
     def "format can be a String"() {
         given:
         def ext = new DexMethodCountExtension()
