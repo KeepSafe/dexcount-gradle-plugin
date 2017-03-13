@@ -19,7 +19,7 @@ final class DexMethodCountPluginSpec extends Specification {
     new DexMethodCountPlugin().apply(project) // project.apply plugin: "com.getkeepsafe.dexcount"
 
     then:
-    def e = thrown IllegalArgumentException
+    def e = thrown(IllegalArgumentException)
     e.message == "Dexcount plugin requires the Android plugin to be configured"
   }
 

@@ -22,12 +22,12 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class InstantRunTest extends Specification {
+final class InstantRunSpec extends Specification {
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder()
 
     def "APKs with instant-run.zip are counted correctly"() {
-        setup:
+        given:
         def apkFile = tempFolder.newFile("tiles.apk")
         def apkResource = getClass().getResourceAsStream("/tiles.apk")
         apkResource.withStream { input ->

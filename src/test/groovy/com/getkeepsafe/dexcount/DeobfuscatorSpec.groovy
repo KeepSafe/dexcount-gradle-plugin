@@ -20,11 +20,11 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-class DeobfuscatorTest extends Specification {
+final class DeobfuscatorSpec extends Specification {
     @Rule TemporaryFolder tempFolder
 
     def "when no mapping file exists, returns given classnames unaltered"() {
-        setup:
+        given:
         def deobs = Deobfuscator.create(null)
 
         when:
@@ -37,7 +37,7 @@ class DeobfuscatorTest extends Specification {
     }
 
     def "maps proguarded names to original names"() {
-        setup:
+        given:
         File file = tempFolder.newFile()
         file.withPrintWriter {
             // Proguard mapping for classnames is "old -> new:"

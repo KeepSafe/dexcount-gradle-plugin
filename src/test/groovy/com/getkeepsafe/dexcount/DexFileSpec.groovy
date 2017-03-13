@@ -18,9 +18,9 @@ package com.getkeepsafe.dexcount;
 
 import spock.lang.Specification
 
-class DexFileTest extends Specification {
+final class DexFileSpec extends Specification {
     def "test AAR dexcount"() {
-        setup:
+        given:
         def aarFile = File.createTempFile("test", ".aar")
         aarFile.deleteOnExit()
 
