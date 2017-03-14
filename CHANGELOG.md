@@ -1,3 +1,8 @@
+0.6.3 (released π 2017)
+---------
+* Add maxMethodCount option to fail builds if the count is exceeded (#152)
+* Add NDK support for AARs (#145)
+
 0.6.2 (released 16 December 2016)
 ---------
 * Don't attempt to count methods on files that don't exist (#139)
