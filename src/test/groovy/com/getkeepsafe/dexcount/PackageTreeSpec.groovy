@@ -16,6 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static com.getkeepsafe.dexcount.RefHelpers.fieldRef

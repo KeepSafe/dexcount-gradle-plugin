@@ -16,13 +16,13 @@
 
 package com.getkeepsafe.dexcount
 
-final class PrintOptions {
-    def includeClasses = false
-    def includeMethodCount = true
-    def includeFieldCount = false
-    def includeTotalMethodCount = false
-    def teamCityIntegration = false
-    def printHeader = false
-    def orderByMethodCount = false
-    def int maxTreeDepth = Integer.MAX_VALUE
+class PrintOptions {
+    var includeClasses: Boolean = false
+    var includeMethodCount: Boolean = true
+    var includeFieldCount: Boolean = false
+    var includeTotalMethodCount: Boolean = false
+    var teamCityIntegration: Boolean = false
+    var printHeader: Boolean = false
+    var orderByMethodCount: Boolean = false
+    var maxTreeDepth: Int = Integer.MAX_VALUE
 }

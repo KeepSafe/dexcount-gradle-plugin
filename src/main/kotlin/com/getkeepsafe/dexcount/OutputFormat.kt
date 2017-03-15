@@ -19,30 +19,24 @@ package com.getkeepsafe.dexcount
 /**
  * Specifies what format the task output should take.
  */
-enum OutputFormat {
+enum class OutputFormat(val extension: String) {
     /**
      * Specifies that method counts will be printed in a flat list of packages.
      */
-    LIST('.txt'),
+    LIST(".txt"),
 
     /**
      * Specifies that the output will be pretty-printed as an tree.
      */
-    TREE('.txt'),
+    TREE(".txt"),
 
     /**
      * Specifies that the output will be a pretty-printed JSON object.
      */
-    JSON('.json'),
+    JSON(".json"),
 
     /**
      * Specifies that output will be a YAML document.
      */
-    YAML('.yml')
-
-    public String extension
-
-    OutputFormat(String extension) {
-        this.extension = extension
-    }
+    YAML(".yml")
 }
