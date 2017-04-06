@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2017 Keepsafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,11 +241,14 @@ public class Output {
      * =======================================================================
      */
 
+    /*
+     * MODIFICATIONS:
+     *   primitiveTypeLabel, descriptorToDot both made public.
+     */
+
     /**
      * Converts a single-character primitive type into its human-readable
      * equivalent.
-     * @param typeChar character type
-     * @return human readable equivalent
      */
     public static String primitiveTypeLabel(char typeChar) {
         /* primitive type; substitute human-readable name in */
@@ -270,8 +274,6 @@ public class Output {
      * Converts a type descriptor to human-readable "dotted" form.  For
      * example, "Ljava/lang/String;" becomes "java.lang.String", and
      * "[I" becomes "int[].
-     * @param descr type descriptor
-     * @return human readable string
      */
     public static String descriptorToDot(String descr) {
         int targetLen = descr.length();
@@ -320,8 +322,6 @@ public class Output {
 
     /**
      * Extracts the class name from a type descriptor.
-     * @param typeName name of type
-     * @return class name
      */
     public static String classNameOnly(String typeName) {
         String dotted = descriptorToDot(typeName);
@@ -337,8 +337,6 @@ public class Output {
     /**
      * Extracts the package name from a type descriptor, and returns it in
      * dotted form.
-     * @param typeName type descriptor
-     * @return package name
      */
     public static String packageNameOnly(String typeName) {
         String dotted = descriptorToDot(typeName);

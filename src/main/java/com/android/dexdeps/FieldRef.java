@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- * Copyright (C) 2015-2016 KeepSafe Software
+ * Copyright (C) 2015-2017 Keepsafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ public class FieldRef implements HasDeclaringClass {
 
     /**
      * Initializes a new field reference.
-     * @param declClass class name
-     * @param fieldType field type
-     * @param fieldName field name
      */
     public FieldRef(String declClass, String fieldType, String fieldName) {
         mDeclClass = declClass;
@@ -34,15 +31,14 @@ public class FieldRef implements HasDeclaringClass {
 
     /**
      * Gets the name of the field's declaring class.
-     * @return class name
      */
+    @Override
     public String getDeclClassName() {
         return mDeclClass;
     }
 
     /**
      * Gets the type name.  Examples: "Ljava/lang/String;", "[I".
-     * @return type name
      */
     public String getTypeName() {
         return mFieldType;
@@ -50,11 +46,14 @@ public class FieldRef implements HasDeclaringClass {
 
     /**
      * Gets the field name.
-     * @return field name
      */
     public String getName() {
         return mFieldName;
     }
+
+    /*
+     * BEGIN MODIFICATIONS
+     */
 
     @Override
     public boolean equals(Object obj) {
@@ -73,4 +72,8 @@ public class FieldRef implements HasDeclaringClass {
                 ^ mFieldName.hashCode()
                 ^ mFieldType.hashCode();
     }
+
+    /*
+     * END MODIFICATIONS
+     */
 }
