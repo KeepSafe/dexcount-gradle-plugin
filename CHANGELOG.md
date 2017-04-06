@@ -1,3 +1,7 @@
+0.6.4 (released 6 April 2017)
+---------
+* Update dexdeps to handle .dex format version 037 (#158)
+
 0.6.3 (released π 2017)
 ---------
 * Add maxMethodCount option to fail builds if the count is exceeded (#152)
