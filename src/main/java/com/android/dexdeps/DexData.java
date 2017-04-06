@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 The Android Open Source Project
- * Copyright (C) 2015-2016 KeepSafe Software
+ * Copyright (C) 2015-2017 Keepsafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.android.dexdeps;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -39,7 +40,6 @@ public class DexData {
 
     /**
      * Constructs a new DexData for this file.
-     * @param raf file to get dexdata from
      */
     public DexData(RandomAccessFile raf) {
         mDexFile = raf;
@@ -66,12 +66,10 @@ public class DexData {
 
     /**
      * Verifies the given magic number.
-     * @param magic number
-     * @return true if valie
      */
     private static boolean verifyMagic(byte[] magic) {
-        return Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC) ||
-            Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_API_13);
+        return Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_v035) ||
+            Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_v037);
     }
 
     /**
@@ -209,6 +207,7 @@ public class DexData {
 
             if (offset == 0) {
                 protoId.types = new int[0];
+                continue;
             } else {
                 seek(offset);
                 int size = readInt();       // #of entries in list
@@ -329,8 +328,6 @@ public class DexData {
     /**
      * Returns an array of method argument type strings, given an index
      * into the proto_ids table.
-     * @param idx index of prototype IDs
-     * @return array of method type strings
      */
     private String[] argArrayFromProtoIndex(int idx) {
         ProtoIdItem protoId = mProtoIds[idx];
@@ -346,8 +343,6 @@ public class DexData {
     /**
      * Returns a string representing the method's return type, given an
      * index into the proto_ids table.
-     * @param idx index of prototype IDs
-     * @return array of method type strings
      */
     private String returnTypeFromProtoIndex(int idx) {
         ProtoIdItem protoId = mProtoIds[idx];
@@ -359,7 +354,6 @@ public class DexData {
      * correspond to classes in the DEX file.  Each class reference has
      * a list of the referenced fields and methods associated with
      * that class.
-     * @return external class references
      */
     public ClassRef[] getExternalReferences() {
         // create a sparse array of ClassRef that parallels mTypeIds
@@ -395,7 +389,6 @@ public class DexData {
     /**
      * Runs through the list of field references, inserting external
      * references into the appropriate ClassRef.
-     * @param sparseRefs class refs
      */
     private void addExternalFieldReferences(ClassRef[] sparseRefs) {
         for (int i = 0; i < mFieldIds.length; i++) {
@@ -413,7 +406,6 @@ public class DexData {
     /**
      * Runs through the list of method references, inserting external
      * references into the appropriate ClassRef.
-     * @param sparseRefs class refs
      */
     private void addExternalMethodReferences(ClassRef[] sparseRefs) {
         for (int i = 0; i < mMethodIds.length; i++) {
@@ -428,6 +420,10 @@ public class DexData {
             }
         }
     }
+
+    /*
+     * BEGIN MODIFIED SECTION
+     */
 
     /**
      * Returns the list of all method references.
@@ -457,6 +453,11 @@ public class DexData {
         }
         return fieldRefs;
     }
+
+    /*
+     * END MODIFIED SECTION
+     */
+
 
 
     /*
@@ -577,10 +578,16 @@ public class DexData {
         public int classDefsSize, classDefsOff;
 
         /* expected magic values */
-        public static final byte[] DEX_FILE_MAGIC = {
-            0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x36, 0x00 };
-        public static final byte[] DEX_FILE_MAGIC_API_13 = {
-            0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00 };
+        public static final byte[] DEX_FILE_MAGIC_v035 =
+            "dex\n035\0".getBytes(StandardCharsets.US_ASCII);
+
+        // Dex version 036 skipped because of an old dalvik bug on some versions
+        // of android where dex files with that version number would erroneously
+        // be accepted and run. See: art/runtime/dex_file.cc
+
+        // V037 was introduced in API LEVEL 24
+        public static final byte[] DEX_FILE_MAGIC_v037 =
+            "dex\n037\0".getBytes(StandardCharsets.US_ASCII);
         public static final int ENDIAN_CONSTANT = 0x12345678;
         public static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
     }

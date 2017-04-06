@@ -25,7 +25,6 @@ public class ClassRef {
 
     /**
      * Initializes a new class reference.
-     * @param className name of class
      */
     public ClassRef(String className) {
         mClassName = className;
@@ -35,14 +34,13 @@ public class ClassRef {
 
     /**
      * Adds the field to the field list.
-     * @param fref field reference
      */
     public void addField(FieldRef fref) {
         mFieldRefs.add(fref);
     }
 
     /**
-     * @return Returns the field list as an array.
+     * Returns the field list as an array.
      */
     public FieldRef[] getFieldArray() {
         return mFieldRefs.toArray(new FieldRef[mFieldRefs.size()]);
@@ -50,14 +48,13 @@ public class ClassRef {
 
     /**
      * Adds the method to the method list.
-     * @param mref method reference
      */
     public void addMethod(MethodRef mref) {
         mMethodRefs.add(mref);
     }
 
     /**
-     * @return Returns the method list as an array.
+     * Returns the method list as an array.
      */
     public MethodRef[] getMethodArray() {
         return mMethodRefs.toArray(new MethodRef[mMethodRefs.size()]);
@@ -65,7 +62,6 @@ public class ClassRef {
 
     /**
      * Gets the class name.
-     * @return class name
      */
     public String getName() {
         return mClassName;
