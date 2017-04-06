@@ -17,7 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DexFileSpec extends Specification {
@@ -25,8 +25,7 @@ final class DexFileSpec extends Specification {
 
     def "test AAR dexcount"() {
         given:
-        def aarFile = File.createTempFile("test", ".aar")
-        aarFile.deleteOnExit()
+        def aarFile = temporaryFolder.newFile("test.aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
             IOUtil.drainToFile(input, aarFile)
@@ -42,7 +41,7 @@ final class DexFileSpec extends Specification {
         dexFiles[0].fieldRefs.size() == 436
     }
 
-    def "test APK build with tools v24"() {
+    def "test APK built with tools v24"() {
         given:
         def apk = temporaryFolder.newFile("app-debug-tools-v24.apk")
 
