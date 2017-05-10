@@ -75,15 +75,18 @@ final class DexFile {
 
     static List<DexFile> extractDexFromAar(File file, int dxTimeoutSecs) {
         // unzip classes.jar from the AAR
-        def zipfile = new ZipFile(file)
-        def entries = Collections.list(zipfile.entries())
-        def jarFile = entries.find { it.name.matches("classes.jar") }
-        def tempClasses = File.createTempFile("classes", ".jar")
-        tempClasses.deleteOnExit()
+        def tempClasses = new ZipFile(file).withCloseable { zipfile ->
+            def entries = Collections.list(zipfile.entries())
+            def jarFile = entries.find { it.name.matches("classes.jar") }
+            def tempClasses = File.createTempFile("classes", ".jar")
+            tempClasses.deleteOnExit()
 
-        zipfile.getInputStream(jarFile).withStream { input ->
-            IOUtil.drainToFile(input, tempClasses)
+            zipfile.getInputStream(jarFile).withStream { input ->
+                IOUtil.drainToFile(input, tempClasses)
+            }
+            return tempClasses
         }
+
         // convert it to DEX format by using the Android dx tool
         def androidSdkHome = DexMethodCountPlugin.sdkLocation
         if (androidSdkHome == null) {
@@ -159,26 +162,27 @@ final class DexFile {
      * @throws ZipException if {@code file} is not a zip file.
      */
     static List<DexFile> extractDexFromZip(File file) {
-        def zipfile = new ZipFile(file)
-        def entries = Collections.list(zipfile.entries())
-        def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
+        return new ZipFile(file).withCloseable { zipfile ->
+            def entries = Collections.list(zipfile.entries())
+            def dexEntries = entries.findAll { it.name.matches("classes.*\\.dex") }
 
-        def instantRunDexFiles = extractIncrementalDexFiles(zipfile, entries)
+            def instantRunDexFiles = extractIncrementalDexFiles(zipfile, entries)
 
-        def mainDexFiles = dexEntries.collect { entry ->
-            def temp = File.createTempFile("dexcount", ".dex")
-            temp.deleteOnExit()
+            def mainDexFiles = dexEntries.collect { entry ->
+                def temp = File.createTempFile("dexcount", ".dex")
+                temp.deleteOnExit()
 
-            zipfile.getInputStream(entry).withStream { input ->
-                IOUtil.drainToFile(input, temp)
+                zipfile.getInputStream(entry).withStream { input ->
+                    IOUtil.drainToFile(input, temp)
+                }
+
+                return new DexFile(temp, true)
             }
 
-            return new DexFile(temp, true)
+            mainDexFiles.addAll(instantRunDexFiles)
+
+            return mainDexFiles
         }
-
-        mainDexFiles.addAll(instantRunDexFiles)
-
-        return mainDexFiles
     }
 
     /**
@@ -204,19 +208,20 @@ final class DexFile {
             IOUtil.drainToFile(input, instantRunFile)
         }
 
-        def instantRunZip = new ZipFile(instantRunFile)
-        def entries = Collections.list(instantRunZip.entries())
-        def dexEntries = entries.findAll { it.name.endsWith(".dex") }
+        return new ZipFile(instantRunFile).withCloseable { instantRunZip ->
+            def entries = Collections.list(instantRunZip.entries())
+            def dexEntries = entries.findAll { it.name.endsWith(".dex") }
 
-        return dexEntries.collect { entry ->
-            def temp = File.createTempFile("dexcount", ".dex")
-            temp.deleteOnExit()
+            return dexEntries.collect { entry ->
+                def temp = File.createTempFile("dexcount", ".dex")
+                temp.deleteOnExit()
 
-            instantRunZip.getInputStream(entry).withStream { input ->
-                IOUtil.drainToFile(input, temp)
+                instantRunZip.getInputStream(entry).withStream { input ->
+                    IOUtil.drainToFile(input, temp)
+                }
+
+                return new DexFile(temp, true, true)
             }
-
-            return new DexFile(temp, true, true)
         }
     }
 
