@@ -12,6 +12,8 @@ A Gradle plugin to report the number of method references in your APK on every b
 
 This helps you keep tabs on the growth of your app, with an eye to staying under the 65,536 method-reference limit, and avoiding the headache of eliminating methods or enabling multidex.
 
+NOTE: `dexcount` does not currently work with the new Android Build Tools as of `3.0.0-alpha1`; it has removed APIs that we depend on and, while replacements have been promised, none have yet been provided.
+
 ## Usage
 
 in `app/build.gradle`
