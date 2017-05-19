@@ -16,94 +16,96 @@
 
 package com.getkeepsafe.dexcount
 
+import java.lang.IllegalArgumentException
+import java.util.Locale
+
 /**
  * Configuration properties for {@link DexMethodCountTask} instances.
  */
-class DexMethodCountExtension {
+open class DexMethodCountExtension {
     /**
      * The format of the method count output, either "list", "tree", "json", or "yaml".
      */
-    OutputFormat format = OutputFormat.LIST
+    var format: OutputFormat = OutputFormat.LIST
+        set(value) {
+            if (value is OutputFormat) {
+                field = value
+            } else {
+                try {
+                    val formatName = "$value".toUpperCase(Locale.US)
+                    field = OutputFormat.valueOf(formatName)
+                } catch (ignored: IllegalArgumentException) {
+                    throw IllegalArgumentException("Unrecognized output format '$value'")
+                }
+            }
+        }
 
     /**
      * When true, individual classes will be include in the package list - otherwise, only packages
      * are included.
      */
-    boolean includeClasses
+    var includeClasses: Boolean = false
 
     /**
      * When true, the number of fields in a package or class will be included in the printed output.
      */
-    boolean includeFieldCount = true
+    var includeFieldCount: Boolean = true
 
     /**
      * When true, the total number of methods in the application will be included in the printed
      * output.
      */
-    boolean includeTotalMethodCount = false
+    var includeTotalMethodCount: Boolean = false
 
     /**
      * When true, packages will be sorted in descending order by the number of methods they contain.
      */
-    boolean orderByMethodCount
+    var orderByMethodCount: Boolean = false
 
     /**
      * When true, the output file will also be printed to the build's standard output.
      */
-    boolean verbose
+    var verbose: Boolean = false
 
     /**
      * Sets the max number of package segments in the output - i.e. when set to 2, counts stop at
      * com.google, when set to 3 you get com.google.android, etc. "Unlimited" by default.
      */
-    int maxTreeDepth = Integer.MAX_VALUE
+    var maxTreeDepth: Int = Integer.MAX_VALUE
 
     /**
      * When true, Team City integration strings will be printed.
      */
-    boolean teamCityIntegration = false
+    var teamCityIntegration: Boolean = false
 
     /**
      * When true, count methods even for Instant Run builds. False by default.
      */
-    boolean enableForInstantRun = false
+    var enableForInstantRun: Boolean = false
 
     /**
      * A string which, if specified, will be added to TeamCity stat names. Null by default.
      */
-    String teamCitySlug = null
+    var teamCitySlug: String? = null
 
     /**
      * When false, does not run count method during assemble task.
      */
-    boolean runOnEachAssemble = true
+    var runOnEachAssemble: Boolean = true
 
     /**
      * When set, the build will fail when the APK/AAR has more methods than the max. 0 by default.
      */
-    int maxMethodCount = -1
+    var maxMethodCount: Int = -1
 
     /**
      * If the user has passed '--stacktrace' or '--full-stacktrace', assume that they are trying to
      * report a dexcount bug. Help us help them out by printing the current plugin title and version.
      */
-    boolean printVersion
+    var printVersion: Boolean = false
 
     /**
      * Timeout when running Dx in seconds.
      */
-    int dxTimeoutSec = 60
-    
-    void setFormat(Object format) {
-        if (format instanceof OutputFormat) {
-            this.format = (OutputFormat) format
-        } else {
-            try {
-                def formatName = "$format".toUpperCase(Locale.US)
-                this.format = OutputFormat.valueOf(formatName)
-            } catch (IllegalArgumentException ignored) {
-                throw new IllegalArgumentException("Unrecognized output format '$format'")
-            }
-        }
-    }
+    var dxTimeoutSec: Int = 60
 }
