@@ -18,6 +18,7 @@ package com.getkeepsafe.dexcount
 
 final class PrintOptions {
     def includeClasses = false
+    def includeClassCount = false
     def includeMethodCount = true
     def includeFieldCount = false
     def includeTotalMethodCount = false

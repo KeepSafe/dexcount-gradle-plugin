@@ -32,6 +32,11 @@ class DexMethodCountExtension {
     boolean includeClasses
 
     /**
+     * When true, the number of classes in a package or class will be included in the printed output.
+     */
+    boolean includeClassCount = false
+
+    /**
      * When true, the number of fields in a package or class will be included in the printed output.
      */
     boolean includeFieldCount = true

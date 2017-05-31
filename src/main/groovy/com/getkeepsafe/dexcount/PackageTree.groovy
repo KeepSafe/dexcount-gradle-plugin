@@ -29,6 +29,10 @@ import java.nio.CharBuffer
 
 @CompileStatic  // necessary to avoid JDK verifier bugs (issues #11 and #12)
 class PackageTree {
+    // A cached sum of classes. -1 means that there is no cached value.
+    // Set by `getClassCount()`, and invalidated by adding new nodes.
+    private int classTotal_ = -1
+
     // A cached sum of this node and all children's method ref counts.
     // -1 means that there is no cached value.  Set by `getMethodCount()`, and
     // invalidated by adding new nodes.
@@ -105,6 +109,18 @@ class PackageTree {
         }
     }
 
+    int getClassCount() {
+        if (classTotal_ == -1) {
+            if (isClass_) {
+                classTotal_ = 1
+            } else {
+                classTotal_ = (int) children_.values().inject(0) {
+                    int sum, PackageTree child -> sum + child.getClassCount() }
+            }
+        }
+        return classTotal_
+    }
+
     int getMethodCount() {
         if (methodTotal_ == -1) {
             methodTotal_ = (int) children_.values().inject(methods_.size()) {
@@ -159,6 +175,10 @@ class PackageTree {
     }
 
     private static printPackageListHeader(Appendable out, PrintOptions opts) {
+        if (opts.includeClassCount) {
+            out.append(String.format("%-8s ", "classes"))
+        }
+
         if (opts.includeMethodCount) {
             out.append(String.format("%-8s ", "methods"))
         }
@@ -182,6 +202,10 @@ class PackageTree {
         sb.append(name_)
 
         if (isPrintable(opts)) {
+            if (opts.includeClassCount) {
+                out.append(String.format("%-8d ", getClassCount()))
+            }
+
             if (opts.includeMethodCount) {
                 out.append(String.format("%-8d ", getMethodCount()))
             }
@@ -211,11 +235,21 @@ class PackageTree {
         indent.times { out.append("  ") }
         out.append(name_)
 
-        if (opts.includeFieldCount || opts.includeMethodCount) {
+        if (opts.includeFieldCount || opts.includeMethodCount || opts.includeClassCount) {
             out.append(" (")
 
             def appended = false
+            if (opts.includeClassCount) {
+                out.append(String.valueOf(getClassCount()))
+                out.append(" ")
+                out.append(pluralizedClasses(getClassCount()))
+                appended = true
+            }
+
             if (opts.includeMethodCount) {
+                if (appended) {
+                    out.append(", ")
+                }
                 out.append(String.valueOf(getMethodCount()))
                 out.append(" ")
                 out.append(pluralizedMethods(getMethodCount()))
@@ -273,6 +307,10 @@ class PackageTree {
 
         json.name("name").value(name_)
 
+        if (opts.includeClassCount) {
+            json.name("classes").value(classCount)
+        }
+
         if (opts.includeMethodCount) {
             json.name("methods").value(methodCount)
         }
@@ -293,6 +331,10 @@ class PackageTree {
 
     void printYaml(Appendable out, PrintOptions opts) {
         out.append("---\n")
+
+        if (opts.includeClassCount) {
+            out.append("classes: " + classCount + "\n")
+        }
 
         if (opts.includeMethodCount) {
             out.append("methods: " + methodCount + "\n")
@@ -319,6 +361,12 @@ class PackageTree {
         out.append("\n")
 
         indentText += "  "
+
+        if (opts.includeClassCount) {
+            out.append(indentText)
+            out.append("classes: " + classCount)
+            out.append("\n")
+        }
 
         if (opts.includeMethodCount) {
             out.append(indentText)
@@ -358,6 +406,10 @@ class PackageTree {
 
     private boolean isPrintable(PrintOptions opts) {
         return opts.includeClasses || !isClass_
+    }
+
+    private static String pluralizedClasses(int n) {
+        return n == 1 ? "class" : "classes"
     }
 
     private static String pluralizedMethods(int n) {
