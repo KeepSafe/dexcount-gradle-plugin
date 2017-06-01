@@ -139,6 +139,7 @@ class DexMethodCountTask extends DefaultTask {
                     prefix = "${prefix}_${slug}"
                 }
 
+                printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_ClassCount", tree.classCount)
                 printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_MethodCount", tree.methodCount)
                 printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_FieldCount", tree.fieldCount)
             }
@@ -263,6 +264,7 @@ class DexMethodCountTask extends DefaultTask {
 
     def getPrintOptions() {
         return new PrintOptions(
+                includeClassCount: config.includeClassCount,
                 includeMethodCount: true,
                 includeFieldCount: config.includeFieldCount,
                 includeTotalMethodCount: config.includeTotalMethodCount,

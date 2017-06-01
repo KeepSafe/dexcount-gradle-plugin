@@ -279,6 +279,46 @@ Total methods: 5
         trimmed == expected
     }
 
+    def "package list can include class count"() {
+        given:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.printHeader = true
+        opts.includeClassCount = true
+        opts.includeMethodCount = true
+        opts.includeFieldCount = true
+
+        when:
+        tree.addMethodRef(methodRef("Lcom/foo/Class1;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Class1;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Class2;"))
+        tree.addMethodRef(methodRef("Lorg/whatever/Foo;"))
+        tree.addMethodRef(methodRef("Lorg/foo/Whatever;"))
+        tree.addFieldRef(fieldRef("Lcom/foo/Class1;"))
+        tree.addFieldRef(fieldRef("Lcom/foo/Class2;"))
+        tree.addFieldRef(fieldRef("Lcom/foo/Class2;"))
+        tree.addFieldRef(fieldRef("Lx/y/Z;"))
+        tree.addFieldRef(fieldRef("Lx/y/W;"))
+
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        def expected = """
+classes  methods  fields   package/class name
+2        3        3        com
+2        3        3        com.foo
+2        2        0        org
+1        1        0        org.foo
+1        1        0        org.whatever
+2        0        2        x
+2        0        2        x.y
+""".trim()
+
+        trimmed == expected
+    }
+
     def "package list can be depth-limited"() {
         given:
         def tree = new PackageTree()
@@ -349,6 +389,53 @@ counts:
       - name: whatever
         methods: 1
         children: []""".trim()
+
+        trimmed == expected
+    }
+
+    def "can format YAML with only class counts"() {
+        given:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.includeTotalMethodCount = true
+        opts.includeClassCount = true
+        opts.includeMethodCount = false
+
+        tree.addFieldRef(fieldRef("Lorg/whatever/Foo;"))
+        tree.addMethodRef(methodRef("Lorg/whatever/Foo;"))
+        tree.addMethodRef(methodRef("Lorg/foo/Whatever;"))
+        tree.addFieldRef(fieldRef("Lx/y/z/XYZ;"))
+        tree.addFieldRef(fieldRef("Lx/y/z/XYZ;"))
+        tree.addMethodRef(methodRef("Lx/y/z/XYZ;"))
+
+        when:
+        tree.printYaml(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        def expected = """
+---
+classes: 3
+counts:
+  - name: org
+    classes: 2
+    children:
+      - name: foo
+        classes: 1
+        children: []
+      - name: whatever
+        classes: 1
+        children: []
+  - name: x
+    classes: 1
+    children:
+      - name: y
+        classes: 1
+        children:
+          - name: z
+            classes: 1
+            children: []""".trim()
 
         trimmed == expected
     }
@@ -430,6 +517,64 @@ counts:
   - name: org
     fields: 2
     children: []""".trim()
+
+        trimmed == expected
+    }
+
+
+    def "can format JSON with only class counts"() {
+        given:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.includeTotalMethodCount = true
+        opts.includeClassCount = true
+        opts.includeMethodCount = false
+
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addFieldRef(fieldRef("Lx/y/z/XYZ;"))
+
+        when:
+        tree.printJson(sb, opts)
+
+        then:
+        def trimmed = sb.toString().trim()
+        def expected = """
+{
+  "name": "",
+  "classes": 3,
+  "children": [
+    {
+      "name": "com",
+      "classes": 2,
+      "children": [
+        {
+          "name": "foo",
+          "classes": 2,
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "x",
+      "classes": 1,
+      "children": [
+        {
+          "name": "y",
+          "classes": 1,
+          "children": [
+            {
+              "name": "z",
+              "classes": 1,
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}""".trim()
 
         trimmed == expected
     }
