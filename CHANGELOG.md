@@ -1,3 +1,9 @@
+0.7.0 (unreleased)
+---------
+* Add support for Android Gradle Plugin 3.0.0
+* Add class counts (#164)
+* Fix zip-file-handle leaks (#160)
+
 0.6.4 (released 6 April 2017)
 ---------
 * Update dexdeps to handle .dex format version 037 (#158)
