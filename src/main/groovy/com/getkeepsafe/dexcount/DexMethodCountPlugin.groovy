@@ -16,12 +16,16 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.gradle.api.ApkVariantOutput
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 
 class DexMethodCountPlugin implements Plugin<Project> {
     static File sdkLocation = SdkResolver.resolve(null)
@@ -75,12 +79,48 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
         variants.all { variant ->
             variant.outputs.each { output ->
-                applyToVariantOutput(project, variant, output)
+                def ext = project.extensions['dexcount'] as DexMethodCountExtension
+
+                Task parentTask = null
+                Task dexcountTask = null
+
+                if (output instanceof ApkVariantOutput) {
+                    def apkOutput = (ApkVariantOutput) output
+                    parentTask = apkOutput.packageApplication
+                    dexcountTask = createDexCountTask(project, ext, variant, output) { task ->
+                        try {
+                            // BuildTools >= 3.0.0
+                            task.inputDirectory = apkOutput.packageApplication.outputDirectory
+                        } catch (MissingPropertyException ignored) {
+                            // Build Tools < 3.0.0
+                            task.apkOrDexFile = apkOutput.packageApplication.outputFile
+                        }
+                    }
+                } else {
+                    project.logger.error("dexcount: Don't know how to handle variant ${variant.name} of type ${variant.class}, skipping")
+                }
+
+                if (dexcountTask != null && parentTask != null) {
+                    // Dexcount tasks require that assemble has been run...
+                    dexcountTask.dependsOn(parentTask)
+                    dexcountTask.mustRunAfter(parentTask)
+
+                    // But assemble should always imply that dexcount runs, unless configured not to.
+                    def runOnEachAssemble = ext.runOnEachAssemble
+                    if (runOnEachAssemble) {
+                        parentTask.finalizedBy(dexcountTask)
+                    }
+                }
             }
         }
     }
 
-    static applyToVariantOutput(Project project, BaseVariant variant, BaseVariantOutput output) {
+    static Task createDexCountTask(
+            Project project,
+            DexMethodCountExtension ext,
+            BaseVariant variant,
+            BaseVariantOutput output,
+            @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyOutputConfiguration) {
         def slug = variant.name.capitalize()
         def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
         if (variant.outputs.size() > 1) {
@@ -88,12 +128,11 @@ class DexMethodCountPlugin implements Plugin<Project> {
             path += "/${output.name}"
         }
 
-        def ext = project.extensions['dexcount'] as DexMethodCountExtension
         def format = ext.format
 
         def isInstantRun = project.properties["android.optional.compilation"] == "INSTANT_DEV"
         if (isInstantRun && !ext.enableForInstantRun) {
-            return
+            return null
         }
 
         // If the user has passed '--stacktrace' or '--full-stacktrace', assume
@@ -106,21 +145,15 @@ class DexMethodCountPlugin implements Plugin<Project> {
         def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
         task.description = "Outputs dex method count for ${variant.name}."
         task.group = 'Reporting'
-        task.apkOrDex = output
+        task.variantOutputName = output.name
         task.mappingFile = variant.mappingFile
         task.outputFile = project.file(path + format.extension)
         task.summaryFile = project.file(path + '.csv')
         task.chartDir = project.file(path + 'Chart')
         task.config = ext
 
-        // Dexcount tasks require that assemble has been run...
-        task.dependsOn(variant.assemble)
-        task.mustRunAfter(variant.assemble)
+        applyOutputConfiguration(task)
 
-        // But assemble should always imply that dexcount runs, unless configured not to.
-        def runOnEachAssemble = ext.runOnEachAssemble
-        if (runOnEachAssemble) {
-            variant.assemble.finalizedBy(task)
-        }
+        return task
     }
 }
