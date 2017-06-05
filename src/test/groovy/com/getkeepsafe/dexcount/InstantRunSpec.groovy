@@ -38,8 +38,8 @@ final class InstantRunSpec extends Specification {
         def project = ProjectBuilder.builder().build()
         def task = project.tasks.create('countDexMethods', DexMethodCountTask)
         task.config = new DexMethodCountExtension()
-        task.apkOrDex = Mock(BaseVariantOutput)
-        task.apkOrDex.outputFile >> apkFile
+        task.variantOutputName = "instantRunSpec"
+        task.apkOrDexFile = apkFile
 
         when:
         task.generatePackageTree()

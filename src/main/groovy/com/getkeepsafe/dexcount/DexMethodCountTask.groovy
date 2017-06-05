@@ -17,14 +17,15 @@
 package com.getkeepsafe.dexcount
 
 import com.android.annotations.Nullable
-import com.android.annotations.VisibleForTesting
-import com.android.build.gradle.api.BaseVariantOutput
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 class DexMethodCountTask extends DefaultTask {
@@ -36,7 +37,15 @@ class DexMethodCountTask extends DefaultTask {
 
     PackageTree tree
 
-    BaseVariantOutput apkOrDex
+    String variantOutputName
+
+    @InputFile
+    @Optional
+    File apkOrDexFile
+
+    @InputDirectory
+    @Optional
+    File inputDirectory
 
     @Nullable
     File mappingFile
@@ -96,7 +105,7 @@ class DexMethodCountTask extends DefaultTask {
      * @return
      */
     def printSummary() {
-        def filename = apkOrDex.outputFile.name
+        def filename = fileToCount().name
 
         if (isInstantRun) {
             withStyledOutput() { out ->
@@ -139,9 +148,9 @@ class DexMethodCountTask extends DefaultTask {
                     prefix = "${prefix}_${slug}"
                 }
 
-                printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_ClassCount", tree.classCount)
-                printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_MethodCount", tree.methodCount)
-                printTeamCityStatisticValue(out, "${prefix}_${apkOrDex.name}_FieldCount", tree.fieldCount)
+                printTeamCityStatisticValue(out, "${prefix}_${variantOutputName}_ClassCount", tree.classCount)
+                printTeamCityStatisticValue(out, "${prefix}_${variantOutputName}_MethodCount", tree.methodCount)
+                printTeamCityStatisticValue(out, "${prefix}_${variantOutputName}_FieldCount", tree.fieldCount)
             }
         }
     }
@@ -202,6 +211,10 @@ class DexMethodCountTask extends DefaultTask {
             out.log(level, "counting:   ${treegenTime - ioTime} ms")
             out.log(level, "printing:   ${outputTime - treegenTime} ms")
             out.log(level, "total:      ${outputTime - startTime} ms")
+            out.log(level, "")
+            out.log(level, "Task inputs:")
+            out.log(level, "inputDir:   $inputDirectory")
+            out.log(level, "apkOrDex:   $apkOrDexFile")
         }
     }
 
@@ -234,13 +247,19 @@ class DexMethodCountTask extends DefaultTask {
      * counts of the current dex/apk file.
      */
     def generatePackageTree() {
+        def file = fileToCount()
+
+        if (file == null) {
+            throw new AssertionError("file is null: inputDirectory=$inputDirectory apkOrDexFile=$apkOrDexFile")
+        }
+
         startTime = System.currentTimeMillis()
 
         // Create a de-obfuscator based on the current Proguard mapping file.
         // If none is given, we'll get a default mapping.
         def deobs = getDeobfuscator()
 
-        def dataList = DexFile.extractDexData(apkOrDex.outputFile, config.dxTimeoutSec)
+        def dataList = DexFile.extractDexData(file, config.dxTimeoutSec)
 
         ioTime = System.currentTimeMillis()
         try {
@@ -287,7 +306,16 @@ class DexMethodCountTask extends DefaultTask {
     }
 
     def checkIfApkExists() {
-        return apkOrDex != null && apkOrDex.outputFile != null && apkOrDex.outputFile.exists()
+        def file = fileToCount()
+        return file != null && file.exists()
+    }
+
+    def fileToCount() {
+        if (inputDirectory != null) {
+            return inputDirectory.listFiles(new ApkFilenameFilter()).first()
+        } else {
+            return apkOrDexFile
+        }
     }
 
     /**
@@ -296,6 +324,15 @@ class DexMethodCountTask extends DefaultTask {
     def failBuildMaxMethods() {
         if (config.maxMethodCount > 0 && tree.methodCount > config.maxMethodCount) {
             throw new GradleException(String.format("The current APK has %d methods, the current max is: %d.", tree.methodCount, config.maxMethodCount))
+        }
+    }
+
+    // Tried to use a closure for this, but Groovy cannot decide between java.io.FilenameFilter
+    // and java.io.FileFilter.  If we have to make it ugly, might as well make it efficient.
+    static class ApkFilenameFilter implements FilenameFilter {
+        @Override
+        boolean accept(File dir, String name) {
+            return name != null && name.endsWith(".apk")
         }
     }
 }
