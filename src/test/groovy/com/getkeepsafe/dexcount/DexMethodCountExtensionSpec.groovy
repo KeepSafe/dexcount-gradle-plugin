@@ -35,6 +35,15 @@ final class DexMethodCountExtensionSpec extends Specification {
     def "setup"() {
         project = ProjectBuilder.builder().build()
 
+        def manifestFile = project.file('src/main/AndroidManifest.xml')
+        manifestFile.parentFile.mkdirs()
+        manifestFile.write("""<?xml version="1.0" encoding="utf-8"?>
+          <manifest package="com.getkeepsafe.dexcount.integration"
+                    xmlns:android="http://schemas.android.com/apk/res/android">
+              <application/>
+          </manifest>
+        """)
+
         apkFile = tempFolder.newFile("tiles.apk")
         def apkResource = getClass().getResourceAsStream("/tiles.apk")
         apkResource.withStream { input ->
@@ -64,7 +73,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         // Override APK file
         DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
         task.variantOutputName = "extensionSpec"
-        task.apkOrDexFile = apkFile
+        task.inputDirectory = apkFile.parentFile
         task.execute()
 
         then:
@@ -93,7 +102,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         // Override APK file
         DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
         task.variantOutputName = "extensionSpec"
-        task.apkOrDexFile = apkFile
+        task.inputDirectory = apkFile.parentFile
         task.execute()
 
         then:

@@ -1,6 +1,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.build.gradle.api.BaseVariantOutput
+import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
@@ -13,10 +14,21 @@ final class DexMethodCountPluginSpec extends Specification {
   final static COMPILE_SDK_VERSION = 25
   final static BUILD_TOOLS_VERSION = "25.0.2"
   final static APPLICATION_ID = "com.example"
-  def project
+  final static MANIFEST_FILE_TEXT = """<?xml version="1.0" encoding="utf-8"?>
+      <manifest package="com.getkeepsafe.dexcount.integration"
+                xmlns:android="http://schemas.android.com/apk/res/android">
+          <application/>
+      </manifest>
+  """
+
+  Project project
+  File manifestFile
 
   def "setup"() {
     project = ProjectBuilder.builder().build()
+    manifestFile = new File(project.projectDir, "src/main/AndroidManifest.xml")
+    manifestFile.parentFile.mkdirs()
+    manifestFile.write(MANIFEST_FILE_TEXT)
   }
 
   def "unsupported project project"() {
@@ -106,9 +118,11 @@ final class DexMethodCountPluginSpec extends Specification {
         release {}
       }
 
+      flavorDimensions "flav"
+
       productFlavors {
-        flavor1 {}
-        flavor2 {}
+        flavor1 { dimension "flav" }
+        flavor2 { dimension "flav" }
       }
     }
 
@@ -184,7 +198,7 @@ final class DexMethodCountPluginSpec extends Specification {
     // Override APK file
     DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
     task.variantOutputName = "pluginSpec"
-    task.apkOrDexFile = apkFile
+    task.inputDirectory = apkFile.parentFile
     task.execute()
 
     then:
