@@ -36,6 +36,7 @@ buildscript {
 
 repositories {
     maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
+    maven { url "https://maven.google.com" }
 }
 
 jar {
@@ -48,7 +49,7 @@ jar {
 
 dependencies {
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:2.3.0'
+    compile 'com.android.tools.build:gradle:3.0.0-alpha3'
     compile 'com.google.code.gson:gson:2.6.2'
 
     testCompile 'junit:junit:4.12'
