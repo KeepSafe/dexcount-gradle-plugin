@@ -36,6 +36,11 @@ class DexMethodCountPlugin implements Plugin<Project> {
             project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
         }
 
+        if (isInstantRun(project)) {
+            project.logger.info("Instant Run detected; disabling dexcount")
+            return
+        }
+
         sdkLocation = SdkResolver.resolve(project)
 
         if (project.plugins.hasPlugin('com.android.application')) {
@@ -74,6 +79,12 @@ class DexMethodCountPlugin implements Plugin<Project> {
         }
     }
 
+    static boolean isInstantRun(Project project) {
+        def compilationOptionString = project.properties["android.optional.compilation"] ?: ""
+        def compilationOptionList = compilationOptionString.split(",")
+        return compilationOptionList.any { it == "INSTANT_DEV" }
+    }
+
     static applyAndroid(Project project, DomainObjectCollection<BaseVariant> variants) {
         project.extensions.create('dexcount', DexMethodCountExtension)
 
@@ -93,7 +104,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
                             task.inputDirectory = apkOutput.packageApplication.outputDirectory
                         } catch (MissingPropertyException ignored) {
                             // Build Tools < 3.0.0
-                            task.apkOrDexFile = apkOutput.packageApplication.outputFile
+                            task.inputFile = apkOutput.packageApplication.outputFile
                         }
                     }
                 } else {
@@ -129,11 +140,6 @@ class DexMethodCountPlugin implements Plugin<Project> {
         }
 
         def format = ext.format
-
-        def isInstantRun = project.properties["android.optional.compilation"] == "INSTANT_DEV"
-        if (isInstantRun && !ext.enableForInstantRun) {
-            return null
-        }
 
         // If the user has passed '--stacktrace' or '--full-stacktrace', assume
         // that they are trying to report a dexcount bug.  Help us help them out

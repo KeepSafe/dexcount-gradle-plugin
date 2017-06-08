@@ -95,7 +95,6 @@ dexcount {
     verbose = false
     maxTreeDepth = Integer.MAX_VALUE
     teamCityIntegration = false
-    enableForInstantRun = false
     teamCitySlug = null
     runOnEachAssemble = true
     maxMethodCount = 64000
@@ -112,7 +111,6 @@ Each flag controls some aspect of the printed output:
 - `verbose`: When true, the output file will also be printed to the build's standard output.
 - `maxTreeDepth`: Sets the max number of package segments in the output - i.e. when set to 2, counts stop at `com.google`, when set to 3 you get `com.google.android`, etc.  "Unlimited" by default.
 - `teamCityIntegration`: When true, Team City integration strings will be printed.
-- `enableForInstantRun`: When true, count methods even for Instant Run builds.  False by default.
 - `teamCitySlug`: A string which, if specified, will be added to TeamCity stat names.  Null by default.
 - `runOnEachAssemble`: When false, does not run count method during assemble task. True by default.
 - `maxMethodCount`: When set, the build will fail when the APK/AAR has more methods than the max. 0 by default.
@@ -135,9 +133,7 @@ If you have multiple products within one project using Dexcount, the default sta
 
 ## Note on Instant Run
 
-By default, `dexcount-gradle-plugin` does not apply to Instant Run builds in Android Studio.  Instant Run is implemented in such a way that it makes method counts very inaccurate: it adds generated code to your APK as well as disabling Proguard.  Additionally, method counting can take anywhere from half a second to several seconds.  A drop in the bucket for full builds, but Instant Run builds can take as little as three seconds, making `dexcount` relatively quite expensive.  For these reason, the plugin is disabled by default.
-
-If, *bearing in mind that counts will be wrong*, you still wish to count methods on Instant Run, setting `enableForInstantRun` in the plugin configuration will make that happen.
+`dexcount-gradle-plugin` does not count methods for Instant Run builds in Android Studio.  Instant Run is implemented in such a way that it makes method counts very inaccurate.  As of build-tools version 3.0.0, it is no longer possible to access the complete incrementally-built APK at all.  For these reasons, **Instant Run is not supported**.
 
 ## Snapshot Builds
 
@@ -167,14 +163,14 @@ GPG signing configuration.
 
 ## Minutia
 
-This plugin creates a task per output file, per variant, and configures each task to run after that variant's `assemble` task.  This means that if the `assemble` task does not run, no method count will be reported.  This also means that counts are done after Proguard is run, if minification is enabled.  Dexcount will use the resulting mapping file to de-obfuscate class and package names.
+This plugin creates a task per output, per variant, and configures each task to run after that variant's `package` task.  This means that if the `package` task does not run, no method count will be reported.  This also means that counts are done after Proguard is run, if minification is enabled.  Dexcount will use the resulting mapping file to de-obfuscate class and package names.
 
 ## Credits
 
 The Java code from the `com.android.dexdeps` package is sourced from the [Android source tree](https://android.googlesource.com/platform/dalvik.git/+/master/tools/dexdeps/).
 Inspired by Mihail Parparita's [`dex-method-counts`](https://github.com/mihaip/dex-method-counts) project, to whom much credit is due.
 
-Copyright 2015-2016 Keepsafe Software, Inc
+Copyright 2015-2017 Keepsafe Software, Inc
 
 [0]: https://wiki.jenkins-ci.org/display/JENKINS/Plot+Plugin
 [1]: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics

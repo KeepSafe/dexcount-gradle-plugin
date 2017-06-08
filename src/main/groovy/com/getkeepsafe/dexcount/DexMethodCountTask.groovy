@@ -39,10 +39,19 @@ class DexMethodCountTask extends DefaultTask {
 
     String variantOutputName
 
+    /**
+     * An APK, AAR, or .dex file.  Will be null for Android projects
+     * using build-tools version 3.0 and above.
+     */
     @InputFile
     @Optional
-    File apkOrDexFile
+    File inputFile
 
+    /**
+     * The output directory of the 'package' task; will contain an
+     * APK or an AAR.  Will be null for Android projects using
+     * build-tools versions before 3.0.
+     */
     @InputDirectory
     @Optional
     File inputDirectory
@@ -96,6 +105,8 @@ class DexMethodCountTask extends DefaultTask {
             withStyledOutput() { out ->
                 out.lifecycle("Dexcount name:    $projectName")
                 out.lifecycle("Dexcount version: $projectVersion")
+                out.debug(    "inputFile:        $inputFile")
+                out.debug(    "inputDirectory:   $inputDirectory")
             }
         }
     }
@@ -214,7 +225,7 @@ class DexMethodCountTask extends DefaultTask {
             out.log(level, "")
             out.log(level, "Task inputs:")
             out.log(level, "inputDir:   $inputDirectory")
-            out.log(level, "apkOrDex:   $apkOrDexFile")
+            out.log(level, "apkOrDex:   $inputFile")
         }
     }
 
@@ -250,7 +261,7 @@ class DexMethodCountTask extends DefaultTask {
         def file = fileToCount()
 
         if (file == null) {
-            throw new AssertionError("file is null: inputDirectory=$inputDirectory apkOrDexFile=$apkOrDexFile")
+            throw new AssertionError("file is null: inputDirectory=$inputDirectory inputFile=$inputFile")
         }
 
         startTime = System.currentTimeMillis()
@@ -312,9 +323,10 @@ class DexMethodCountTask extends DefaultTask {
 
     def fileToCount() {
         if (inputDirectory != null) {
-            return inputDirectory.listFiles(new ApkFilenameFilter()).first()
+            def fileList = inputDirectory.listFiles(new ApkFilenameFilter())
+            return fileList.length > 0 ? fileList[0] : null
         } else {
-            return apkOrDexFile
+            return inputFile
         }
     }
 
