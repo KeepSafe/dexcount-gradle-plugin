@@ -225,7 +225,7 @@ class DexMethodCountTask extends DefaultTask {
             out.log(level, "")
             out.log(level, "Task inputs:")
             out.log(level, "inputDir:   $inputDirectory")
-            out.log(level, "apkOrDex:   $inputFile")
+            out.log(level, "inputFile:  $inputFile")
         }
     }
 
