@@ -198,6 +198,7 @@ final class DexMethodCountPluginSpec extends Specification {
     // Override APK file
     DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
     task.variantOutputName = "pluginSpec"
+    task.inputFile = null // tests fail using Gradle Plugin 2.3.3 if this remains set
     task.inputDirectory = apkFile.parentFile
     task.execute()
 
