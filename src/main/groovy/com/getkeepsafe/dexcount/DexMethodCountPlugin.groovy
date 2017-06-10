@@ -16,9 +16,15 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.api.ApkVariantOutput
+import com.android.build.gradle.api.ApplicationVariant
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
+import com.android.build.gradle.api.LibraryVariant
+import com.android.build.gradle.api.TestVariant
+import com.android.builder.Version
+import com.android.repository.Revision
 import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
@@ -41,17 +47,26 @@ class DexMethodCountPlugin implements Plugin<Project> {
             return
         }
 
-        sdkLocation = SdkResolver.resolve(project)
-
-        if (project.plugins.hasPlugin('com.android.application')) {
-            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants)
-        } else if (project.plugins.hasPlugin('com.android.test')) {
-            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.applicationVariants)
-        } else if (project.plugins.hasPlugin('com.android.library')) {
-            applyAndroid(project, (DomainObjectCollection<BaseVariant>) project.android.libraryVariants)
-        } else {
-            throw new IllegalArgumentException('Dexcount plugin requires the Android plugin to be configured')
+        try {
+            Class.forName("com.android.builder.Version")
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("dexcount requires the Android plugin to be configured", e)
         }
+
+        def gradlePluginRevision = Revision.parseRevision(Version.ANDROID_GRADLE_PLUGIN_VERSION)
+        def threeOhRevision = Revision.parseRevision("3.0.0")
+
+        Provider provider
+
+        //noinspection ChangeToOperator
+        if (gradlePluginRevision.compareTo(threeOhRevision, Revision.PreviewComparison.IGNORE) >= 0) {
+            provider = new ThreeOhProvider(project)
+        } else {
+            provider = new LegacyProvider(project)
+        }
+
+        sdkLocation = SdkResolver.resolve(project)
+        provider.apply()
     }
 
     static boolean isAtLeastJavaEight() {
@@ -85,81 +100,160 @@ class DexMethodCountPlugin implements Plugin<Project> {
         return compilationOptionList.any { it == "INSTANT_DEV" }
     }
 
-    static applyAndroid(Project project, DomainObjectCollection<BaseVariant> variants) {
-        project.extensions.create('dexcount', DexMethodCountExtension)
+    abstract class Provider {
+        protected Project project
+        protected DexMethodCountExtension ext
 
-        variants.all { variant ->
-            variant.outputs.each { output ->
-                def ext = project.extensions['dexcount'] as DexMethodCountExtension
+        protected Provider(Project project) {
+            this.project = project
+            this.ext = project.extensions.create("dexcount", DexMethodCountExtension)
 
-                Task parentTask = null
-                Task dexcountTask = null
+            // If the user has passed '--stacktrace' or '--full-stacktrace', assume
+            // that they are trying to report a dexcount bug.  Help them help us out
+            // by printing the current plugin title and version.
+            if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
+                ext.printVersion = true
+            }
+        }
 
-                if (output instanceof ApkVariantOutput) {
-                    def apkOutput = (ApkVariantOutput) output
-                    parentTask = apkOutput.packageApplication
-                    dexcountTask = createDexCountTask(project, ext, variant, output) { task ->
-                        try {
-                            // BuildTools >= 3.0.0
-                            task.inputDirectory = apkOutput.packageApplication.outputDirectory
-                        } catch (MissingPropertyException ignored) {
-                            // Build Tools < 3.0.0
-                            task.inputFile = apkOutput.packageApplication.outputFile
-                        }
-                    }
+        void apply() {
+            DomainObjectCollection<BaseVariant> variants
+
+            if (project.plugins.hasPlugin('com.android.application')) {
+                variants = project.android.applicationVariants
+            } else if (project.plugins.hasPlugin('com.android.test')) {
+                variants = project.android.applicationVariants
+            } else if (project.plugins.hasPlugin('com.android.library')) {
+                variants = project.android.libraryVariants
+            } else {
+                throw new IllegalArgumentException('Dexcount plugin requires the Android plugin to be configured')
+            }
+
+            variants.all { variant ->
+                if (variant instanceof ApplicationVariant) {
+                    applyToApplicationVariant((ApplicationVariant) variant)
+                } else if (variant instanceof TestVariant) {
+                    applyToTestVariant((TestVariant) variant)
+                } else if (variant instanceof LibraryVariant) {
+                    applyToLibraryVariant((LibraryVariant) variant)
                 } else {
                     project.logger.error("dexcount: Don't know how to handle variant ${variant.name} of type ${variant.class}, skipping")
                 }
+            }
+        }
 
-                if (dexcountTask != null && parentTask != null) {
-                    // Dexcount tasks require that assemble has been run...
-                    dexcountTask.dependsOn(parentTask)
-                    dexcountTask.mustRunAfter(parentTask)
+        abstract void applyToApplicationVariant(ApplicationVariant variant)
+        abstract void applyToTestVariant(TestVariant variant)
+        abstract void applyToLibraryVariant(LibraryVariant variant)
 
-                    // But assemble should always imply that dexcount runs, unless configured not to.
-                    def runOnEachAssemble = ext.runOnEachAssemble
-                    if (runOnEachAssemble) {
-                        parentTask.finalizedBy(dexcountTask)
-                    }
+        protected void addDexcountTaskToGraph(Task parentTask, DexMethodCountTask dexcountTask) {
+            if (dexcountTask != null && parentTask != null) {
+                // Dexcount tasks require that assemble has been run...
+                dexcountTask.dependsOn(parentTask)
+                dexcountTask.mustRunAfter(parentTask)
+
+                // But assemble should always imply that dexcount runs, unless configured not to.
+                if (ext.runOnEachAssemble) {
+                    parentTask.finalizedBy(dexcountTask)
                 }
+            }
+        }
+
+        protected DexMethodCountTask createTask(
+                BaseVariant variant,
+                BaseVariantOutput output,
+                @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyInputConfiguration) {
+            def slug = variant.name.capitalize()
+            def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
+            if (variant.outputs.size() > 1) {
+                assert output != null
+                slug += output.name.capitalize()
+                path += "/${output.name}"
+            }
+
+            def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
+            task.description = "Outputs dex method count for ${variant.name}."
+            task.group = 'Reporting'
+            task.variantOutputName = slug.uncapitalize()
+            task.mappingFile = variant.mappingFile
+            task.outputFile = project.file(path + ext.format.extension)
+            task.summaryFile = project.file(path + '.csv')
+            task.chartDir = project.file(path + 'Chart')
+            task.config = ext
+
+            applyInputConfiguration(task)
+
+            return task
+        }
+    }
+
+    class LegacyProvider extends Provider {
+        LegacyProvider(Project project) {
+            super(project)
+        }
+
+        @Override
+        void applyToApplicationVariant(ApplicationVariant variant) {
+            applyToApkVariant(variant)
+        }
+
+        @Override
+        void applyToTestVariant(TestVariant variant) {
+            applyToApkVariant(variant)
+        }
+
+        @Override
+        void applyToLibraryVariant(LibraryVariant variant) {
+            variant.outputs.each { output ->
+                def aar = output.outputFile
+                def task = createTask(variant, output) { t -> t.inputFile = aar }
+                addDexcountTaskToGraph(output.assemble, task)
+            }
+        }
+
+        private void applyToApkVariant(ApkVariant variant) {
+            variant.outputs.each { output ->
+                def apk = output.outputFile
+                def task = createTask(variant, output) { t -> t.inputFile = apk }
+                addDexcountTaskToGraph(output.assemble, task)
             }
         }
     }
 
-    static Task createDexCountTask(
-            Project project,
-            DexMethodCountExtension ext,
-            BaseVariant variant,
-            BaseVariantOutput output,
-            @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyOutputConfiguration) {
-        def slug = variant.name.capitalize()
-        def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
-        if (variant.outputs.size() > 1) {
-            slug += output.name.capitalize()
-            path += "/${output.name}"
+    class ThreeOhProvider extends Provider {
+        ThreeOhProvider(Project project) {
+            super(project)
         }
 
-        def format = ext.format
-
-        // If the user has passed '--stacktrace' or '--full-stacktrace', assume
-        // that they are trying to report a dexcount bug.  Help us help them out
-        // by printing the current plugin title and version.
-        if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
-            ext.printVersion = true
+        @Override
+        void applyToApplicationVariant(ApplicationVariant variant) {
+            applyToApkVariant(variant)
         }
 
-        def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
-        task.description = "Outputs dex method count for ${variant.name}."
-        task.group = 'Reporting'
-        task.variantOutputName = output.name
-        task.mappingFile = variant.mappingFile
-        task.outputFile = project.file(path + format.extension)
-        task.summaryFile = project.file(path + '.csv')
-        task.chartDir = project.file(path + 'Chart')
-        task.config = ext
+        @Override
+        void applyToTestVariant(TestVariant variant) {
+            applyToApkVariant(variant)
+        }
 
-        applyOutputConfiguration(task)
+        @Override
+        void applyToLibraryVariant(LibraryVariant variant) {
+            def packageTask = variant.packageLibrary
+            def dexcountTask = createTask(variant, null) { t -> t.inputFile = packageTask.archivePath }
+            addDexcountTaskToGraph(packageTask, dexcountTask)
+        }
 
-        return task
+        private void applyToApkVariant(ApkVariant variant) {
+            variant.outputs.each { output ->
+                if (output instanceof ApkVariantOutput) {
+                    // why wouldn't it be?
+                    def apkOutput = (ApkVariantOutput) output
+                    def packageDirectory = apkOutput.packageApplication.outputDirectory
+                    def task = createTask(variant, apkOutput) { t -> t.inputDirectory = packageDirectory }
+                    addDexcountTaskToGraph(apkOutput.packageApplication, task)
+                } else {
+                    throw new IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output.class}")
+                }
+            }
+        }
     }
 }
