@@ -49,9 +49,11 @@ jar {
 
 dependencies {
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:3.0.0-alpha3'
     compile 'com.google.code.gson:gson:2.6.2'
 
+    compileOnly 'com.android.tools.build:gradle:3.0.0-alpha3'
+
+    testCompile 'com.android.tools.build:gradle:3.0.0-alpha3'
     testCompile 'junit:junit:4.12'
     testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
