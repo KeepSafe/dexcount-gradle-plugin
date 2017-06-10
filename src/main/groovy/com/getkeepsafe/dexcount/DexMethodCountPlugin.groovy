@@ -174,7 +174,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
             def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
             task.description = "Outputs dex method count for ${variant.name}."
             task.group = 'Reporting'
-            task.variantOutputName = slug.toLowerCase(Locale.US)
+            task.variantOutputName = slug.uncapitalize()
             task.mappingFile = variant.mappingFile
             task.outputFile = project.file(path + ext.format.extension)
             task.summaryFile = project.file(path + '.csv')
