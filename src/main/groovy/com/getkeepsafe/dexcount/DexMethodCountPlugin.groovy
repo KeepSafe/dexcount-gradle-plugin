@@ -16,6 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.api.ApkVariantOutput
 import com.android.build.gradle.api.ApplicationVariant
 import com.android.build.gradle.api.BaseVariant
@@ -106,6 +107,13 @@ class DexMethodCountPlugin implements Plugin<Project> {
         protected Provider(Project project) {
             this.project = project
             this.ext = project.extensions.create("dexcount", DexMethodCountExtension)
+
+            // If the user has passed '--stacktrace' or '--full-stacktrace', assume
+            // that they are trying to report a dexcount bug.  Help them help us out
+            // by printing the current plugin title and version.
+            if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
+                ext.printVersion = true
+            }
         }
 
         void apply() {
@@ -135,8 +143,8 @@ class DexMethodCountPlugin implements Plugin<Project> {
         }
 
         abstract void applyToApplicationVariant(ApplicationVariant variant)
-        abstract void applyToLibraryVariant(LibraryVariant variant)
         abstract void applyToTestVariant(TestVariant variant)
+        abstract void applyToLibraryVariant(LibraryVariant variant)
 
         protected void addDexcountTaskToGraph(Task parentTask, DexMethodCountTask dexcountTask) {
             if (dexcountTask != null && parentTask != null) {
@@ -154,7 +162,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         protected DexMethodCountTask createTask(
                 BaseVariant variant,
                 BaseVariantOutput output,
-                @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyOutputConfiguration) {
+                @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyInputConfiguration) {
             def slug = variant.name.capitalize()
             def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
             if (variant.outputs.size() > 1) {
@@ -163,26 +171,17 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 path += "/${output.name}"
             }
 
-            def format = ext.format
-
-            // If the user has passed '--stacktrace' or '--full-stacktrace', assume
-            // that they are trying to report a dexcount bug.  Help us help them out
-            // by printing the current plugin title and version.
-            if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
-                ext.printVersion = true
-            }
-
             def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
             task.description = "Outputs dex method count for ${variant.name}."
             task.group = 'Reporting'
-            task.variantOutputName = slug
+            task.variantOutputName = slug.toLowerCase(Locale.US)
             task.mappingFile = variant.mappingFile
-            task.outputFile = project.file(path + format.extension)
+            task.outputFile = project.file(path + ext.format.extension)
             task.summaryFile = project.file(path + '.csv')
             task.chartDir = project.file(path + 'Chart')
             task.config = ext
 
-            applyOutputConfiguration(task)
+            applyInputConfiguration(task)
 
             return task
         }
@@ -195,11 +194,12 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
         @Override
         void applyToApplicationVariant(ApplicationVariant variant) {
-            variant.outputs.each { output ->
-                def apk = output.outputFile
-                def task = createTask(variant, output) { t -> t.inputFile = apk }
-                addDexcountTaskToGraph(output.assemble, task)
-            }
+            applyToApkVariant(variant)
+        }
+
+        @Override
+        void applyToTestVariant(TestVariant variant) {
+            applyToApkVariant(variant)
         }
 
         @Override
@@ -211,8 +211,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
             }
         }
 
-        @Override
-        void applyToTestVariant(TestVariant variant) {
+        private void applyToApkVariant(ApkVariant variant) {
             variant.outputs.each { output ->
                 def apk = output.outputFile
                 def task = createTask(variant, output) { t -> t.inputFile = apk }
@@ -228,17 +227,12 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
         @Override
         void applyToApplicationVariant(ApplicationVariant variant) {
-            variant.outputs.each { output ->
-                if (output instanceof ApkVariantOutput) {
-                    // why wouldn't it be?
-                    def apkOutput = (ApkVariantOutput) output
-                    def packageDirectory = apkOutput.packageApplication.outputDirectory
-                    def task = createTask(variant, apkOutput) { t -> t.inputDirectory = packageDirectory }
-                    addDexcountTaskToGraph(apkOutput.packageApplication, task)
-                } else {
-                    throw new IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output.class}")
-                }
-            }
+            applyToApkVariant(variant)
+        }
+
+        @Override
+        void applyToTestVariant(TestVariant variant) {
+            applyToApkVariant(variant)
         }
 
         @Override
@@ -248,8 +242,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
             addDexcountTaskToGraph(packageTask, dexcountTask)
         }
 
-        @Override
-        void applyToTestVariant(TestVariant variant) {
+        private void applyToApkVariant(ApkVariant variant) {
             variant.outputs.each { output ->
                 if (output instanceof ApkVariantOutput) {
                     // why wouldn't it be?
