@@ -148,12 +148,12 @@ class DexMethodCountPlugin implements Plugin<Project> {
 
         protected void addDexcountTaskToGraph(Task parentTask, DexMethodCountTask dexcountTask) {
             if (dexcountTask != null && parentTask != null) {
-                // Dexcount tasks require that assemble has been run...
+                // Dexcount tasks require that their parent task has been run...
                 dexcountTask.dependsOn(parentTask)
                 dexcountTask.mustRunAfter(parentTask)
 
-                // But assemble should always imply that dexcount runs, unless configured not to.
-                if (ext.runOnEachAssemble) {
+                // But package should always imply that dexcount runs, unless configured not to.
+                if (ext.runOnEachPackage) {
                     parentTask.finalizedBy(dexcountTask)
                 }
             }
