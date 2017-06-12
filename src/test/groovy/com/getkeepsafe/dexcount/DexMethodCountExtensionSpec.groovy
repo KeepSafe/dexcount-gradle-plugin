@@ -161,4 +161,34 @@ final class DexMethodCountExtensionSpec extends Specification {
         expect:
         new DexMethodCountExtension().format == OutputFormat.LIST
     }
+
+    def "runOnEachPackage defaults to true"() {
+        when:
+        def ext = new DexMethodCountExtension()
+
+        then:
+        ext.runOnEachPackage
+    }
+
+    def "runOnEachAssemble is a synonym for runOnEachPackage"() {
+        given:
+        def ext = new DexMethodCountExtension()
+
+        when:
+        ext.runOnEachAssemble = false
+
+        then:
+        !ext.runOnEachPackage
+    }
+
+    def "runOnEachPackage is a synonym for runOnEachAssemble"() {
+        given:
+        def ext = new DexMethodCountExtension()
+
+        when:
+        ext.runOnEachPackage = false
+
+        then:
+        !ext.runOnEachAssemble
+    }
 }

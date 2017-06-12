@@ -20,6 +20,8 @@ package com.getkeepsafe.dexcount
  * Configuration properties for {@link DexMethodCountTask} instances.
  */
 class DexMethodCountExtension {
+    private boolean runOnEachPackage = true;
+
     /**
      * The format of the method count output, either "list", "tree", "json", or "yaml".
      */
@@ -74,11 +76,6 @@ class DexMethodCountExtension {
     String teamCitySlug = null
 
     /**
-     * When false, does not run count method during assemble task.
-     */
-    boolean runOnEachAssemble = true
-
-    /**
      * When set, the build will fail when the APK/AAR has more methods than the max. 0 by default.
      */
     int maxMethodCount = -1
@@ -93,6 +90,48 @@ class DexMethodCountExtension {
      * Timeout when running Dx in seconds.
      */
     int dxTimeoutSec = 60
+
+    /**
+     * When false, does not automatically count methods following the `package` task.
+     *
+     * Deprecated since 0.7.0, as dexcount no longer depends on the `assemble` task.
+     * Currently a synonym for {@link #runOnEachPackage}; will be removed in a future
+     * version.
+     *
+     * @deprecated since 0.7.0; prefer {@link #runOnEachPackage}.
+     */
+    @Deprecated
+    public boolean isRunOnEachAssemble() {
+        return runOnEachPackage
+    }
+
+    /**
+     * When false, does not automatically count methods following the `package` task.
+     *
+     * Deprecated since 0.7.0, as dexcount no longer depends on the `assemble` task.
+     * Currently a synonym for {@link #runOnEachPackage}; will be removed in a future
+     * version.
+     *
+     * @deprecated since 0.7.0; prefer {@link #runOnEachPackage}.
+     */
+    @Deprecated
+    public void setRunOnEachAssemble(boolean runOnEachAssemble) {
+        this.runOnEachPackage = runOnEachAssemble
+    }
+
+    /**
+     * When false, does not automatically count methods following the `package` task.
+     */
+    public boolean isRunOnEachPackage() {
+        return runOnEachPackage
+    }
+
+    /**
+     * When false, does not automatically count methods following the `package` task.
+     */
+    public void setRunOnEachPackage(boolean runOnEachPackage) {
+        this.runOnEachPackage = runOnEachPackage
+    }
     
     void setFormat(Object format) {
         if (format instanceof OutputFormat) {
