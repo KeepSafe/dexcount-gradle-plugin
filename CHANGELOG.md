@@ -1,5 +1,8 @@
-0.7.0 (unreleased)
+0.7.0 (released 12 June 2017)
 ---------
+* Deprecate `runOnEachAssemble` configuration property
+* Make Android Gradle plugin a compileOnly dependency (#176)
+* Disable Instant Run support; incompatible with the new build tools
 * Add support for Android Gradle Plugin 3.0.0
 * Add class counts (#164)
 * Fix zip-file-handle leaks (#160)

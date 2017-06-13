@@ -8,11 +8,9 @@
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Dexcount%20Gradle%20Plugin-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1940)
 [![Join the chat at https://gitter.im/keepsafe/dexcount-gradle-plugin](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/keepsafe/dexcount-gradle-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A Gradle plugin to report the number of method references in your APK on every build.
+A Gradle plugin to report the number of method references in your APK or AAR on every build.
 
 This helps you keep tabs on the growth of your app, with an eye to staying under the 65,536 method-reference limit, and avoiding the headache of eliminating methods or enabling multidex.
-
-NOTE: `dexcount` does not currently support Android Studio 3's build tools.  Experimental support is available in the snapshot version `0.7.0-SNAPSHOT`; if you are using the new build tools, please use this version and report any issues you encounter.
 
 ## Usage
 
@@ -24,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.4'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.7.0'
     }
 }
 
@@ -96,7 +94,7 @@ dexcount {
     maxTreeDepth = Integer.MAX_VALUE
     teamCityIntegration = false
     teamCitySlug = null
-    runOnEachAssemble = true
+    runOnEachPackage = true
     maxMethodCount = 64000
 }
 ```
@@ -112,7 +110,7 @@ Each flag controls some aspect of the printed output:
 - `maxTreeDepth`: Sets the max number of package segments in the output - i.e. when set to 2, counts stop at `com.google`, when set to 3 you get `com.google.android`, etc.  "Unlimited" by default.
 - `teamCityIntegration`: When true, Team City integration strings will be printed.
 - `teamCitySlug`: A string which, if specified, will be added to TeamCity stat names.  Null by default.
-- `runOnEachAssemble`: When false, does not run count method during assemble task. True by default.
+- `runOnEachPackage`: When false, does not run count method during package task. True by default.  Synonym for `runOnEachAssemble`, which is deprecated.
 - `maxMethodCount`: When set, the build will fail when the APK/AAR has more methods than the max. 0 by default.
 
 ## Use with Jenkins Plot Plugin
