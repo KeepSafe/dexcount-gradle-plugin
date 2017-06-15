@@ -165,16 +165,18 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyInputConfiguration) {
             def slug = variant.name.capitalize()
             def path = "${project.buildDir}/outputs/dexcount/${variant.name}"
+            def outputName = variant.name
             if (variant.outputs.size() > 1) {
                 assert output != null
                 slug += output.name.capitalize()
                 path += "/${output.name}"
+                outputName = output.name
             }
 
             def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
             task.description = "Outputs dex method count for ${variant.name}."
             task.group = 'Reporting'
-            task.variantOutputName = slug.uncapitalize()
+            task.variantOutputName = outputName
             task.mappingFile = variant.mappingFile
             task.outputFile = project.file(path + ext.format.extension)
             task.summaryFile = project.file(path + '.csv')
