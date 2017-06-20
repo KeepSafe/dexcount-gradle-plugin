@@ -109,22 +109,26 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         withStyledOutput() { out ->
             def percentMethodsUsed = percentUsed(tree.methodCount)
             def percentFieldsUsed = percentUsed(tree.fieldCount)
+            def percentClassesUsed = percentUsed(tree.classCount)
 
             def methodsRemaining = Math.max(MAX_DEX_REFS - tree.methodCount, 0)
             def fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
+            def classesRemaining = Math.max(MAX_DEX_REFS - tree.classCount, 0)
 
             out.warn("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
             out.warn("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
+            out.warn("Total classes in ${filename}:  ${tree.classCount} ($percentClassesUsed% used)")
             out.warn("Methods remaining in ${filename}: $methodsRemaining")
             out.warn("Fields remaining in ${filename}:  $fieldsRemaining")
+            out.warn("Classes remaining in ${filename}:  $classesRemaining")
         }
 
         if (summaryFile != null) {
             summaryFile.parentFile.mkdirs()
             summaryFile.createNewFile()
 
-            final String headers = "methods,fields"
-            final String counts = "${tree.methodCount},${tree.fieldCount}"
+            final String headers = "methods,fields,classes"
+            final String counts = "${tree.methodCount},${tree.fieldCount},${tree.classCount}"
 
             summaryFile.withOutputStream { stream ->
                 def appendableStream = new PrintStream(stream)

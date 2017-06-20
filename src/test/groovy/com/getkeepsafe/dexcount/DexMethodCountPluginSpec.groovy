@@ -1,8 +1,6 @@
 package com.getkeepsafe.dexcount
 
-import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -212,8 +210,8 @@ final class DexMethodCountPluginSpec extends Specification {
             "3        0        b.a\n"
     // debug.txt - TXT
     def actualSummaryFile = task.summaryFile.absoluteFile.text
-    def expectedSummaryFile = "methods,fields\n" +
-            "9,0\n"
+    def expectedSummaryFile = "methods,fields,classes\n" +
+            "9,0,4\n"
     // debugChart/data.js - JSON
     def actualChartDir = new File(task.chartDir, "data.js").text
     def expectedChartDir = "var data = {\n" +
