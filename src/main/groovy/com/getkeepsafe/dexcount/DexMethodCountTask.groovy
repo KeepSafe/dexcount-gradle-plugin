@@ -25,6 +25,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.ParallelizableTask
 import org.gradle.api.tasks.TaskAction
 
 abstract class DexMethodCountTaskBase extends DefaultTask {
@@ -87,6 +88,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             withStyledOutput() { out ->
                 out.lifecycle("Dexcount name:    $projectName")
                 out.lifecycle("Dexcount version: $projectVersion")
+                out.debug(    "Dexcount input:   ${rawInputRepresentation()}")
             }
         }
     }
@@ -202,6 +204,8 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             out.log(level, "counting:   ${treegenTime - ioTime} ms")
             out.log(level, "printing:   ${outputTime - treegenTime} ms")
             out.log(level, "total:      ${outputTime - startTime} ms")
+            out.log(level, "")
+            out.log(level, "input:      {}", rawInputRepresentation())
         }
     }
 
@@ -237,7 +241,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         def file = fileToCount()
 
         if (file == null) {
-            throw new AssertionError("file is null: inputDirectory=$inputDirectory inputFile=${inputFile()}")
+            throw new AssertionError("file is null: rawInput=${rawInputRepresentation()}")
         }
 
         startTime = System.currentTimeMillis()
@@ -299,6 +303,8 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
 
     abstract File fileToCount();
 
+    abstract String rawInputRepresentation();
+
     /**
      * Fails the build when a user specifies a "max method count" for their current build.
      */
@@ -309,6 +315,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
     }
 }
 
+@ParallelizableTask
 class ModernMethodCountTask extends DexMethodCountTaskBase {
     /**
      * The output directory of the 'package' task; will contain an
@@ -324,6 +331,11 @@ class ModernMethodCountTask extends DexMethodCountTaskBase {
         return fileList.length > 0 ? fileList[0] : null
     }
 
+    @Override
+    String rawInputRepresentation() {
+        return "$inputDirectory"
+    }
+
     // Tried to use a closure for this, but Groovy cannot decide between java.io.FilenameFilter
     // and java.io.FileFilter.  If we have to make it ugly, might as well make it efficient.
     static class ApkFilenameFilter implements FilenameFilter {
@@ -334,6 +346,7 @@ class ModernMethodCountTask extends DexMethodCountTaskBase {
     }
 }
 
+@ParallelizableTask
 class LegacyMethodCountTask extends DexMethodCountTaskBase {
 
     BaseVariantOutput variantOutput
@@ -341,5 +354,14 @@ class LegacyMethodCountTask extends DexMethodCountTaskBase {
     @Override
     File fileToCount() {
         return variantOutput.outputFile
+    }
+
+    @Override
+    String rawInputRepresentation() {
+        if (variantOutput == null) {
+            return "variantOutput=null"
+        } else {
+            return "variantOutput{name=${variantOutput.name} outputFile=${variantOutput.outputFile}}"
+        }
     }
 }
