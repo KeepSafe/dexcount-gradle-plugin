@@ -71,9 +71,8 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
+        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
-        task.inputFile = null // tests fail using Gradle Plugin 2.3.3 if this remains set
         task.inputDirectory = apkFile.parentFile
         task.execute()
 
@@ -101,9 +100,8 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTask task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTask
+        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
-        task.inputFile = null // tests fail using Gradle Plugin 2.3.3 if this remains set
         task.inputDirectory = apkFile.parentFile
         task.execute()
 

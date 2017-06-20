@@ -146,7 +146,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         abstract void applyToTestVariant(TestVariant variant)
         abstract void applyToLibraryVariant(LibraryVariant variant)
 
-        protected void addDexcountTaskToGraph(Task parentTask, DexMethodCountTask dexcountTask) {
+        protected void addDexcountTaskToGraph(Task parentTask, DexMethodCountTaskBase dexcountTask) {
             if (dexcountTask != null && parentTask != null) {
                 // Dexcount tasks require that their parent task has been run...
                 dexcountTask.dependsOn(parentTask)
@@ -159,7 +159,8 @@ class DexMethodCountPlugin implements Plugin<Project> {
             }
         }
 
-        protected DexMethodCountTask createTask(
+        protected DexMethodCountTaskBase createTask(
+                Class<? extends DexMethodCountTaskBase> taskClass,
                 BaseVariant variant,
                 BaseVariantOutput output,
                 @ClosureParams(value = SimpleType, options = ['com.getkeepsafe.dexcount.DexMethodCountTask']) Closure applyInputConfiguration) {
@@ -173,7 +174,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
                 outputName = output.name
             }
 
-            def task = project.tasks.create("count${slug}DexMethods", DexMethodCountTask)
+            def task = project.tasks.create("count${slug}DexMethods", taskClass)
             task.description = "Outputs dex method count for ${variant.name}."
             task.group = 'Reporting'
             task.variantOutputName = outputName
@@ -207,16 +208,14 @@ class DexMethodCountPlugin implements Plugin<Project> {
         @Override
         void applyToLibraryVariant(LibraryVariant variant) {
             variant.outputs.each { output ->
-                def aar = output.outputFile
-                def task = createTask(variant, output) { t -> t.inputFile = aar }
+                def task = createTask(LegacyMethodCountTask, variant, output) { t -> t.variantOutput = output }
                 addDexcountTaskToGraph(output.assemble, task)
             }
         }
 
         private void applyToApkVariant(ApkVariant variant) {
             variant.outputs.each { output ->
-                def apk = output.outputFile
-                def task = createTask(variant, output) { t -> t.inputFile = apk }
+                def task = createTask(LegacyMethodCountTask, variant, output) { t -> t.variantOutput = output }
                 addDexcountTaskToGraph(output.assemble, task)
             }
         }
@@ -240,7 +239,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         @Override
         void applyToLibraryVariant(LibraryVariant variant) {
             def packageTask = variant.packageLibrary
-            def dexcountTask = createTask(variant, null) { t -> t.inputFile = packageTask.archivePath }
+            def dexcountTask = createTask(ModernMethodCountTask, variant, null) { t -> t.inputFile = packageTask.archivePath }
             addDexcountTaskToGraph(packageTask, dexcountTask)
         }
 
@@ -250,7 +249,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
                     // why wouldn't it be?
                     def apkOutput = (ApkVariantOutput) output
                     def packageDirectory = apkOutput.packageApplication.outputDirectory
-                    def task = createTask(variant, apkOutput) { t -> t.inputDirectory = packageDirectory }
+                    def task = createTask(ModernMethodCountTask, variant, apkOutput) { t -> t.inputDirectory = packageDirectory }
                     addDexcountTaskToGraph(apkOutput.packageApplication, task)
                 } else {
                     throw new IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output.class}")
