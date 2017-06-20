@@ -17,6 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.annotations.Nullable
+import com.android.build.gradle.api.BaseVariantOutput
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
@@ -24,11 +25,9 @@ import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
-class DexMethodCountTask extends DefaultTask {
+abstract class DexMethodCountTaskBase extends DefaultTask {
     /**
      * The maximum number of method refs and field refs allowed in a single Dex
      * file.
@@ -38,23 +37,6 @@ class DexMethodCountTask extends DefaultTask {
     PackageTree tree
 
     String variantOutputName
-
-    /**
-     * An APK, AAR, or .dex file.  Will be null for Android projects
-     * using build-tools version 3.0 and above.
-     */
-    @InputFile
-    @Optional
-    File inputFile
-
-    /**
-     * The output directory of the 'package' task; will contain an
-     * APK or an AAR.  Will be null for Android projects using
-     * build-tools versions before 3.0.
-     */
-    @InputDirectory
-    @Optional
-    File inputDirectory
 
     @Nullable
     File mappingFile
@@ -105,8 +87,6 @@ class DexMethodCountTask extends DefaultTask {
             withStyledOutput() { out ->
                 out.lifecycle("Dexcount name:    $projectName")
                 out.lifecycle("Dexcount version: $projectVersion")
-                out.debug(    "inputFile:        $inputFile")
-                out.debug(    "inputDirectory:   $inputDirectory")
             }
         }
     }
@@ -222,10 +202,6 @@ class DexMethodCountTask extends DefaultTask {
             out.log(level, "counting:   ${treegenTime - ioTime} ms")
             out.log(level, "printing:   ${outputTime - treegenTime} ms")
             out.log(level, "total:      ${outputTime - startTime} ms")
-            out.log(level, "")
-            out.log(level, "Task inputs:")
-            out.log(level, "inputDir:   $inputDirectory")
-            out.log(level, "inputFile:  $inputFile")
         }
     }
 
@@ -261,7 +237,7 @@ class DexMethodCountTask extends DefaultTask {
         def file = fileToCount()
 
         if (file == null) {
-            throw new AssertionError("file is null: inputDirectory=$inputDirectory inputFile=$inputFile")
+            throw new AssertionError("file is null: inputDirectory=$inputDirectory inputFile=${inputFile()}")
         }
 
         startTime = System.currentTimeMillis()
@@ -321,14 +297,7 @@ class DexMethodCountTask extends DefaultTask {
         return file != null && file.exists()
     }
 
-    def fileToCount() {
-        if (inputDirectory != null) {
-            def fileList = inputDirectory.listFiles(new ApkFilenameFilter())
-            return fileList.length > 0 ? fileList[0] : null
-        } else {
-            return inputFile
-        }
-    }
+    abstract File fileToCount();
 
     /**
      * Fails the build when a user specifies a "max method count" for their current build.
@@ -338,6 +307,22 @@ class DexMethodCountTask extends DefaultTask {
             throw new GradleException(String.format("The current APK has %d methods, the current max is: %d.", tree.methodCount, config.maxMethodCount))
         }
     }
+}
+
+class ModernMethodCountTask extends DexMethodCountTaskBase {
+    /**
+     * The output directory of the 'package' task; will contain an
+     * APK or an AAR.  Will be null for Android projects using
+     * build-tools versions before 3.0.
+     */
+    @InputDirectory
+    File inputDirectory
+
+    @Override
+    File fileToCount() {
+        def fileList = inputDirectory.listFiles(new ApkFilenameFilter())
+        return fileList.length > 0 ? fileList[0] : null
+    }
 
     // Tried to use a closure for this, but Groovy cannot decide between java.io.FilenameFilter
     // and java.io.FileFilter.  If we have to make it ugly, might as well make it efficient.
@@ -346,5 +331,15 @@ class DexMethodCountTask extends DefaultTask {
         boolean accept(File dir, String name) {
             return name != null && name.endsWith(".apk")
         }
+    }
+}
+
+class LegacyMethodCountTask extends DexMethodCountTaskBase {
+
+    BaseVariantOutput variantOutput
+
+    @Override
+    File fileToCount() {
+        return variantOutput.outputFile
     }
 }
