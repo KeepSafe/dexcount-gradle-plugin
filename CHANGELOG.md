@@ -1,3 +1,9 @@
+0.7.1 (released 22 June 2017)
+---------
+* Add class count to output and summary files (#184)
+* Fix counting renamed variant outputs (#182)
+* Remove use of `uncapitalize()` for users of Gradle < 2.5 (#180)
+
 0.7.0 (released 12 June 2017)
 ---------
 * Deprecate `runOnEachAssemble` configuration property
