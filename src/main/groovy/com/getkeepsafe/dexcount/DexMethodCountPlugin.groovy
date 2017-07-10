@@ -239,7 +239,7 @@ class DexMethodCountPlugin implements Plugin<Project> {
         @Override
         void applyToLibraryVariant(LibraryVariant variant) {
             def packageTask = variant.packageLibrary
-            def dexcountTask = createTask(ModernMethodCountTask, variant, null) { t -> t.inputFile = packageTask.archivePath }
+            def dexcountTask = createTask(ModernMethodCountTask, variant, null) { t -> t.inputDirectory = packageTask.archivePath }
             addDexcountTaskToGraph(packageTask, dexcountTask)
         }
 
