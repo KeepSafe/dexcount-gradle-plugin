@@ -1,3 +1,7 @@
+0.7.2 (released 10 July 2017)
+---------
+* Fix counting AAR projects on AGP 3.0+ (#188)
+
 0.7.1 (released 22 June 2017)
 ---------
 * Add class count to output and summary files (#184)
