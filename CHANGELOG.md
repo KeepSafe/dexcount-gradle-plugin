@@ -1,3 +1,7 @@
+0.7.3 (released 14 July 2017)
+---------
+* Fix builds when Instant Run is enabled and `dexcount` extension is used (#190)
+
 0.7.2 (released 10 July 2017)
 ---------
 * Fix counting AAR projects on AGP 3.0+ (#188)
