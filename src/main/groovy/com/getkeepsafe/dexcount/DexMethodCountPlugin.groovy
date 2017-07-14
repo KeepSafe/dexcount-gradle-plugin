@@ -42,11 +42,6 @@ class DexMethodCountPlugin implements Plugin<Project> {
             project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
         }
 
-        if (isInstantRun(project)) {
-            project.logger.info("Instant Run detected; disabling dexcount")
-            return
-        }
-
         try {
             Class.forName("com.android.builder.Version")
         } catch (ClassNotFoundException e) {
@@ -117,6 +112,14 @@ class DexMethodCountPlugin implements Plugin<Project> {
         }
 
         void apply() {
+            // We need to do this check *after* we create the 'dexcount' Gradle extension.
+            // If we bail on instant run builds any earlier, then the build will break
+            // for anyone configuring dexcount due to the extension not being registered.
+            if (isInstantRun(project)) {
+                project.logger.info("Instant Run detected; disabling dexcount")
+                return
+            }
+
             DomainObjectCollection<BaseVariant> variants
 
             if (project.plugins.hasPlugin('com.android.application')) {
