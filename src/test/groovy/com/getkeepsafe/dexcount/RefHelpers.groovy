@@ -37,7 +37,7 @@ final class RefHelpers {
     static String randomName() {
         def rand = new Random()
         def alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
-        def len = rand.nextInt(16)
+        def len = 16
         def sb = new StringBuilder(len)
         for (int i = 0; i < len; ++i) {
             sb.append(alphabet.charAt(rand.nextInt(alphabet.length())))
