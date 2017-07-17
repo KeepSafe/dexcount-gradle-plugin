@@ -6,9 +6,10 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "https://maven.google.com" }
+        google()
         jcenter()
     }
+
     dependencies {
         classpath "com.android.tools.build:gradle:3.0.0-alpha3"
         classpath "com.getkeepsafe.dexcount:dexcount-gradle-plugin:$dexcountVersion"
