@@ -1,5 +1,5 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.getkeepsafe.dexcount'
+apply plugin: "com.android.application"
+apply plugin: "com.getkeepsafe.dexcount"
 
 android {
     compileSdkVersion 25
@@ -17,7 +17,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
         debug {
             minifyEnabled false
@@ -31,7 +31,7 @@ dexcount {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile fileTree(dir: "libs", include: ["*.jar"])
+    testCompile "junit:junit:4.12"
+    compile "com.android.support:appcompat-v7:25.2.0"
 }
