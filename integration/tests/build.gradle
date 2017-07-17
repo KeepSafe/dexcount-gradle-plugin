@@ -2,12 +2,12 @@ apply plugin: "com.android.test" // A plugin used for test-only-modules
 apply plugin: "com.getkeepsafe.dexcount"
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 25
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
 
         // The package name of the test app
         testApplicationId "com.getkeepsafe.dexcount.integration.tests"
@@ -26,7 +26,7 @@ android {
 
 dependencies {
     // Android Testing Support Library"s runner and rules and hamcrest matchers
-    compile "com.android.support.test:runner:0.4.1"
-    compile "com.android.support.test:rules:0.4.1"
-    compile "org.hamcrest:hamcrest-core:1.3"
+    compile deps.runner
+    compile deps.rules
+    compile deps.hamcrestCore
 }
