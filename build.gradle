@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-apply plugin: 'groovy'
-apply plugin: 'java'
-apply plugin: 'com.github.ben-manes.versions'
-
-sourceCompatibility = JavaVersion.VERSION_1_7
-
-group = GROUP
-version = VERSION_NAME
-
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
@@ -39,25 +30,32 @@ repositories {
     maven { url "https://maven.google.com" }
 }
 
+apply plugin: "groovy"
+apply plugin: "java"
+apply plugin: "com.github.ben-manes.versions"
+
+sourceCompatibility = JavaVersion.VERSION_1_7
+
+group = GROUP
+version = VERSION_NAME
+
 jar {
     manifest {
         attributes(
-                'Implementation-Title': POM_ARTIFACT_ID,
-                'Implementation-Version': VERSION_NAME)
+                "Implementation-Title": POM_ARTIFACT_ID,
+                "Implementation-Version": VERSION_NAME)
     }
 }
 
 dependencies {
     compile gradleApi()
-    compile 'com.google.code.gson:gson:2.6.2'
+    compile "com.google.code.gson:gson:2.6.2"
 
-    compileOnly 'com.android.tools.build:gradle:3.0.0-alpha3'
+    compileOnly "com.android.tools.build:gradle:3.0.0-alpha3"
 
-    testCompile 'com.android.tools.build:gradle:3.0.0-alpha3'
-    testCompile 'junit:junit:4.12'
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
-        exclude module: 'groovy-all'
-    }
+    testCompile "com.android.tools.build:gradle:3.0.0-alpha3"
+    testCompile "junit:junit:4.12"
+    testCompile "org.spockframework:spock-core:1.0-groovy-2.4", { exclude module: "groovy-all" } // Use localGroovy()
 }
 
-apply from: file('gradle/gradle-mvn-push.gradle')
+apply from: file("gradle/gradle-mvn-push.gradle")
