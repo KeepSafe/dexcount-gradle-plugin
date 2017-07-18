@@ -17,10 +17,8 @@ ext {
 ext.plugs = [
         "gradle"              : "com.android.tools.build:gradle:3.0.0-alpha3",
         "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
-        "dexcountGradlePlugin": "com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.7.2",
         "gradleVersionsPlugin": "com.github.ben-manes:gradle-versions-plugin:0.15.0"
 ]
-
 
 // Dependencies
 ext.deps = [
