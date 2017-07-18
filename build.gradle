@@ -23,6 +23,7 @@ buildscript {
 
     dependencies {
         classpath plugs.gradleVersionsPlugin // Check for plugin updates
+        classpath plugs.kotlinGradlePlugin
     }
 }
 
@@ -36,6 +37,7 @@ allprojects {
 
 apply plugin: "groovy"
 apply plugin: "java"
+apply plugin: "kotlin"
 apply plugin: "com.github.ben-manes.versions"
 
 sourceCompatibility = JavaVersion.VERSION_1_7
@@ -63,3 +65,12 @@ dependencies {
 }
 
 apply from: file("gradle/gradle-mvn-push.gradle")
+
+// Compile Kotlin then Groovy
+afterEvaluate {
+    compileKotlin.dependsOn = compileKotlin.taskDependencies.values - "compileJava"
+    compileGroovy.dependsOn compileKotlin
+    compileGroovy.classpath += files(compileKotlin.destinationDir)
+    classes.dependsOn compileGroovy
+}
+
