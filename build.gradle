@@ -22,14 +22,16 @@ buildscript {
     }
 
     dependencies {
-        // Check for plugin updates
-        classpath plugs.gradleVersionsPlugin
+        classpath plugs.gradleVersionsPlugin // Check for plugin updates
     }
 }
 
-repositories {
-    maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
-    google()
+allprojects {
+    repositories {
+        mavenLocal()
+        maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
+        google()
+    }
 }
 
 apply plugin: "groovy"
