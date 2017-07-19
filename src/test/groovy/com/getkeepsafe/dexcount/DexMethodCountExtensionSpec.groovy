@@ -27,7 +27,7 @@ import spock.lang.Specification
 final class DexMethodCountExtensionSpec extends Specification {
     @Rule final TemporaryFolder tempFolder = new TemporaryFolder()
     final static COMPILE_SDK_VERSION = 25
-    final static BUILD_TOOLS_VERSION = "25.0.2"
+    final static BUILD_TOOLS_VERSION = "25.0.3"
     final static APPLICATION_ID = "com.example"
     Project project
     File apkFile

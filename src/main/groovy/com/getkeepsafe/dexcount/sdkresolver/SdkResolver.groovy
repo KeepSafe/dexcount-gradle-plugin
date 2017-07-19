@@ -25,7 +25,7 @@ import static com.android.SdkConstants.ANDROID_HOME_ENV
 import static com.android.SdkConstants.FN_LOCAL_PROPERTIES
 import static com.android.SdkConstants.PLATFORM_WINDOWS
 import static com.android.SdkConstants.SDK_DIR_PROPERTY
-import static com.android.SdkConstants.NDK_DIR_PROPERTY 
+import static com.android.SdkConstants.NDK_DIR_PROPERTY
 import static com.android.SdkConstants.currentPlatform
 
 /**
@@ -54,7 +54,7 @@ class SdkResolver {
         userHome = new File(system.property('user.home'))
         userAndroid = new File(userHome, '.android-sdk')
 
-        def projectRoot = project?.rootDir ?: new File(".");
+        def projectRoot = project?.rootDir ?: new File(".")
         localProperties = new File(projectRoot, FN_LOCAL_PROPERTIES)
     }
 
@@ -82,8 +82,8 @@ class SdkResolver {
 
         // Look for ANDROID_NDK_HOME environment variable. it's not defined in SdkConstants unluckily, so defining here
         // Some people use NDK_HOME, but androidrecommended is ANDROID_NDK_HOME
-        def ANDROID_NDK_HOME = "ANDROID_NDK_HOME" 
-        def androidNdkHome = system.env ANDROID_NDK_HOME 
+        def ANDROID_NDK_HOME = "ANDROID_NDK_HOME"
+        def androidNdkHome = system.env ANDROID_NDK_HOME
         def ndkDir = null
         if (androidNdkHome != null && !"".equals(androidNdkHome)) {
             ndkDir = new File(androidNdkHome)
@@ -94,7 +94,7 @@ class SdkResolver {
                 ndkDir = null
             }
         }
-		
+
         // Look for ANDROID_HOME environment variable.
         def androidHome = system.env ANDROID_HOME_ENV
         if (androidHome != null && !"".equals(androidHome)) {

@@ -10,7 +10,7 @@ import spock.lang.Unroll
 final class DexMethodCountPluginSpec extends Specification {
   @Rule final TemporaryFolder tempFolder = new TemporaryFolder()
   final static COMPILE_SDK_VERSION = 25
-  final static BUILD_TOOLS_VERSION = "25.0.2"
+  final static BUILD_TOOLS_VERSION = "25.0.3"
   final static APPLICATION_ID = "com.example"
   final static MANIFEST_FILE_TEXT = """<?xml version="1.0" encoding="utf-8"?>
       <manifest package="com.getkeepsafe.dexcount.integration"

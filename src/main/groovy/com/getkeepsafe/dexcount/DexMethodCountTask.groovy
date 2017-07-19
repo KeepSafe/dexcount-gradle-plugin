@@ -305,9 +305,9 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         return file != null && file.exists()
     }
 
-    abstract File fileToCount();
+    abstract File fileToCount()
 
-    abstract String rawInputRepresentation();
+    abstract String rawInputRepresentation()
 
     /**
      * Fails the build when a user specifies a "max method count" for their current build.

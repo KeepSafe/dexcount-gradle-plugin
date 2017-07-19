@@ -21,9 +21,9 @@ package com.getkeepsafe.dexcount.sdkresolver
  * https://github.com/JakeWharton/sdk-manager-plugin
  */
 interface System {
-    String env(String name);
-    String property(String key);
-    String property(String key, String defaultValue);
+    String env(String name)
+    String property(String key)
+    String property(String key, String defaultValue)
 
     static final class Real implements System {
         @Override String env(String name) {
@@ -31,11 +31,11 @@ interface System {
         }
 
         @Override String property(String key) {
-            return java.lang.System.getProperty(key);
+            return java.lang.System.getProperty(key)
         }
 
         @Override String property(String key, String defaultValue) {
-            return java.lang.System.getProperty(key, defaultValue);
+            return java.lang.System.getProperty(key, defaultValue)
         }
     }
 }
