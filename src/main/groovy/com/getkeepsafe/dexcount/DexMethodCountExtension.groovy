@@ -20,7 +20,7 @@ package com.getkeepsafe.dexcount
  * Configuration properties for {@link DexMethodCountTask} instances.
  */
 class DexMethodCountExtension {
-    private boolean runOnEachPackage = true;
+    private boolean runOnEachPackage = true
 
     /**
      * The format of the method count output, either "list", "tree", "json", or "yaml".
@@ -132,7 +132,7 @@ class DexMethodCountExtension {
     public void setRunOnEachPackage(boolean runOnEachPackage) {
         this.runOnEachPackage = runOnEachPackage
     }
-    
+
     void setFormat(Object format) {
         if (format instanceof OutputFormat) {
             this.format = (OutputFormat) format

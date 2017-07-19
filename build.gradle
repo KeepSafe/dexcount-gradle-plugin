@@ -36,11 +36,11 @@ allprojects {
 }
 
 apply plugin: "groovy"
-apply plugin: "java"
+apply plugin: "java-gradle-plugin"
 apply plugin: "kotlin"
 apply plugin: "com.github.ben-manes.versions"
 
-sourceCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = rootProject.ext.sourceCompatibilityVersion
 
 group = GROUP
 version = VERSION_NAME
@@ -54,14 +54,14 @@ jar {
 }
 
 dependencies {
-    compile gradleApi()
-    compile deps.gson
+    implementation localGroovy()
+    implementation deps.gson
 
     compileOnly plugs.gradle
 
-    testCompile plugs.gradle
-    testCompile deps.junit
-    testCompile deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
+    testImplementation plugs.gradle
+    testImplementation deps.junit
+    testImplementation deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
 }
 
 apply from: rootProject.file("gradle/gradle-mvn-push.gradle")
