@@ -1,0 +1,56 @@
+compileGroovy {
+    sourceCompatibility = project.ext.sourceCompatibilityVersion
+    targetCompatibility = project.ext.targetCompatibilityVersion
+
+    // Show all warnings except boot classpath
+    configure(options) {
+        compilerArgs << "-Xlint:all"            // Turn on all warnings
+        compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
+        compilerArgs << "-Werror"               // Turn warnings into errors
+        compilerArgs << "-Xdiags:verbose"       // Turn on verbose errors
+        encoding = "utf-8"
+        incremental = true
+        fork = true
+    }
+
+    configure(groovyOptions) {
+        encoding = "utf-8"
+        fork = true
+    }
+}
+
+test {
+    // Turn on logging for all tests, filter to show failures/skips only
+    testLogging {
+        exceptionFormat "full"
+        showCauses true
+        showExceptions true
+        showStackTraces true
+        events "failed", "skipped"
+    }
+}
+
+javadoc {
+    configure(options) {
+        exclude "**/*Test.java"
+        if (JavaVersion.current().isJava8Compatible()) addStringOption("Xdoclint:none", "-quiet")
+    }
+}
+
+groovydoc {
+    docTitle = "${project.name} ${project.version}"
+    header = project.name
+    link("http://docs.oracle.com/javase/8/docs/api/",
+        "http://docs.oracle.com/javaee/7/api/",
+        "http://groovy.codehaus.org/gapi/")
+    exclude "**/*Spec.java"
+}
+
+// Prevent forked processes from stealing focus (on MacOS at least)
+tasks.withType(JavaForkOptions) {
+    // should improve memory on a 64bit JVM
+    jvmArgs "-XX:+UseCompressedOops"
+    // should avoid GradleWorkerMain to steal focus
+    jvmArgs "-Djava.awt.headless=true"
+    jvmArgs "-Dapple.awt.UIElement=true"
+}
