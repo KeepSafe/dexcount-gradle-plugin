@@ -64,7 +64,8 @@ dependencies {
     testCompile deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
 }
 
-apply from: file("gradle/gradle-mvn-push.gradle")
+apply from: rootProject.file("gradle/gradle-mvn-push.gradle")
+apply from: rootProject.file("gradle/compile.gradle")
 
 // Compile Kotlin then Groovy
 afterEvaluate {
