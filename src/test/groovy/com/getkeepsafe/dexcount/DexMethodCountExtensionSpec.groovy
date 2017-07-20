@@ -16,7 +16,6 @@
 
 package com.getkeepsafe.dexcount
 
-import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskExecutionException
 import org.gradle.testfixtures.ProjectBuilder

@@ -32,6 +32,6 @@ ext.deps = [
         // integration - if you change these, you need to update the values in ./.buildscript/test.sh
         "appcompatv7" : "com.android.support:appcompat-v7:25.2.0",
         "runner"      : "com.android.support.test:runner:0.4.1",
-        "rules"      : "com.android.support.test:rules:0.4.1",
+        "rules"       : "com.android.support.test:rules:0.4.1",
         "hamcrestCore": "org.hamcrest:hamcrest-core:1.3"
 ]
