@@ -55,6 +55,7 @@ jar {
 
 dependencies {
     implementation localGroovy()
+    implementation deps.kotlinStdlib
     implementation deps.gson
 
     compileOnly plugs.gradle

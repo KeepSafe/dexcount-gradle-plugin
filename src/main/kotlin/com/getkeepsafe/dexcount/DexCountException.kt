@@ -16,17 +16,8 @@
 
 package com.getkeepsafe.dexcount
 
-final class IOUtil {
-    static drainToFile(InputStream stream, File file) {
-        stream.withStream { input ->
-            file.withOutputStream { output ->
-                def buf = new byte[4096]
-                def read
-                while ((read = input.read(buf)) != -1) {
-                    output.write(buf, 0, read)
-                }
-                output.flush()
-            }
-        }
-    }
+class DexCountException : RuntimeException {
+    constructor()
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
 }

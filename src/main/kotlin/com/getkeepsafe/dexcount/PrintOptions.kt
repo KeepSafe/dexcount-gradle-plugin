@@ -16,33 +16,14 @@
 
 package com.getkeepsafe.dexcount
 
-/**
- * Specifies what format the task output should take.
- */
-enum OutputFormat {
-    /**
-     * Specifies that method counts will be printed in a flat list of packages.
-     */
-    LIST('.txt'),
-
-    /**
-     * Specifies that the output will be pretty-printed as an tree.
-     */
-    TREE('.txt'),
-
-    /**
-     * Specifies that the output will be a pretty-printed JSON object.
-     */
-    JSON('.json'),
-
-    /**
-     * Specifies that output will be a YAML document.
-     */
-    YAML('.yml')
-
-    public String extension
-
-    OutputFormat(String extension) {
-        this.extension = extension
-    }
+internal class PrintOptions {
+    var includeClasses: Boolean = false
+    var includeClassCount: Boolean = false
+    var includeMethodCount: Boolean = true
+    var includeFieldCount: Boolean = false
+    var includeTotalMethodCount: Boolean = false
+    var teamCityIntegration: Boolean = false
+    var printHeader: Boolean = false
+    var orderByMethodCount: Boolean = false
+    var maxTreeDepth = Integer.MAX_VALUE
 }

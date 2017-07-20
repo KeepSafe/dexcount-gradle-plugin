@@ -16,8 +16,16 @@
 
 package com.getkeepsafe.dexcount
 
-final class DexCountException extends RuntimeException {
-    DexCountException() {}
-    DexCountException(String message) { super(message) }
-    DexCountException(String message, Throwable cause) { super(message, cause) }
+import java.io.File
+import java.io.InputStream
+
+object IOUtil {
+    @JvmStatic fun drainToFile(stream: InputStream, file: File) {
+        stream.use { input ->
+            File(file.path).outputStream().use { output ->
+                input.copyTo(output)
+                output.flush()
+            }
+        }
+    }
 }
