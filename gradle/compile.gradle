@@ -1,3 +1,16 @@
+compileJava {
+    sourceCompatibility = project.ext.sourceCompatibilityVersion
+    targetCompatibility = project.ext.targetCompatibilityVersion
+
+    // Show all warnings except boot classpath
+    configure(options) {
+        compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
+        encoding = "utf-8"
+        incremental = true
+        fork = true
+    }
+}
+
 compileGroovy {
     sourceCompatibility = project.ext.sourceCompatibilityVersion
     targetCompatibility = project.ext.targetCompatibilityVersion
@@ -31,7 +44,16 @@ test {
 }
 
 javadoc {
+    title = "${project.name} ${project.version}"
     configure(options) {
+        header = project.name
+        encoding "UTF-8"
+        docEncoding "UTF-8"
+        charSet "UTF-8"
+        linkSource true
+        author = true
+        links("http://docs.oracle.com/javase/8/docs/api/",
+            "http://docs.oracle.com/javaee/7/api/")
         exclude "**/*Test.java"
         if (JavaVersion.current().isJava8Compatible()) addStringOption("Xdoclint:none", "-quiet")
     }
