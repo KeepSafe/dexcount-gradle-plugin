@@ -23,10 +23,11 @@ import groovy.transform.stc.SimpleType
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.ParallelizableTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.logging.text.StyledTextOutput
+import org.gradle.internal.logging.text.StyledTextOutputFactory
 
 abstract class DexMethodCountTaskBase extends DefaultTask {
     /**
@@ -69,8 +70,9 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             printTaskDiagnosticData()
             failBuildMaxMethods()
         } catch (DexCountException e) {
-            withStyledOutput() { out ->
-                out.error("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues", e)
+            withStyledOutput(StyledTextOutput.Style.Error, LogLevel.ERROR) { out ->
+                out.println("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues")
+                e.printStackTrace(out)
             }
         }
     }
@@ -85,10 +87,10 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             def projectName = getClass().package.implementationTitle
             def projectVersion = getClass().package.implementationVersion
 
-            withStyledOutput() { out ->
-                out.lifecycle("Dexcount name:    $projectName")
-                out.lifecycle("Dexcount version: $projectVersion")
-                out.debug(    "Dexcount input:   ${rawInputRepresentation()}")
+            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
+                out.println("Dexcount name:    $projectName")
+                out.println("Dexcount version: $projectVersion")
+                out.println(    "Dexcount input:   ${rawInputRepresentation()}")
             }
         }
     }
@@ -101,12 +103,19 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         def filename = fileToCount().name
 
         if (isInstantRun) {
-            withStyledOutput() { out ->
-                out.warn("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
+            withStyledOutput(StyledTextOutput.Style.Failure) { out ->
+                out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
             }
         }
 
-        withStyledOutput() { out ->
+        def style
+        if (tree.methodCount < 50000) {
+            style = StyledTextOutput.Style.Identifier // green
+        } else {
+            style = StyledTextOutput.Style.Info       // yellow
+        }
+
+        withStyledOutput(style) { out ->
             def percentMethodsUsed = percentUsed(tree.methodCount)
             def percentFieldsUsed = percentUsed(tree.fieldCount)
             def percentClassesUsed = percentUsed(tree.classCount)
@@ -115,12 +124,12 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             def fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
             def classesRemaining = Math.max(MAX_DEX_REFS - tree.classCount, 0)
 
-            out.warn("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
-            out.warn("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
-            out.warn("Total classes in ${filename}:  ${tree.classCount} ($percentClassesUsed% used)")
-            out.warn("Methods remaining in ${filename}: $methodsRemaining")
-            out.warn("Fields remaining in ${filename}:  $fieldsRemaining")
-            out.warn("Classes remaining in ${filename}:  $classesRemaining")
+            out.println("Total methods in ${filename}: ${tree.methodCount} ($percentMethodsUsed% used)")
+            out.println("Total fields in ${filename}:  ${tree.fieldCount} ($percentFieldsUsed% used)")
+            out.println("Total classes in ${filename}:  ${tree.classCount} ($percentClassesUsed% used)")
+            out.println("Methods remaining in ${filename}: $methodsRemaining")
+            out.println("Fields remaining in ${filename}:  $fieldsRemaining")
+            out.println("Classes remaining in ${filename}:  $classesRemaining")
         }
 
         if (summaryFile != null) {
@@ -138,7 +147,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         }
 
         if (getPrintOptions().teamCityIntegration || config.teamCitySlug != null) {
-            withStyledOutput() { out ->
+            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
                 def prefix = "Dexcount"
                 if (config.teamCitySlug != null) {
                     def slug = config.teamCitySlug.replace(' ', '_') // Not sure how TeamCity would handle spaces?
@@ -156,8 +165,8 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
      * Reports to Team City statistic value
      * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
      */
-    static printTeamCityStatisticValue(Logger out, String key, int value) {
-        out.lifecycle("##teamcity[buildStatisticValue key='${key}' value='${value}']")
+    static printTeamCityStatisticValue(StyledTextOutput out, String key, int value) {
+        out.println("##teamcity[buildStatisticValue key='${key}' value='${value}']")
     }
 
     /**
@@ -197,19 +206,19 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         // verbose is enabled (in which case use the default log level).
         def level = config.verbose ? LogLevel.LIFECYCLE : LogLevel.DEBUG
 
-        withStyledOutput() { out ->
+        withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
             def strBuilder = new StringBuilder()
             print(tree, strBuilder)
 
-            out.log(level, strBuilder.toString())
-            out.log(level, "\n\nTask runtimes:")
-            out.log(level, "--------------")
-            out.log(level, "parsing:    ${ioTime - startTime} ms")
-            out.log(level, "counting:   ${treegenTime - ioTime} ms")
-            out.log(level, "printing:   ${outputTime - treegenTime} ms")
-            out.log(level, "total:      ${outputTime - startTime} ms")
-            out.log(level, "")
-            out.log(level, "input:      {}", rawInputRepresentation())
+            out.format(strBuilder.toString())
+            out.format("\n\nTask runtimes:")
+            out.format("--------------")
+            out.format("parsing:    ${ioTime - startTime} ms")
+            out.format("counting:   ${treegenTime - ioTime} ms")
+            out.format("printing:   ${outputTime - treegenTime} ms")
+            out.format("total:      ${outputTime - startTime} ms")
+            out.format("")
+            out.format("input:      {}", rawInputRepresentation())
         }
     }
 
@@ -217,9 +226,14 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         tree.print(out, config.format, getPrintOptions())
     }
 
-    def withStyledOutput(@ClosureParams(value = SimpleType, options = ['org.gradle.api.logging.Logger']) Closure closure) {
-        // TODO: Actually make this stylized when we have our own solution: https://github.com/KeepSafe/dexcount-gradle-plugin/issues/124
-        closure(getLogger())
+    def withStyledOutput(
+        StyledTextOutput.Style style,
+        LogLevel level = null,
+        @ClosureParams(value = SimpleType, options = ['org.gradle.internal.logging.text.StyledTextOutput']) Closure closure) {
+        def factory = services.get(StyledTextOutputFactory)
+        def output = level == null ? factory.create('dexcount') : factory.create('dexcount', level)
+
+        closure(output.withStyle(style))
     }
 
     def printToFile(
@@ -291,8 +305,8 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
 
     def getDeobfuscator() {
         if (mappingFile != null && !mappingFile.exists()) {
-            withStyledOutput() {
-                it.debug("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
+            withStyledOutput(StyledTextOutput.Style.Normal, LogLevel.DEBUG) {
+                it.println("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
             }
             mappingFile = null
         }
