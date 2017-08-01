@@ -20,14 +20,29 @@ import com.android.annotations.Nullable
 import com.android.build.gradle.api.BaseVariantOutput
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
+import kotlin.Unit
+import kotlin.jvm.functions.Function1
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.ParallelizableTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.internal.logging.text.StyledTextOutput
-import org.gradle.internal.logging.text.StyledTextOutputFactory
+
+
+class ClosureToFunctionAdapter implements Function1<PrintWriter, Unit> {
+    private Closure closure
+
+    ClosureToFunctionAdapter(Closure closure) {
+        this.closure = closure
+    }
+
+    @Override
+    Unit invoke(PrintWriter printWriter) {
+        closure(printWriter)
+        return Unit.INSTANCE
+    }
+}
 
 abstract class DexMethodCountTaskBase extends DefaultTask {
     /**
@@ -70,7 +85,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             printTaskDiagnosticData()
             failBuildMaxMethods()
         } catch (DexCountException e) {
-            withStyledOutput(StyledTextOutput.Style.Error, LogLevel.ERROR) { out ->
+            withStyledOutput(Style.Error, LogLevel.ERROR) { out ->
                 out.println("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues")
                 e.printStackTrace(out)
             }
@@ -87,7 +102,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
             def projectName = getClass().package.implementationTitle
             def projectVersion = getClass().package.implementationVersion
 
-            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
+            withStyledOutput(Style.Normal) { out ->
                 out.println("Dexcount name:    $projectName")
                 out.println("Dexcount version: $projectVersion")
                 out.println(    "Dexcount input:   ${rawInputRepresentation()}")
@@ -103,16 +118,16 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         def filename = fileToCount().name
 
         if (isInstantRun) {
-            withStyledOutput(StyledTextOutput.Style.Failure) { out ->
+            withStyledOutput(Style.Failure) { out ->
                 out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
             }
         }
 
         def style
         if (tree.methodCount < 50000) {
-            style = StyledTextOutput.Style.Identifier // green
+            style = Style.Identifier // green
         } else {
-            style = StyledTextOutput.Style.Info       // yellow
+            style = Style.Info       // yellow
         }
 
         withStyledOutput(style) { out ->
@@ -147,7 +162,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         }
 
         if (getPrintOptions().teamCityIntegration || config.teamCitySlug != null) {
-            withStyledOutput(StyledTextOutput.Style.Normal) { out ->
+            withStyledOutput(Style.Normal) { out ->
                 def prefix = "Dexcount"
                 if (config.teamCitySlug != null) {
                     def slug = config.teamCitySlug.replace(' ', '_') // Not sure how TeamCity would handle spaces?
@@ -165,7 +180,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
      * Reports to Team City statistic value
      * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
      */
-    static printTeamCityStatisticValue(StyledTextOutput out, String key, int value) {
+    static printTeamCityStatisticValue(PrintWriter out, String key, int value) {
         out.println("##teamcity[buildStatisticValue key='${key}' value='${value}']")
     }
 
@@ -206,7 +221,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
         // verbose is enabled (in which case use the default log level).
         def level = config.verbose ? LogLevel.LIFECYCLE : LogLevel.DEBUG
 
-        withStyledOutput(StyledTextOutput.Style.Info, level) { out ->
+        withStyledOutput(Style.Info, level) { out ->
             def strBuilder = new StringBuilder()
             print(tree, strBuilder)
 
@@ -227,13 +242,11 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
     }
 
     def withStyledOutput(
-        StyledTextOutput.Style style,
+        Style style,
         LogLevel level = null,
-        @ClosureParams(value = SimpleType, options = ['org.gradle.internal.logging.text.StyledTextOutput']) Closure closure) {
-        def factory = services.get(StyledTextOutputFactory)
-        def output = level == null ? factory.create('dexcount') : factory.create('dexcount', level)
+        @ClosureParams(value = SimpleType, options = ['java.io.PrintWriter']) Closure closure) {
 
-        closure(output.withStyle(style))
+        ColorConsoleKt.withStyledOutput(this, style, level, new ClosureToFunctionAdapter(closure))
     }
 
     def printToFile(
@@ -305,7 +318,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
 
     def getDeobfuscator() {
         if (mappingFile != null && !mappingFile.exists()) {
-            withStyledOutput(StyledTextOutput.Style.Normal, LogLevel.DEBUG) {
+            withStyledOutput(Style.Normal, LogLevel.DEBUG) {
                 it.println("Mapping file specified at ${mappingFile.absolutePath} does not exist, assuming output is not obfuscated.")
             }
             mappingFile = null
