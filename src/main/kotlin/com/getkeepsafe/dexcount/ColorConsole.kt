@@ -36,7 +36,7 @@ fun DefaultTask.withStyledOutput(style: Style, level: LogLevel? = null, fn: (Pri
 }
 
 private fun DefaultTask.createStyledOutputFactory(): StyledTextOutputFactoryWrapper {
-    val registry = AbstractTask_getServices(this)
+    val registry = DefaultTask_getServices(this)
     val factory = ServiceRegistry_get(registry, styledTextOutputFactoryClass)
     return StyledTextOutputFactoryWrapper(factory)
 }
@@ -145,10 +145,9 @@ private val serviceRegistryClass: Class<*> by lazy {
     )
 }
 
-private val AbstractTask_getServices: Method by lazy {
+private val DefaultTask_getServices: Method by lazy {
     var clazz: Class<*>? = DefaultTask::class.java
     var method: Method? = null
-    var iterations = 0
     val classesExamined = mutableListOf<Class<*>>()
     while (clazz != Any::class.java && clazz != null) {
         classesExamined += clazz
@@ -158,10 +157,6 @@ private val AbstractTask_getServices: Method by lazy {
             break
         } catch (e: NoSuchMethodException) {
             clazz = clazz.superclass
-        }
-
-        if (++iterations > 10) {
-            throw AssertionError("wtf: $classesExamined")
         }
     }
     method!!
