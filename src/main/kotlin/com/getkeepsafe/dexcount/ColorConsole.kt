@@ -148,9 +148,7 @@ private val serviceRegistryClass: Class<*> by lazy {
 private val DefaultTask_getServices: Method by lazy {
     var clazz: Class<*>? = DefaultTask::class.java
     var method: Method? = null
-    val classesExamined = mutableListOf<Class<*>>()
     while (clazz != Any::class.java && clazz != null) {
-        classesExamined += clazz
         try {
             method = clazz.getDeclaredMethod("getServices")
             method.isAccessible = true
