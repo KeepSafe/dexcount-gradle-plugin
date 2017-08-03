@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 KeepSafe Software
+ * Copyright 2016-2017 KeepSafe Software
  * Copyright 2014 Jake Wharton
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,21 @@ package com.getkeepsafe.dexcount.sdkresolver
  * https://github.com/JakeWharton/sdk-manager-plugin
  */
 interface System {
-    String env(String name)
-    String property(String key)
-    String property(String key, String defaultValue)
+    fun env(name: String): String?
+    fun property(key: String): String?
+    fun property(key: String, defaultValue: String): String
 
-    static final class Real implements System {
-        @Override String env(String name) {
+    class Real: System {
+        override fun env(name: String): String? {
             return java.lang.System.getenv(name)
         }
 
-        @Override String property(String key) {
+        override fun property(key: String): String? {
             return java.lang.System.getProperty(key)
         }
 
-        @Override String property(String key, String defaultValue) {
-            return java.lang.System.getProperty(key, defaultValue)
+        override fun property(key: String, defaultValue: String): String {
+            return java.lang.System.getProperty(key, defaultValue)!!
         }
     }
 }

@@ -23,7 +23,6 @@ import spock.lang.Specification
 final class DexFileSpec extends Specification {
     @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder()
 
-    @spock.lang.Ignore("Temporarily disabled until the new DexFile implementation works")
     def "test AAR dexcount"() {
         given:
         def aarFile = temporaryFolder.newFile("test.aar")

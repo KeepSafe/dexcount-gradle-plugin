@@ -16,19 +16,23 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.SdkConstants
 import com.android.dexdeps.DexData
 import com.android.dexdeps.DexDataException
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
-
+import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
+import java.io.EOFException
 import java.io.File
+import java.io.InputStream
+import java.io.IOException
 import java.io.RandomAccessFile
 
+import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
-import java.io.EOFException
 
 /**
  * A physical file and the {@link DexData} contained therein.
@@ -38,9 +42,9 @@ import java.io.EOFException
  * {@link DexFile#dispose()}.
  */
 internal class DexFile private constructor(
-        private val file: File,
-        private val isTemp: Boolean,
-        val isInstantRun: Boolean = false) {
+    private val file: File,
+    private val isTemp: Boolean,
+    val isInstantRun: Boolean = false) {
 
     private val raf: RandomAccessFile = RandomAccessFile(file, "r")
     private val data: DexData = DexData(raf)
@@ -88,8 +92,7 @@ internal class DexFile private constructor(
 
             // AAR files need special treatment
             if (file.name.endsWith(".aar")) {
-                return emptyList()
-                //return extractDexFromAar(file, dxTimeoutSecs)
+                return extractDexFromAar(file, dxTimeoutSecs)
             }
 
             try {
@@ -101,87 +104,81 @@ internal class DexFile private constructor(
             return listOf(DexFile(file, false))
         }
 
-//        fun extractDexFromAar(file: File, dxTimeoutSecs: Int): List<DexFile>
-//        {
-//            // unzip classes.jar from the AAR
-//            val tempClasses = ZipFile(file).let { zipfile ->
-//                val entries = zipfile.entries(). Collections . list (zipfile.entries())
-//                val jarFile = entries.find { it.name.matches("classes.jar") }
-//                val tempClasses = File.createTempFile ("classes", ".jar")
-//                tempClasses.deleteOnExit()
-//
-//                zipfile.getInputStream(jarFile).withStream { input ->
-//                    IOUtil.drainToFile(input, tempClasses)
-//                }
-//
-//                tempClasses.also {
-//                    zipfile.close()
-//                }
-//            }
-//
-//            // convert it to DEX format by using the Android dx tool
-//            val androidSdkHome = DexMethodCountPlugin.sdkLocation
-//                if (androidSdkHome == null) {
-//                    throw Exception ("Android SDK not found!")
-//                }
-//
-//            val buildToolsSubDirs = File(androidSdkHome, "build-tools")
-//            // get latest Dx tool by sorting by name
-//            val dirs = buildToolsSubDirs.listFiles().sort { it.name }.reverse()
-//            if (dirs.length == 0) {
-//                throw Exception ("No Build Tools found in " + buildToolsSubDirs.absolutePath)
-//            }
-//
-//
-//            val dxExe = if (currentPlatform() == PLATFORM_WINDOWS) {
-//                File(dirs[0], "dx.bat")
-//            } else {
-//                File(dirs[0], "dx")
-//            }
-//
-//            if (!dxExe.exists()) {
-//                throw Exception ("dx tool not found at " + dxExe.absolutePath)
-//            }
-//
-//            // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
-//            val tempDex = File.createTempFile ("classes", ".dex")
-//            tempDex.deleteOnExit()
-//
-//            val dxCmd = "${dxExe.absolutePath} --dex --output=${tempDex.absolutePath} ${tempClasses.absolutePath}"
-//
-//            val sout = StringBuilder()
-//            val serr = StringBuilder()
-//            val proc = ProcessBuilder().command(dxCmd).start()
-//            val finished = AtomicBoolean(false)
-//            val thread = Thread.start {
-//                proc.waitForProcessOutput(sout, serr)
-//                finished.set(true)
-//            }
-//
-//            try {
-//                thread.join(TimeUnit.SECONDS.toMillis(dxTimeoutSecs))
-//            } catch (InterruptedException ignored) {
-//                // oh well
-//            }
-//
-//            if (!finished.get()) {
-//                thread.interrupt()
-//                proc.destroy()
-//                throw new DexCountException ("dx timed out after $dxTimeoutSecs seconds")
-//            }
-//
-//            def exitCode = proc . exitValue ()
-//            if (exitCode != 0) {
-//                throw new DexCountException ("dx exited with exit code $exitCode\nstderr=$serr")
-//            }
-//
-//            if (!tempDex.exists()) {
-//                throw new DexCountException ("Error converting classes.jar into classes.dex: $serr")
-//            }
-//
-//            // return resulting dex file in a list
-//            return [new DexFile (tempDex, true)]
-//        }
+        fun extractDexFromAar(file: File, dxTimeoutSecs: Int): List<DexFile>
+        {
+            // unzip classes.jar from the AAR
+            val tempClasses = ZipFile(file).let { zipfile ->
+                val entries = zipfile.entries().toList()
+                val jarFile = entries.find { it.name.matches(Regex("classes.jar")) }
+                val tempClasses = File.createTempFile ("classes", ".jar")
+                tempClasses.deleteOnExit()
+
+                zipfile.getInputStream(jarFile).use { input ->
+                    IOUtil.drainToFile(input, tempClasses)
+                }
+
+                tempClasses.also {
+                    zipfile.close()
+                }
+            }
+
+            // convert it to DEX format by using the Android dx tool
+            val androidSdkHome = SdkResolver.resolve(null)
+            if (androidSdkHome == null) {
+                throw Exception ("Android SDK not found!")
+            }
+
+            val buildToolsSubDirs = File(androidSdkHome, "build-tools")
+            // get latest Dx tool by sorting by name
+            val dirs = buildToolsSubDirs.listFiles().sortedBy { it.name }.asReversed()
+            if (dirs.isEmpty()) {
+                throw Exception ("No Build Tools found in " + buildToolsSubDirs.absolutePath)
+            }
+
+            val dxExe = if (SdkConstants.currentPlatform() == SdkConstants.PLATFORM_WINDOWS) {
+                File(dirs[0], "dx.bat")
+            } else {
+                File(dirs[0], "dx")
+            }
+
+            if (!dxExe.exists()) {
+                throw Exception ("dx tool not found at " + dxExe.absolutePath)
+            }
+
+            // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
+            val tempDex = File.createTempFile ("classes", ".dex").apply { deleteOnExit() }
+
+            val sout = StringBuilder()
+            val serr = StringBuilder()
+            val proc = ProcessBuilder().command(
+                    dxExe.absolutePath,
+                    "--dex",
+                    "--output=${tempDex.absolutePath}",
+                    tempClasses.absolutePath)
+                .start()
+
+            val didFinish = proc.waitForProcessOutput(
+                stdout = sout,
+                stderr = serr,
+                timeoutMillis = TimeUnit.SECONDS.toMillis(dxTimeoutSecs.toLong()))
+
+            val exitCode = if (didFinish) proc.exitValue() else -1
+            proc.dispose()
+
+            if (!didFinish) {
+                throw DexCountException("dx timed out after $dxTimeoutSecs seconds")
+            }
+
+            if (exitCode != 0) {
+                throw DexCountException("dx exited with exit code $exitCode\nstderr=$serr")
+            }
+
+            if (!tempDex.exists()) {
+                throw DexCountException("Error converting classes.jar into classes.dex: $serr")
+            }
+
+            return listOf(DexFile(tempDex, true))
+        }
 
         /**
          * Attempts to unzip the file and extract all dex files inside of it.
@@ -236,28 +233,112 @@ internal class DexFile private constructor(
                 return emptyList()
             }
 
-            val instantRunFile = File.createTempFile("instant-run", ".zip")
-            instantRunFile.deleteOnExit()
+            val instantRunFile = makeTempFile("instant-run", ".zip")
 
             apk.getInputStream(incremental.single()).use { input ->
-                IOUtil.drainToFile(input, instantRunFile)
+                instantRunFile.writeFromStream(input)
             }
 
-            return ZipFile(instantRunFile).use { instantRunZip ->
-                val entries = instantRunZip.entries().toList()
-                val dexEntries = entries.filter { it.name.endsWith(".dex") }
-
-                dexEntries.map { entry ->
-                    val temp = File.createTempFile ("dexcount", ".dex")
-                    temp.deleteOnExit()
-
-                    instantRunZip.getInputStream(entry).use { input ->
-                        IOUtil.drainToFile(input, temp)
+            return instantRunFile.unzip { entries ->
+                entries
+                    .filter { it.name.endsWith(".dex") }
+                    .map { entry ->
+                        val temp = makeTempFile("dexcount", ".dex")
+                        entry.inputStream().use { temp.writeFromStream(it) }
+                        DexFile(temp, true, true)
                     }
-
-                    DexFile(temp, true, true)
-                }
+                    .toList()
             }
+        }
+    }
+}
+
+private fun <T> File.unzip(fn: (Sequence<StreamableZipEntry>) -> T): T {
+    return ZipFile(this).use { zip ->
+        val streamableEntries = zip.entries().asSequence().map { StreamableZipEntry(zip, it) }
+        fn(streamableEntries)
+    }
+}
+
+private fun makeTempFile(prefix: String, suffix: String): File {
+    return File.createTempFile(prefix, suffix).apply { deleteOnExit() }
+}
+
+private fun File.writeFromStream(stream: InputStream) {
+    this.outputStream().use { output ->
+        stream.copyTo(output)
+    }
+}
+
+private class StreamableZipEntry(
+    private val file: ZipFile,
+    private val entry: ZipEntry) {
+
+    val name: String
+        get() = entry.name
+
+    fun inputStream(): InputStream {
+        return file.getInputStream(entry)
+    }
+}
+
+private fun Process.waitForProcessOutput(stdout: Appendable, stderr: Appendable, timeoutMillis: Long): Boolean {
+    val (o, e) = consumeStdout(stdout) to consumeStderr(stderr)
+
+    try { o.join() } catch (ignored: InterruptedException) {}
+    try { e.join() } catch (ignored: InterruptedException) {}
+    return try {
+        waitFor(timeoutMillis, TimeUnit.MILLISECONDS)
+    } catch (ignored: InterruptedException) {
+        false
+    }
+}
+
+private fun Process.consumeStdout(stdout: Appendable): Thread {
+    return Thread(TextDumper(inputStream, stdout)).apply { start() }
+}
+
+private fun Process.consumeStderr(stderr: Appendable): Thread {
+    return Thread(TextDumper(errorStream, stderr)).apply { start() }
+}
+
+private fun Process.dispose() {
+    try {
+        inputStream.close()
+    } catch (e: IOException) {
+        // ignore
+    }
+
+    try {
+        errorStream.close()
+    } catch (e: IOException) {
+        // ignore
+    }
+
+    try {
+        outputStream.close()
+    } catch (e: IOException) {
+        // ignore
+    }
+
+    try {
+        destroy()
+    } catch (e: Exception) {
+        // ignore
+    }
+}
+
+private class TextDumper(
+    private val inputStream: InputStream,
+    private val output: Appendable) : Runnable {
+
+    override fun run() {
+        val reader = inputStream.bufferedReader()
+        val lines = generateSequence { reader.readLine() }
+
+        for (line in lines) {
+            output.append(line)
+            output.append("\n")
         }
     }
 }
