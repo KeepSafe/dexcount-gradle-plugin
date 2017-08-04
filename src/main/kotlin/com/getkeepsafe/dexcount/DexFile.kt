@@ -187,7 +187,7 @@ internal class DexFile: Closeable {
          * @throws ZipException if {@code file} is not a zip file.
          */
         @JvmStatic
-        internal fun extractDexFromZip(file: File): List<DexFile> {
+        fun extractDexFromZip(file: File): List<DexFile> {
             return file.unzip { entries ->
                 entries
                     .filter { it.name.matches(Regex("classes.*\\.dex")) }
