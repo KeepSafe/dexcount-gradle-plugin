@@ -26,7 +26,10 @@ import com.android.SdkConstants.PLATFORM_WINDOWS
 import com.android.SdkConstants.SDK_DIR_PROPERTY
 import com.android.SdkConstants.NDK_DIR_PROPERTY
 import com.android.SdkConstants.currentPlatform
+import java.io.BufferedWriter
 import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 import java.util.*
 
 /**
@@ -141,7 +144,7 @@ class SdkResolver {
             }
         }
         if (localProperties.exists()) {
-            localProperties.writer(Charsets.UTF_8).use {
+            localProperties.appendingWriter {
                 it.write("$SDK_DIR_PROPERTY=$theSdkPath\n")
                 if (theNdkPath!=null){
                     it.write("$NDK_DIR_PROPERTY=$theNdkPath\n")
@@ -153,6 +156,17 @@ class SdkResolver {
                 it.write("$SDK_DIR_PROPERTY=$theSdkPath\n")
                 if (theNdkPath!=null){
                     it.write("$NDK_DIR_PROPERTY=$theNdkPath\n")
+                }
+            }
+        }
+    }
+
+    private inline fun File.appendingWriter(fn: (BufferedWriter) -> Unit) {
+        FileOutputStream(this, true).use { stream ->
+            OutputStreamWriter(stream, Charsets.UTF_8).use { writer ->
+                BufferedWriter(writer).use { bufferedWriter ->
+                    fn(bufferedWriter)
+                    bufferedWriter.flush()
                 }
             }
         }
