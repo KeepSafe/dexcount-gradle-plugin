@@ -295,7 +295,7 @@ abstract class DexMethodCountTaskBase extends DefaultTask {
                 tree.addFieldRef(it)
             }
         } finally {
-            dataList*.dispose()
+            dataList*.close()
         }
 
         treegenTime = System.currentTimeMillis()
