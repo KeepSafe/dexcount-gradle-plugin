@@ -16,7 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
-internal class PrintOptions {
+class PrintOptions {
     var includeClasses: Boolean = false
     var includeClassCount: Boolean = false
     var includeMethodCount: Boolean = true
