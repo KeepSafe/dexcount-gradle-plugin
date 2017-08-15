@@ -59,7 +59,7 @@ open class LegacyMethodCountTask: DexMethodCountTaskBase() {
         get() = variantOutput.outputFile
 
     override val rawInputRepresentation: String
-        get() = "variantOutput={name=${variantOutput.name} outputFile=${variantOutput.outputFile}"
+        get() = "variantOutput={name=${variantOutput.name} outputFile=${variantOutput.outputFile}}"
 }
 
 abstract class DexMethodCountTaskBase: DefaultTask() {
