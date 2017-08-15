@@ -6,12 +6,27 @@ import java.io.PrintWriter
 import java.io.Writer
 import java.lang.reflect.Method
 
+
+enum class Color {
+    DEFAULT,
+    GREEN,
+    YELLOW,
+    RED
+}
+
+private fun Color.toStyle() = when (this) {
+    Color.DEFAULT -> Style.Normal
+    Color.GREEN   -> Style.Identifier
+    Color.YELLOW  -> Style.Info
+    Color.RED     -> Style.Error
+}
+
 /**
  * Various styles that can be applied to text output.
  *
  * These names match the Gradle StyledTextOutput.Style enums exactly.
  */
-enum class Style {
+private enum class Style {
     Normal,
     Header,
     UserInput,
@@ -26,7 +41,8 @@ enum class Style {
     Error
 }
 
-fun DefaultTask.withStyledOutput(style: Style, level: LogLevel? = null, fn: (PrintWriter) -> Unit) {
+fun DefaultTask.withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: (PrintWriter) -> Unit) {
+    val style = color.toStyle()
     val factory = this.createStyledOutputFactory()
     val output = factory.create("dexcount", level)
     val styledOutput = output.withStyle(style)

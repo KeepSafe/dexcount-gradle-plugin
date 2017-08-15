@@ -216,12 +216,6 @@ private fun makeTempFile(pattern: String): File {
     return File.createTempFile(prefix, suffix).apply { deleteOnExit() }
 }
 
-private fun File.writeFromStream(stream: InputStream) {
-    this.outputStream().use { output ->
-        stream.copyTo(output)
-    }
-}
-
 private class StreamableZipEntry(
     private val file: ZipFile,
     private val entry: ZipEntry
