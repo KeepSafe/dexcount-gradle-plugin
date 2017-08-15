@@ -128,7 +128,7 @@ class PackageTree(
         val sb = StringBuilder(64)
 
         if (opts.includeTotalMethodCount) {
-            out.appendln("Total methods: methodCount")
+            out.appendln("Total methods: $methodCount")
         }
 
         if (opts.printHeader) {
