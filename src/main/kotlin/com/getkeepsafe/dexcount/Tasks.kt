@@ -193,8 +193,8 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
 
         if (printOptions.teamCityIntegration || config.teamCitySlug != null) {
             withStyledOutput { out ->
-                val slug = config.teamCitySlug?.let { "_" + it.replace(' ', '_') } ?: ""
-                val prefix = "Dexcount_${slug}_$variantOutputName"
+                val slug = "Dexcount" + (config.teamCitySlug?.let { "_" + it.replace(' ', '_') } ?: "")
+                val prefix = "${slug}_$variantOutputName"
 
                 /**
                  * Reports to Team City statistic value
