@@ -18,6 +18,7 @@ package com.getkeepsafe.dexcount
 
 import java.io.File
 import java.io.InputStream
+import java.io.PrintStream
 
 object IOUtil {
     @JvmStatic fun drainToFile(stream: InputStream, file: File) {
@@ -28,4 +29,23 @@ object IOUtil {
             }
         }
     }
+}
+
+fun File.writeFromStream(stream: InputStream) {
+    this.outputStream().use { output ->
+        stream.copyTo(output)
+    }
+}
+
+fun InputStream.copyToFile(file: File) {
+    file.outputStream().use {
+        copyTo(it)
+        it.flush()
+    }
+}
+
+fun File.printStream(): PrintStream {
+    parentFile.mkdirs()
+    createNewFile()
+    return PrintStream(outputStream())
 }
