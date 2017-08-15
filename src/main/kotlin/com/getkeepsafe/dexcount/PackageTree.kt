@@ -18,6 +18,10 @@ class PackageTree(
         @JvmStatic private fun isClassName(name: String): Boolean {
             return Character.isUpperCase(name[0]) || name.contains("[]")
         }
+
+        private inline fun <T> Iterable<T>.sumBy(initialCount: Int, selector: (T) -> Int): Int {
+            return initialCount + sumBy(selector)
+        }
     }
 
     // A cached sum of classes.
@@ -43,13 +47,39 @@ class PackageTree(
     // nodes and possibly non-empty for class nodes.
     private val fields_ = HashSet<HasDeclaringClass>()
 
+    val classCount: Int
+        get() {
+            if (classTotal_ == null) {
+                if (isClass_) {
+                    classTotal_ = 1
+                } else {
+                    classTotal_ = children_.values.sumBy { it.classCount }
+                }
+            }
+            return classTotal_!!
+        }
+
+    val methodCount: Int
+        get() {
+            if (methodTotal_ == null) {
+                methodTotal_ = children_.values.sumBy(methods_.size) { it.methodCount }
+            }
+            return methodTotal_!!
+        }
+
+    val fieldCount: Int
+        get() {
+            if (fieldTotal_ == null) {
+                fieldTotal_ = children_.values.sumBy(fields_.size) { it.fieldCount }
+            }
+            return fieldTotal_!!
+        }
+
     constructor() : this("", false, null)
 
     constructor(deobfuscator: Deobfuscator) : this("", false, deobfuscator)
 
     constructor(name: String, deobfuscator: Deobfuscator) : this(name, isClassName(name), deobfuscator)
-
-
 
     fun addMethodRef(method: MethodRef) {
         addInternal(descriptorToDot(method), 0, true, method)
@@ -80,34 +110,6 @@ class PackageTree(
         }
     }
 
-    val classCount: Int
-        get() {
-            if (classTotal_ == null) {
-                if (isClass_) {
-                    classTotal_ = 1
-                } else {
-                    classTotal_ = children_.values.sumBy { it.classCount }
-                }
-            }
-            return classTotal_!!
-        }
-
-    val methodCount: Int
-        get() {
-            if (methodTotal_ == null) {
-                methodTotal_ = children_.values.fold(methods_.size) { sum, child -> sum + child.methodCount }
-            }
-            return methodTotal_!!
-        }
-
-    val fieldCount: Int
-        get() {
-            if (fieldTotal_ == null) {
-                fieldTotal_ = children_.values.fold(fields_.size) { sum, child -> sum + child.fieldCount }
-            }
-            return fieldTotal_!!
-        }
-
     fun print(out: Appendable, format: OutputFormat, opts: PrintOptions) {
         when (format) {
             OutputFormat.LIST -> printPackageList(out, opts)
@@ -126,7 +128,7 @@ class PackageTree(
         val sb = StringBuilder(64)
 
         if (opts.includeTotalMethodCount) {
-            out.append("Total methods: ${methodCount}\n")
+            out.appendln("Total methods: methodCount")
         }
 
         if (opts.printHeader) {
@@ -202,9 +204,7 @@ class PackageTree(
 
             var appended = false
             if (opts.includeClassCount) {
-                out.append("$classCount")
-                out.append(" ")
-                out.append(pluralizedClasses(classCount))
+                out.append("$classCount ${pluralizedClasses(classCount)}")
                 appended = true
             }
 
@@ -212,9 +212,7 @@ class PackageTree(
                 if (appended) {
                     out.append(", ")
                 }
-                out.append("$methodCount")
-                out.append(" ")
-                out.append(pluralizedMethods(methodCount))
+                out.append("$methodCount ${pluralizedMethods(methodCount)}")
                 appended = true
             }
 
@@ -222,9 +220,7 @@ class PackageTree(
                 if (appended) {
                     out.append(", ")
                 }
-                out.append("$fieldCount")
-                out.append(" ")
-                out.append(pluralizeFields(fieldCount))
+                out.append("$fieldCount ${pluralizeFields(fieldCount)}")
             }
 
             out.append(")")
@@ -315,39 +311,30 @@ class PackageTree(
 
         var indentText = "  ".repeat((depth * 2) + 1)
 
-        out.append(indentText + "- name: ")
-        out.append(name_)
-        out.append("\n")
+        out.appendln("$indentText- name: $name_")
 
         indentText += "  "
 
         if (opts.includeClassCount) {
-            out.append(indentText)
-            out.append("classes: " + classCount)
-            out.append("\n")
+            out.appendln("${indentText}classes: $classCount")
         }
 
         if (opts.includeMethodCount) {
-            out.append(indentText)
-            out.append("methods: " + methodCount)
-            out.append("\n")
+            out.appendln("${indentText}methods: $methodCount")
         }
 
         if (opts.includeFieldCount) {
-            out.append(indentText)
-            out.append("fields: " + fieldCount)
-            out.append("\n")
+            out.appendln("${indentText}fields: $fieldCount")
         }
 
         val children = if ((depth + 1) == opts.maxTreeDepth) emptyList() else getChildren(opts)
         if (children.isEmpty()) {
-            out.append(indentText)
-            out.append("children: []\n")
+            out.appendln("${indentText}children: []")
         } else {
-            out.append(indentText)
-            out.append("children:\n")
-            children.forEach { it.printYamlRecursively(out, depth + 1, opts) }
+            out.appendln("${indentText}children:")
         }
+
+        children.forEach { it.printYamlRecursively(out, depth + 1, opts) }
     }
 
     private fun getChildren(opts: PrintOptions): List<PackageTree> {
@@ -367,17 +354,11 @@ class PackageTree(
         return opts.includeClasses || !isClass_
     }
 
-    private fun pluralizedClasses(n: Int): String {
-        return if (n == 1) "class" else "classes"
-    }
+    private fun pluralizedClasses(n: Int) = if (n == 1) "class" else "classes"
 
-    private fun pluralizedMethods(n: Int): String {
-        return if (n == 1) "method" else "methods"
-    }
+    private fun pluralizedMethods(n: Int) = if (n == 1) "method" else "methods"
 
-    private fun pluralizeFields(n: Int): String {
-        return if (n == 1) "field" else "fields"
-    }
+    private fun pluralizeFields(n: Int) = if (n == 1) "field" else "fields"
 
     private fun descriptorToDot(ref: HasDeclaringClass): String {
         val descriptor = ref.declClassName
