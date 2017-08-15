@@ -43,10 +43,10 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
 
     lateinit var config: DexMethodCountExtension
 
-    private var startTime: Long = 0
-    private var ioTime: Long = 0
-    private var treegenTime: Long = 0
-    private var outputTime: Long = 0
+    private var startTime   = 0L
+    private var ioTime      = 0L
+    private var treegenTime = 0L
+    private var outputTime  = 0L
 
     private val printOptions by lazy { // needs to be lazy because config is lateinit
         PrintOptions().apply {
