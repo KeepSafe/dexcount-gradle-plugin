@@ -25,7 +25,6 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.ParallelizableTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.io.FilenameFilter
 
 /**
  * The maximum number of method refs and field refs allowed in a single Dex
