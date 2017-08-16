@@ -16,10 +16,13 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Nullable
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.ParallelizableTask
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
@@ -28,6 +31,36 @@ import java.io.File
  * file.
  */
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
+
+@ParallelizableTask
+open class ModernMethodCountTask: DexMethodCountTaskBase() {
+    /**
+     * The output directory of the 'package' task; will contain an
+     * APK or an AAR.
+     */
+    @InputDirectory
+    lateinit var inputDirectory: File
+
+    override val fileToCount: File?
+        get() = inputDirectory.listFiles { _, name ->
+            name?.endsWith(".apk") ?: false
+        }.firstOrNull()
+
+    override val rawInputRepresentation: String
+        get() = "$inputDirectory"
+}
+
+@ParallelizableTask
+open class LegacyMethodCountTask: DexMethodCountTaskBase() {
+
+    lateinit var variantOutput: BaseVariantOutput
+
+    override val fileToCount: File?
+        get() = variantOutput.outputFile
+
+    override val rawInputRepresentation: String
+        get() = "variantOutput={name = ${variantOutput.name}, outputFile = ${variantOutput.outputFile}}"
+}
 
 abstract class DexMethodCountTaskBase: DefaultTask() {
     lateinit var tree: PackageTree
