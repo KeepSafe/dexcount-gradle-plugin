@@ -21,7 +21,6 @@ import com.android.dexdeps.DexData
 import com.android.dexdeps.DexDataException
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
-import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
@@ -122,8 +121,7 @@ internal class DexFile: Closeable {
             }
 
             // convert it to DEX format by using the Android dx tool
-            // TODO: Use a reference to DexMethodCountPlugin.sdkLocation, once it is ported to Kotlin
-            val androidSdkHome = SdkResolver.resolve(null) ?: throw Exception("Android SDK not found!")
+            val androidSdkHome = DexMethodCountPlugin.sdkLocation ?: throw Exception("Android SDK not found!")
             val buildToolsSubDirs = File(androidSdkHome, "build-tools")
 
             // get latest Dx tool by sorting by name
