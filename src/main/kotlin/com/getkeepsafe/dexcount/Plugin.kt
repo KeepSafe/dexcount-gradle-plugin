@@ -156,15 +156,13 @@ abstract class TaskProvider(
     abstract fun applyToLibraryVariant(variant: LibraryVariant)
 
     protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: DexMethodCountTaskBase) {
-        if (dexcountTask != null && parentTask != null) {
-            // Dexcount tasks require that their parent task has been run...
-            dexcountTask.dependsOn(parentTask)
-            dexcountTask.mustRunAfter(parentTask)
+        // Dexcount tasks require that their parent task has been run...
+        dexcountTask.dependsOn(parentTask)
+        dexcountTask.mustRunAfter(parentTask)
 
-            // But package should always imply that dexcount runs, unless configured not to.
-            if (ext.runOnEachPackage) {
-                parentTask.finalizedBy(dexcountTask)
-            }
+        // But package should always imply that dexcount runs, unless configured not to.
+        if (ext.runOnEachPackage) {
+            parentTask.finalizedBy(dexcountTask)
         }
     }
 
@@ -215,7 +213,7 @@ class LegacyProvider(project: Project): TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
-        variant.outputs.forEach { output ->
+        variant.outputs.all { output ->
             val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
             addDexcountTaskToGraph(output.assemble, task)
         }
@@ -238,7 +236,7 @@ class ThreeOhProvider(project: Project): TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
-        variant.outputs.forEach { output ->
+        variant.outputs.all { output ->
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
                 val packageDirectory = output.packageApplication.outputDirectory
