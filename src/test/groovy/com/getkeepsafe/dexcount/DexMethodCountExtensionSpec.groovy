@@ -46,7 +46,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         apkFile = tempFolder.newFile("tiles.apk")
         def apkResource = getClass().getResourceAsStream("/tiles.apk")
         apkResource.withStream { input ->
-            IOUtil.drainToFile(input, apkFile)
+            apkFile.append(input)
         }
     }
 

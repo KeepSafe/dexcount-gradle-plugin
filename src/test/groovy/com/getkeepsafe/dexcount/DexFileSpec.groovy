@@ -28,7 +28,7 @@ final class DexFileSpec extends Specification {
         def aarFile = temporaryFolder.newFile("test.aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
-            IOUtil.drainToFile(input, aarFile)
+            aarFile.append(input)
         }
 
         when:
@@ -46,7 +46,7 @@ final class DexFileSpec extends Specification {
         def apk = temporaryFolder.newFile("app-debug-tools-v24.apk")
 
         getClass().getResourceAsStream("/app-debug-tools-v24.apk").withStream { input ->
-            IOUtil.drainToFile(input, apk)
+            apk.append(input)
         }
 
         when:

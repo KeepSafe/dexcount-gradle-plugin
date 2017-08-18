@@ -52,7 +52,7 @@ class PackageTree(
     // Same semantics as methodTotal_.
     private var fieldTotal_: Int? = null
 
-    private val deobfuscator_: Deobfuscator = deobfuscator ?: Deobfuscator(null)
+    private val deobfuscator_: Deobfuscator = deobfuscator ?: Deobfuscator.empty
     private val children_: SortedMap<String, PackageTree> = TreeMap()
 
     // The set of methods declared on this node.  Will be empty for package
