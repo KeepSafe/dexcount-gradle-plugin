@@ -20,17 +20,6 @@ import java.io.File
 import java.io.InputStream
 import java.io.PrintStream
 
-object IOUtil {
-    @JvmStatic fun drainToFile(stream: InputStream, file: File) {
-        stream.use { input ->
-            File(file.path).outputStream().use { output ->
-                input.copyTo(output)
-                output.flush()
-            }
-        }
-    }
-}
-
 fun File.writeFromStream(stream: InputStream) {
     this.outputStream().use { output ->
         stream.copyTo(output)

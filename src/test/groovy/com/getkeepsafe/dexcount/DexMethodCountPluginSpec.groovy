@@ -176,7 +176,7 @@ final class DexMethodCountPluginSpec extends Specification {
     def apkFile = tempFolder.newFile("tiniest-smallest-app.apk")
     def apkResource = getClass().getResourceAsStream("/tiniest-smallest-app.apk")
     apkResource.withStream { input ->
-      IOUtil.drainToFile(input, apkFile)
+        apkFile.append(input)
     }
 
     project.apply plugin: "com.android.application"

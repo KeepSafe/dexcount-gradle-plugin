@@ -16,8 +16,16 @@
 
 package com.getkeepsafe.dexcount
 
-import com.android.build.gradle.*
-import com.android.build.gradle.api.*
+import com.android.build.gradle.AppExtension
+import com.android.build.gradle.LibraryExtension
+import com.android.build.gradle.TestExtension
+import com.android.build.gradle.api.ApkVariant
+import com.android.build.gradle.api.ApkVariantOutput
+import com.android.build.gradle.api.ApplicationVariant
+import com.android.build.gradle.api.BaseVariant
+import com.android.build.gradle.api.BaseVariantOutput
+import com.android.build.gradle.api.LibraryVariant
+import com.android.build.gradle.api.TestVariant
 import com.android.builder.Version
 import com.android.repository.Revision
 import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
@@ -27,44 +35,6 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import java.io.File
 import kotlin.reflect.KClass
-
-val Project.isInstantRun: Boolean
-    get() {
-        val compilationOptionString = project.properties["android.optional.compilation"] as? String ?: ""
-        val compilationOptionList = compilationOptionString.split(",").map(String::trim)
-        return compilationOptionList.any { it == "INSTANT_DEV" }
-    }
-
-val isAtLeastJavaEight: Boolean
-    get() {
-        var version = System.getProperty("java.version")
-        if (version == null) {
-            // All JVMs provide this property... what's going on?
-            return false
-        }
-
-        // Java version strings are something like 1.8.0_65; we don't
-        // care about the third component, if it exists.  Skip it.
-        val indexOfDecimal = version.indexOf('.').let {
-            if (it != -1) {
-                version.indexOf('.', it + 1)
-            } else {
-                it
-            }
-        }
-
-        if (indexOfDecimal != -1) {
-            version = version.substring(0, indexOfDecimal)
-        }
-
-        return try {
-            val numericVersion = java.lang.Double.parseDouble(version)
-            numericVersion >= 1.8
-        } catch (ignored: NumberFormatException) {
-            // Invalid Java version number; who knows.
-            false
-        }
-    }
 
 open class DexMethodCountPlugin: Plugin<Project> {
     companion object {
@@ -107,7 +77,7 @@ abstract class TaskProvider(
         // If the user has passed '--stacktrace' or '--full-stacktrace', assume
         // that they are trying to report a dexcount bug.  Help them help us out
         // by printing the current plugin title and version.
-        if (GradleApi.isShowStacktrace(project.gradle.startParameter)) {
+        if (project.gradle.startParameter.isShowStacktrace) {
             printVersion = true
         }
     }

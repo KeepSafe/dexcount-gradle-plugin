@@ -26,10 +26,9 @@ import java.util.TreeMap
  * mapping file.
  */
 open class Deobfuscator(reader: MappingReader?) {
-    private val mapping: MutableMap<String, String>
+    private val mapping = TreeMap<String, String>()
 
     init {
-        mapping = TreeMap<String, String>()
         reader?.pump(Processor())
     }
 
