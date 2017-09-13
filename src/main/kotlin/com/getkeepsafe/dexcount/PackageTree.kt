@@ -129,14 +129,9 @@ class PackageTree(
     fun print(out: Appendable, format: OutputFormat, opts: PrintOptions) {
         when (format) {
             OutputFormat.LIST -> printPackageList(out, opts)
-
             OutputFormat.TREE -> printTree(out, opts)
-
             OutputFormat.JSON -> printJson(out, opts)
-
             OutputFormat.YAML -> printYaml(out, opts)
-
-            else -> throw IllegalArgumentException("Unknown format: $format")
         }
     }
 
