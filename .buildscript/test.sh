@@ -4,16 +4,16 @@ set -e
 
 # Not sure how well Travis deals with cwd; restore it on script exit.
 DIR=`pwd`
-trap "cd $DIR" SIGINT SIGTERM EXIT
+trap "cd ${DIR}" SIGINT SIGTERM EXIT
 
-./gradlew clean build install
+./gradlew clean build install --stacktrace
 
 VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 
 echo "Building integration test project..."
 cd integration
-./gradlew clean -PdexcountVersion="$VERSION" :app:assembleDebug 2>&1 -s | tee app.log
-./gradlew clean -PdexcountVersion="$VERSION" :tests:assembleDebug 2>&1 -s | tee tests.log
+./gradlew clean -PdexcountVersion="$VERSION" :app:assembleDebug 2>&1 --stacktrace | tee app.log
+./gradlew clean -PdexcountVersion="$VERSION" :tests:assembleDebug 2>&1 --stacktrace | tee tests.log
 
 echo "Integration build done!  Running tests..."
 
