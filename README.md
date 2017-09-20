@@ -22,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.7.3'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.0'
     }
 }
 
@@ -32,6 +32,8 @@ apply plugin: 'com.getkeepsafe.dexcount'
 
 #### Note
 `dexcount-gradle-plugin` "requires" Java 8 to run.  "Requires" means that, while it will technically work if Gradle is being run on Java 7, there are situations where it may crash.  This is caused by dependencies we don't bundle targeting JRE 8; these cannot be loaded on older runtimes.  Attempting to load them will crash Gradle.  This currently applies only to counting `.aar` library projects, but as time goes by the JRE-8-only surface area will only increase.
+
+Android build tools versons 3.0.0-alpha1 through 3.0.0-beta5 are not supported by `dexcount-gradle-plugin`; their APIs are incompatible.  Newer and older versions work without issue.
 
 ## Sample output
 
@@ -145,7 +147,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.7.4-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.1-SNAPSHOT'
   }
 }
 ```

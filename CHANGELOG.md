@@ -1,3 +1,8 @@
+0.8.0 (released 20 September 2017)
+---------
+* Update modern counting task to use Android Studio 3.0's new variant API (#218)
+* Rewrite from Groovy -> Kotlin
+
 0.7.3 (released 14 July 2017)
 ---------
 * Fix builds when Instant Run is enabled and `dexcount` extension is used (#190)
