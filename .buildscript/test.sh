@@ -13,6 +13,7 @@ VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 echo "Building integration test project..."
 cd integration
 ./gradlew clean -PdexcountVersion="$VERSION" :app:assembleDebug 2>&1 --stacktrace | tee app.log
+./gradlew clean -PdexcountVersion="$VERSION" :lib:assembleDebug 2>&1 --stacktrace | tee lib.log
 ./gradlew clean -PdexcountVersion="$VERSION" :tests:assembleDebug 2>&1 --stacktrace | tee tests.log
 
 echo "Integration build done!  Running tests..."
@@ -34,5 +35,12 @@ grep -F 'Total methods in tests-debug.apk: 3086 (4.71% used)' tests.log || die "
 grep -F 'Total fields in tests-debug.apk:  774 (1.18% used)' tests.log || die "Incorrect field count in tests-debug.apk"
 grep -F 'Methods remaining in tests-debug.apk: 62449' tests.log || die "Incorrect remaining-method value in tests-debug.apk"
 grep -F 'Fields remaining in tests-debug.apk:  64761' tests.log || die "Incorrect remaining-field value in tests-debug.apk"
+
+grep -F 'Total methods in lib-debug.aar: 7 (0.01% used)' lib.log || die "Incorrect method count in lib-debug.aar"
+grep -F 'Total fields in lib-debug.aar:  6 (0.01% used)' lib.log || die "Incorrect field count in lib-debug.aar"
+grep -F 'Total classes in lib-debug.aar:  5 (0.01% used)' lib.log || die "Incorrect class count in lib-debug.aar"
+grep -F 'Methods remaining in lib-debug.aar: 65528' lib.log || die "Incorrect remaining-method count in lib-debug.aar"
+grep -F 'Fields remaining in lib-debug.aar:  65529' lib.log || die "Incorrect remaining-field count in lib-debug.aar"
+grep -F 'Classes remaining in lib-debug.aar:  65530' lib.log || die "Incorrect remaining-class count in lib-debug.aar"
 
 echo "Tests complete."

@@ -9,12 +9,12 @@ ext {
     targetCompatibilityVersion = JavaVersion.VERSION_1_7
 
     // Common versions
-    kotlinVersion = "1.1.3-2"
+    kotlinVersion = "1.1.4-3"
 }
 
 // Plugins
 ext.plugs = [
-        "gradle"              : "com.android.tools.build:gradle:3.0.0-alpha3",
+        "gradle"              : "com.android.tools.build:gradle:3.0.0-beta6",
         "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
         "gradleVersionsPlugin": "com.github.ben-manes:gradle-versions-plugin:0.15.0"
 ]
