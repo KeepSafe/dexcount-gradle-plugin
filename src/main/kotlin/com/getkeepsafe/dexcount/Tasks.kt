@@ -21,8 +21,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Nullable
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.ParallelizableTask
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
@@ -32,26 +31,30 @@ import java.io.File
  */
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 
-@ParallelizableTask
 open class ModernMethodCountTask: DexMethodCountTaskBase() {
     /**
-     * The output directory of the 'package' task; will contain an
-     * APK or an AAR.
+     * The output of the 'package' task; will be either an APK or an AAR.
      */
-    @InputDirectory
-    lateinit var inputDirectory: File
+    @InputFile
+    lateinit var inputFile: File
 
     override val fileToCount: File?
-        get() = inputDirectory.listFiles { _, name ->
-            name?.endsWith(".apk") ?: false
-        }.firstOrNull()
+        get() = inputFile
 
     override val rawInputRepresentation: String
-        get() = "$inputDirectory"
+        get() = "$inputFile"
 }
 
-@ParallelizableTask
 open class LegacyMethodCountTask: DexMethodCountTaskBase() {
+
+    /**
+     * The output of the 'assemble' task, on AGP < 3.0.  Its 'outputFile'
+     * property will point to either an AAR or an APK.
+     *
+     * We don't use [@Input][org.gradle.api.tasks.Input] here because
+     * [BaseVariantOutput] implementations aren't is [Serializable].  This
+     * makes Gradle's input cache routines crash, sometimes.
+     */
 
     lateinit var variantOutput: BaseVariantOutput
 

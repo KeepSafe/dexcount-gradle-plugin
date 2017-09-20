@@ -1,0 +1,38 @@
+apply plugin: "com.android.library"
+apply plugin: "com.getkeepsafe.dexcount"
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    publishNonDefault true
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+}
+
+dexcount {
+    verbose = true
+    teamCitySlug = project.name
+}
+
+dependencies {
+    compile deps.appcompatv7
+
+    testCompile deps.junit
+}

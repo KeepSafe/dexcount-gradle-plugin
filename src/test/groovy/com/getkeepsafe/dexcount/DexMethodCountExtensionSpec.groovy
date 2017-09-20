@@ -72,7 +72,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         // Override APK file
         DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
-        task.inputDirectory = apkFile.parentFile
+        task.inputFile = apkFile
         task.execute()
 
         then:
@@ -101,7 +101,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         // Override APK file
         DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
-        task.inputDirectory = apkFile.parentFile
+        task.inputFile = apkFile
         task.execute()
 
         then:
