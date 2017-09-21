@@ -1,3 +1,7 @@
+0.8.1 (released 21 Septtember 2017)
+---------
+* Fix for users of Android Gradle Plugin versions below 3.0
+
 0.8.0 (released 20 September 2017)
 ---------
 * Update modern counting task to use Android Studio 3.0's new variant API (#218)
