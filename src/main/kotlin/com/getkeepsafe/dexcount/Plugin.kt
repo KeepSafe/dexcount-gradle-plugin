@@ -34,6 +34,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import java.io.File
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
 
 open class DexMethodCountPlugin: Plugin<Project> {
@@ -79,6 +80,12 @@ abstract class TaskProvider(
         // by printing the current plugin title and version.
         if (project.gradle.startParameter.isShowStacktrace) {
             printVersion = true
+        }
+    }
+
+    private val baseVariant_getOutputs: Method by lazy {
+        BaseVariant::class.java.getDeclaredMethod("getOutputs").apply {
+            isAccessible = true
         }
     }
 
@@ -136,6 +143,17 @@ abstract class TaskProvider(
         }
     }
 
+    /**
+     * Gets the outputs for the given [variant] as a basic [Collection].
+     *
+     * This is useful for AGP < 3.0, where the return type is _not_ a
+     * [DomainObjectCollection].
+     */
+    protected fun getOutputsForVariant(variant: BaseVariant): Collection<BaseVariantOutput> {
+        @Suppress("UNCHECKED_CAST")
+        return baseVariant_getOutputs(variant) as Collection<BaseVariantOutput>
+    }
+
     protected fun <T : DexMethodCountTaskBase> createTask(
             taskClass: KClass<T>,
             variant: BaseVariant,
@@ -144,7 +162,7 @@ abstract class TaskProvider(
         var slug = variant.name.capitalize()
         var path = "${project.buildDir}/outputs/dexcount/${variant.name}"
         var outputName = variant.name
-        if (variant.outputs.size > 1) {
+        if (getOutputsForVariant(variant).size > 1) {
             if (output == null) { throw AssertionError("Output should never be null here") }
             slug += output.name.capitalize()
             path += "/${output.name}"
@@ -176,14 +194,14 @@ class LegacyProvider(project: Project): TaskProvider(project) {
     }
 
     override fun applyToLibraryVariant(variant: LibraryVariant) {
-        variant.outputs.all { output ->
+        getOutputsForVariant(variant).forEach { output ->
             val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
             addDexcountTaskToGraph(output.assemble, task)
         }
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
-        variant.outputs.all { output ->
+        getOutputsForVariant(variant).forEach { output ->
             val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
             addDexcountTaskToGraph(output.assemble, task)
         }
