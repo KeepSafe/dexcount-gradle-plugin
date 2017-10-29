@@ -1,37 +1,34 @@
 // Variables for entire project
 ext {
-    // Setup
-    minSdkVersion = 16
-    targetSdkVersion = 26
-    compileSdkVersion = 26
-    buildToolsVersion = "26.0.1"
+    minSdkVersion = 19
+    targetSdkVersion = 27
+    compileSdkVersion = 27
+    buildToolsVersion = "27.0.0"
     sourceCompatibilityVersion = JavaVersion.VERSION_1_7
     targetCompatibilityVersion = JavaVersion.VERSION_1_7
-
-    // Common versions
-    kotlinVersion = "1.1.4-3"
+    kotlinVersion = "1.1.51"
 }
 
 // Plugins
 ext.plugs = [
-        "gradle"              : "com.android.tools.build:gradle:3.0.0-beta6",
-        "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
-        "gradleVersionsPlugin": "com.github.ben-manes:gradle-versions-plugin:0.15.0"
+    "gradle"              : "com.android.tools.build:gradle:3.0.0-beta6",
+    "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
+    "gradleVersionsPlugin": "com.github.ben-manes:gradle-versions-plugin:0.17.0"
 ]
 
 // Dependencies
 ext.deps = [
-        // compile
-        "kotlinStdlib": "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
-        "gson"        : "com.google.code.gson:gson:2.8.1",
+    // compile
+    "kotlinStdlib": "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
+    "gson"        : "com.google.code.gson:gson:2.8.2",
 
-        // testCompile
-        "junit"       : "junit:junit:4.12",
-        "spockCore"   : "org.spockframework:spock-core:1.1-groovy-2.4",
+    // testCompile
+    "junit"       : "junit:junit:4.12",
+    "spockCore"   : "org.spockframework:spock-core:1.1-groovy-2.4",
 
-        // integration - if you change these, you need to update the values in ./.buildscript/test.sh
-        "appcompatv7" : "com.android.support:appcompat-v7:25.2.0",
-        "runner"      : "com.android.support.test:runner:0.4.1",
-        "rules"       : "com.android.support.test:rules:0.4.1",
-        "hamcrestCore": "org.hamcrest:hamcrest-core:1.3"
+    // integration - if you change these, you need to update the values in ./.buildscript/test.sh
+    "appcompatv7" : "com.android.support:appcompat-v7:25.2.0",
+    "runner"      : "com.android.support.test:runner:0.4.1",
+    "rules"       : "com.android.support.test:rules:0.4.1",
+    "hamcrestCore": "org.hamcrest:hamcrest-core:1.3"
 ]

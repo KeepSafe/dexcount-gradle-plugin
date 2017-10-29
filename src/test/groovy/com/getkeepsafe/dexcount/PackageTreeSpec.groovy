@@ -124,8 +124,8 @@ final class PackageTreeSpec extends Specification {
         tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
         tree.printTree(sb, new PrintOptions(
-                includeClasses: true,
-                maxTreeDepth: 2))
+            includeClasses: true,
+            maxTreeDepth: 2))
 
         then:
         def expected = """
@@ -520,7 +520,6 @@ counts:
 
         trimmed == expected
     }
-
 
     def "can format JSON with only class counts"() {
         given:

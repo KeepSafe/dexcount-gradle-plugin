@@ -25,8 +25,8 @@ import spock.lang.Specification
 
 final class DexMethodCountExtensionSpec extends Specification {
     @Rule final TemporaryFolder tempFolder = new TemporaryFolder()
-    final static COMPILE_SDK_VERSION = 25
-    final static BUILD_TOOLS_VERSION = "25.0.3"
+    final static COMPILE_SDK_VERSION = 27
+    final static BUILD_TOOLS_VERSION = "27.0.0"
     final static APPLICATION_ID = "com.example"
     Project project
     File apkFile
@@ -70,7 +70,8 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
+        DexMethodCountTaskBase task = project.tasks.getByName(
+            "countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
         task.inputFile = apkFile
         task.execute()
@@ -99,7 +100,8 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
+        DexMethodCountTaskBase task = project.tasks.getByName(
+            "countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
         task.inputFile = apkFile
         task.execute()
