@@ -101,17 +101,17 @@ abstract class TaskProvider(
         val variants: DomainObjectCollection<out BaseVariant> = when {
             project.plugins.hasPlugin("com.android.application") -> {
                 val ext = project.extensions.findByType(AppExtension::class.java)
-                ext.applicationVariants
+                ext!!.applicationVariants
             }
 
             project.plugins.hasPlugin("com.android.test") -> {
                 val ext = project.extensions.findByType(TestExtension::class.java)
-                ext.applicationVariants
+                ext!!.applicationVariants
             }
 
             project.plugins.hasPlugin("com.android.library") -> {
                 val ext = project.extensions.findByType(LibraryExtension::class.java)
-                ext.libraryVariants
+                ext!!.libraryVariants
             }
 
             else -> throw IllegalArgumentException("Dexcount plugin requires the Android plugin to be configured")
