@@ -19,11 +19,11 @@ package com.getkeepsafe.dexcount
 import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.Nullable
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import javax.annotation.Nullable
 
 /**
  * The maximum number of method refs and field refs allowed in a single Dex

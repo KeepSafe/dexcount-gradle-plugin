@@ -11,7 +11,7 @@ ext {
 
 // Plugins
 ext.plugs = [
-    "gradle"              : "com.android.tools.build:gradle:3.0.0-beta6",
+    "gradle"              : "com.android.tools.build:gradle:3.1.0-alpha01",
     "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
     "gradleVersionsPlugin": "com.github.ben-manes:gradle-versions-plugin:0.17.0"
 ]

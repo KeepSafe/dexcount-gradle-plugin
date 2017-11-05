@@ -26,7 +26,6 @@ import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.build.gradle.api.LibraryVariant
 import com.android.build.gradle.api.TestVariant
-import com.android.builder.Version
 import com.android.repository.Revision
 import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import org.gradle.api.DomainObjectCollection
@@ -40,6 +39,9 @@ import kotlin.reflect.KClass
 open class DexMethodCountPlugin: Plugin<Project> {
     companion object {
         var sdkLocation: File? = SdkResolver.resolve(null)
+        const val VERSION_3_ZERO_FIELD: String = "com.android.builder.Version" // <= 3.0
+        const val VERSION_3_ONE_FIELD: String = "com.android.builder.model.Version" // > 3.1
+        const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
     }
 
     override fun apply(project: Project) {
@@ -47,15 +49,32 @@ open class DexMethodCountPlugin: Plugin<Project> {
             project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
         }
 
+        var gradlePluginVersion: String? = null
+        var exception: Exception? = null
+
         try {
-            Class.forName("com.android.builder.Version")
-        } catch (e: ClassNotFoundException) {
-            throw IllegalStateException("dexcount requires the Android plugin to be configured", e)
+            gradlePluginVersion = Class.forName(VERSION_3_ZERO_FIELD).getDeclaredField(AGP_VERSION_FIELD).get(this).toString()
+        } catch (e: Exception) {
+            exception = e
+        }
+
+        try {
+            gradlePluginVersion = Class.forName(VERSION_3_ONE_FIELD).getDeclaredField(AGP_VERSION_FIELD).get(this).toString()
+        } catch (e: Exception) {
+            exception = e
+        }
+
+        println(gradlePluginVersion)
+
+        if (gradlePluginVersion == null && exception != null) {
+            throw IllegalStateException("dexcount requires the Android plugin to be configured", exception)
+        } else if (gradlePluginVersion == null) {
+            throw IllegalStateException("dexcount requires the Android plugin to be configured")
         }
 
         sdkLocation = SdkResolver.resolve(project)
 
-        val gradlePluginRevision = Revision.parseRevision(Version.ANDROID_GRADLE_PLUGIN_VERSION)
+        val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
         val threeOhRevision = Revision.parseRevision("3.0.0")
 
         val isBuildTools3 = gradlePluginRevision.compareTo(threeOhRevision, Revision.PreviewComparison.IGNORE) >= 0
