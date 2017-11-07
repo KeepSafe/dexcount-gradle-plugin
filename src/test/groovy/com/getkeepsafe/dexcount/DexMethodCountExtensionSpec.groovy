@@ -73,7 +73,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         DexMethodCountTaskBase task = project.tasks.getByName(
             "countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
-        task.inputFile = apkFile
+        task.inputFileProvider = {apkFile}
         task.execute()
 
         then:
@@ -103,7 +103,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         DexMethodCountTaskBase task = project.tasks.getByName(
             "countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
-        task.inputFile = apkFile
+        task.inputFileProvider = {apkFile}
         task.execute()
 
         then:

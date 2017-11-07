@@ -238,7 +238,9 @@ class ThreeOhProvider(project: Project): TaskProvider(project) {
 
     override fun applyToLibraryVariant(variant: LibraryVariant) {
         val packageTask = variant.packageLibrary
-        val dexcountTask = createTask(ModernMethodCountTask::class, variant, null) { t -> t.inputFile = packageTask.archivePath }
+        val dexcountTask = createTask(ModernMethodCountTask::class, variant, null) { t ->
+            t.inputFileProvider = { packageTask.archivePath }
+        }
         addDexcountTaskToGraph(packageTask, dexcountTask)
     }
 
@@ -246,7 +248,9 @@ class ThreeOhProvider(project: Project): TaskProvider(project) {
         variant.outputs.all { output ->
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
-                val task = createTask(ModernMethodCountTask::class, variant, output) { t -> t.inputFile = output.outputFile }
+                val task = createTask(ModernMethodCountTask::class, variant, output) { t ->
+                    t.inputFileProvider = { output.outputFile }
+                }
                 addDexcountTaskToGraph(output.packageApplication, task)
             } else {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
