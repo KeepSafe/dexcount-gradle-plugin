@@ -32,17 +32,22 @@ import javax.annotation.Nullable
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 
 open class ModernMethodCountTask: DexMethodCountTaskBase() {
+
+    lateinit var inputFileProvider: () -> File
+
     /**
      * The output of the 'package' task; will be either an APK or an AAR.
      */
     @InputFile
-    lateinit var inputFile: File
+    fun getInputFile(): File {
+        return inputFileProvider()
+    }
 
     override val fileToCount: File?
-        get() = inputFile
+        get() = getInputFile()
 
     override val rawInputRepresentation: String
-        get() = "$inputFile"
+        get() = "${getInputFile()}"
 }
 
 open class LegacyMethodCountTask: DexMethodCountTaskBase() {
