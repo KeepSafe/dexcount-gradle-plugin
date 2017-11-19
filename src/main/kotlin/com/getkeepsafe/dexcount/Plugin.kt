@@ -27,7 +27,6 @@ import com.android.build.gradle.api.BaseVariantOutput
 import com.android.build.gradle.api.LibraryVariant
 import com.android.build.gradle.api.TestVariant
 import com.android.repository.Revision
-import com.getkeepsafe.dexcount.sdkresolver.SdkResolver
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -38,10 +37,13 @@ import kotlin.reflect.KClass
 
 open class DexMethodCountPlugin: Plugin<Project> {
     companion object {
-        var sdkLocation: File? = SdkResolver.resolve(null)
-        const val VERSION_3_ZERO_FIELD: String = "com.android.builder.Version" // <= 3.0
-        const val VERSION_3_ONE_FIELD: String = "com.android.builder.model.Version" // > 3.1
-        const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
+        var sdkLocation: File? = null
+        private const val VERSION_3_ZERO_FIELD: String = "com.android.builder.Version" // <= 3.0
+        private const val VERSION_3_ONE_FIELD: String = "com.android.builder.model.Version" // > 3.1
+        private const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
+        private const val AGP_VERSION_3: String = "3.0.0"
+        private const val ANDROID_EXTENSION_NAME = "android"
+        private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
     }
 
     override fun apply(project: Project) {
@@ -64,18 +66,17 @@ open class DexMethodCountPlugin: Plugin<Project> {
             exception = e
         }
 
-        println(gradlePluginVersion)
-
         if (gradlePluginVersion == null && exception != null) {
             throw IllegalStateException("dexcount requires the Android plugin to be configured", exception)
         } else if (gradlePluginVersion == null) {
             throw IllegalStateException("dexcount requires the Android plugin to be configured")
         }
 
-        sdkLocation = SdkResolver.resolve(project)
+        val android = project.extensions.findByName(ANDROID_EXTENSION_NAME)
+        sdkLocation = android?.javaClass?.getMethod(SDK_DIRECTORY_METHOD)?.invoke(android) as File?
 
         val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
-        val threeOhRevision = Revision.parseRevision("3.0.0")
+        val threeOhRevision = Revision.parseRevision(AGP_VERSION_3)
 
         val isBuildTools3 = gradlePluginRevision.compareTo(threeOhRevision, Revision.PreviewComparison.IGNORE) >= 0
 
