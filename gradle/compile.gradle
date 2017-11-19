@@ -1,6 +1,6 @@
 compileJava {
-    sourceCompatibility = project.ext.sourceCompatibilityVersion
-    targetCompatibility = project.ext.targetCompatibilityVersion
+    sourceCompatibility = project.ext.javaVersion
+    targetCompatibility = project.ext.javaVersion
 
     // Show all warnings except boot classpath
     configure(options) {
@@ -12,8 +12,8 @@ compileJava {
 }
 
 compileGroovy {
-    sourceCompatibility = project.ext.sourceCompatibilityVersion
-    targetCompatibility = project.ext.targetCompatibilityVersion
+    sourceCompatibility = project.ext.javaVersion
+    targetCompatibility = project.ext.javaVersion
 
     // Show all warnings except boot classpath
     configure(options) {
@@ -55,7 +55,7 @@ javadoc {
         links("http://docs.oracle.com/javase/8/docs/api/",
             "http://docs.oracle.com/javaee/7/api/")
         exclude "**/*Test.java"
-        if (JavaVersion.current().isJava8Compatible()) addStringOption("Xdoclint:none", "-quiet")
+        if (JavaVersion.current().java8Compatible) addStringOption("Xdoclint:none", "-quiet")
     }
 }
 
