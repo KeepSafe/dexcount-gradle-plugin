@@ -25,6 +25,16 @@ final class DexFileSpec extends Specification {
 
     def "test AAR dexcount"() {
         given:
+        if (new File("local.properties").exists()) {
+            Properties properties = new Properties()
+            InputStream inputStream = new FileInputStream("local.properties")
+            properties.load(inputStream)
+            inputStream.close()
+            DexMethodCountPlugin.sdkLocation = new File(properties.getProperty("sdk.dir"))
+        } else {
+            DexMethodCountPlugin.sdkLocation = new File(System.getenv("ANDROID_HOME"))
+        }
+
         def aarFile = temporaryFolder.newFile("test.aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
