@@ -40,7 +40,7 @@ apply plugin: "java-gradle-plugin"
 apply plugin: "kotlin"
 apply plugin: "com.github.ben-manes.versions"
 
-sourceCompatibility = rootProject.ext.sourceCompatibilityVersion
+sourceCompatibility = rootProject.ext.javaVersion
 
 group = GROUP
 version = VERSION_NAME
@@ -54,12 +54,12 @@ jar {
 }
 
 dependencies {
-    implementation localGroovy()
     implementation deps.kotlinStdlib
     implementation deps.gson
 
     compileOnly plugs.gradle
 
+    testImplementation localGroovy()
     testImplementation plugs.gradle
     testImplementation deps.junit
     testImplementation deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
