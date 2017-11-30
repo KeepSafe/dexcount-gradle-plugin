@@ -1,4 +1,10 @@
-0.8.1 (released 21 Septtember 2017)
+0.8.2 (released 30 November 2017)
+---------
+* Remove ported SdkResolver (#232)
+* Fix counts where output file has been renamed (#229)
+* Update Android Gradle support to 3.1.0 (#225)
+
+0.8.1 (released 21 September 2017)
 ---------
 * Fix for users of Android Gradle Plugin versions below 3.0
 
