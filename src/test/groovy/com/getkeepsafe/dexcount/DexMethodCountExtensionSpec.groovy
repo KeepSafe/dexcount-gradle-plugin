@@ -24,10 +24,10 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DexMethodCountExtensionSpec extends Specification {
-    @Rule final TemporaryFolder tempFolder = new TemporaryFolder()
-    final static COMPILE_SDK_VERSION = 27
-    final static BUILD_TOOLS_VERSION = "27.0.0"
-    final static APPLICATION_ID = "com.example"
+    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
+    def COMPILE_SDK_VERSION = 27
+    def BUILD_TOOLS_VERSION = "27.0.0"
+    def APPLICATION_ID = "com.example"
     Project project
     File apkFile
 
@@ -43,7 +43,7 @@ final class DexMethodCountExtensionSpec extends Specification {
           </manifest>
         """)
 
-        apkFile = tempFolder.newFile("tiles.apk")
+        apkFile = temporaryFolder.newFile("tiles.apk")
         def apkResource = getClass().getResourceAsStream("/tiles.apk")
         apkResource.withStream { input ->
             apkFile.append(input)
