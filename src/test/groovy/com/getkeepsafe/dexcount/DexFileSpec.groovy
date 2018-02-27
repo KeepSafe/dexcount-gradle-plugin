@@ -21,7 +21,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DexFileSpec extends Specification {
-    @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder()
+    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
 
     def "test AAR dexcount"() {
         given:
