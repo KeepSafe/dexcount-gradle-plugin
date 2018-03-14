@@ -19,5 +19,6 @@ package com.android.dexdeps;
 /**
  * Bad data found inside a DEX file.
  */
+@SuppressWarnings("serial")
 public class DexDataException extends RuntimeException {
 }
