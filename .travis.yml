@@ -7,7 +7,7 @@ before_install:
   # Download SDK
   - echo yes | sdkmanager "tools" &>/dev/null
   - echo yes | sdkmanager "platform-tools" &>/dev/null
-  - echo yes | sdkmanager "build-tools;27.0.1" &>/dev/null
+  - echo yes | sdkmanager "build-tools;27.0.3" &>/dev/null
   - echo yes | sdkmanager "platforms;android-27" &>/dev/null
   # Update remaining dependencies and accept licenses
   - echo yes | sdkmanager --update &>/dev/null
