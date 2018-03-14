@@ -1,16 +1,16 @@
 def dexcountVersion = rootProject.hasProperty("dexcountVersion") ? rootProject.property("dexcountVersion") : VERSION_NAME
 
 buildscript {
-    apply from: rootProject.file("../gradle/versions.gradle")
+    apply from: "../gradle/dependencies.gradle"
 
     repositories {
         mavenLocal()
-        maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
+        gradlePluginPortal()
         google()
     }
 
     dependencies {
-        classpath plugs.gradle
+        classpath deps.gradle
         classpath "com.getkeepsafe.dexcount:dexcount-gradle-plugin:$dexcountVersion"
     }
 }
@@ -18,7 +18,7 @@ buildscript {
 allprojects {
     repositories {
         mavenLocal()
-        maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
+        gradlePluginPortal()
         google()
     }
 }

@@ -15,30 +15,30 @@
  */
 
 buildscript {
-    apply from: rootProject.file("gradle/versions.gradle")
+    apply from: "gradle/dependencies.gradle"
 
     repositories {
-        maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
+        gradlePluginPortal()
     }
 
     dependencies {
-        classpath plugs.gradleVersionsPlugin // Check for plugin updates
-        classpath plugs.kotlinGradlePlugin
+        classpath deps.gradleVersionsPlugin
+        classpath deps.kotlinGradlePlugin
     }
 }
 
 allprojects {
     repositories {
         mavenLocal()
-        maven { url "https://plugins.gradle.org/m2/" } // Mirrors jcenter() and mavenCentral()
+        gradlePluginPortal()
         google()
     }
 }
 
+apply plugin: "com.github.ben-manes.versions"
+apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "groovy"
 apply plugin: "java-gradle-plugin"
-apply plugin: "kotlin"
-apply plugin: "com.github.ben-manes.versions"
 
 sourceCompatibility = rootProject.ext.javaVersion
 
@@ -53,17 +53,33 @@ jar {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        eachDependency { details ->
+            if (details.requested.group == "org.jetbrains.kotlin") {
+                details.useVersion rootProject.ext.kotlinVersion
+            }
+        }
+    }
+}
+
 dependencies {
     implementation deps.kotlinStdlib
     implementation deps.gson
 
-    compileOnly plugs.gradle
+    compileOnly deps.gradle
 
     testImplementation localGroovy()
-    testImplementation plugs.gradle
+    testImplementation deps.gradle
     testImplementation deps.junit
     testImplementation deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
 }
 
-apply from: rootProject.file("gradle/gradle-mvn-push.gradle")
-apply from: rootProject.file("gradle/compile.gradle")
+apply from: "gradle/gradle-mvn-push.gradle"
+apply from: "gradle/compile.gradle"
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+    kotlinOptions {
+        allWarningsAsErrors = true
+    }
+}
