@@ -69,7 +69,8 @@ public class DexData {
      */
     private static boolean verifyMagic(byte[] magic) {
         return Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_v035) ||
-            Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_v037);
+            Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_v037) ||
+            Arrays.equals(magic, HeaderItem.DEX_FILE_MAGIC_v038);
     }
 
     /**
@@ -588,6 +589,11 @@ public class DexData {
         // V037 was introduced in API LEVEL 24
         public static final byte[] DEX_FILE_MAGIC_v037 =
             "dex\n037\0".getBytes(StandardCharsets.US_ASCII);
+
+        // V038 was introduced in API LEVEL 26
+        public static final byte[] DEX_FILE_MAGIC_v038 =
+            "dex\n038\0".getBytes(StandardCharsets.US_ASCII);
+
         public static final int ENDIAN_CONSTANT = 0x12345678;
         public static final int REVERSE_ENDIAN_CONSTANT = 0x78563412;
     }
