@@ -5,18 +5,26 @@ ext {
     compileSdkVersion = 27
     buildToolsVersion = "27.0.3"
     javaVersion = "1.7"
-    kotlinVersion = "1.2.30"
+    kotlinVersion = "1.2.50"
 }
 
 ext.deps = [
     // Plugins
-    "gradle"              : "com.android.tools.build:gradle:3.1.0-alpha03",
+    "gradle"              : [
+        dependencies.create("com.android.tools.build:gradle:3.2.0-alpha18") {
+            // Android build tools (as of 3.2.0-alpha18) bundle the deprecated
+            // 'jre' stdlib modules, which cause warnings at build-time that
+            // fail the build.
+            exclude module: 'kotlin-stdlib-jre7'
+            exclude module: 'kotlin-stdlib-jre8'
+        }
+    ],
     "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
     "gradleVersionsPlugin": "com.github.ben-manes:gradle-versions-plugin:0.17.0",
 
     // Dependencies
     // compile
-    "kotlinStdlib"        : "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
+    "kotlinStdlib"        : "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion",
     "gson"                : "com.google.code.gson:gson:2.8.2",
 
     // testCompile
