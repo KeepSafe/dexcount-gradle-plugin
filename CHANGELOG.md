@@ -1,3 +1,7 @@
+0.8.3 (released 19 June 2018)
+---------
+* Update dexdeps to handle .dex format version 038 (#248)
+
 0.8.2 (released 30 November 2017)
 ---------
 * Remove ported SdkResolver (#232)

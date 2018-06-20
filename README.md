@@ -22,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.2'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.3'
     }
 }
 
@@ -147,7 +147,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.3-SNAPSHOT'
+    classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.4-SNAPSHOT'
   }
 }
 ```
@@ -170,7 +170,7 @@ This plugin creates a task per output, per variant, and configures each task to 
 The Java code from the `com.android.dexdeps` package is sourced from the [Android source tree](https://android.googlesource.com/platform/dalvik.git/+/master/tools/dexdeps/).
 Inspired by Mihail Parparita's [`dex-method-counts`](https://github.com/mihaip/dex-method-counts) project, to whom much credit is due.
 
-Copyright 2015-2017 Keepsafe Software, Inc
+Copyright 2015-2018 Keepsafe Software, Inc
 
 [0]: https://wiki.jenkins-ci.org/display/JENKINS/Plot+Plugin
 [1]: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
