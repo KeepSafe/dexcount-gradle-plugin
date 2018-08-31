@@ -95,9 +95,10 @@ open class DexMethodCountExtension {
     var maxTreeDepth = Integer.MAX_VALUE
 
     /**
-     * When true, Team City integration strings will be printed.
+     * When true, Team City integration strings will be printed. If the TEAMCITY_VERSION System
+     * environment variable is defined this will become true by default.
      */
-    var teamCityIntegration = false
+    var teamCityIntegration = System.getenv("TEAMCITY_VERSION") != null
 
     /**
      * A string which, if specified, will be added to TeamCity stat names. Null by default.
