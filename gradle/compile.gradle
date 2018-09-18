@@ -8,7 +8,6 @@ tasks.withType(JavaCompile) {
         compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
         compilerArgs << "-Werror"               // Turn warnings into errors
         encoding = "utf-8"
-        incremental = true
         fork = true
     }
 }
@@ -23,7 +22,6 @@ tasks.withType(GroovyCompile) {
         compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
         compilerArgs << "-Werror"               // Turn warnings into errors
         encoding = "utf-8"
-        incremental = true
         fork = true
     }
 
