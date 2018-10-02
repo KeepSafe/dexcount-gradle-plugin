@@ -124,6 +124,8 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     @TaskAction
     open fun countMethods() {
         try {
+            check(config.enabled) { "Tasks should not be executed if the plugin is disabled" }
+
             if (!inputFileExists()) {
                 return
             }

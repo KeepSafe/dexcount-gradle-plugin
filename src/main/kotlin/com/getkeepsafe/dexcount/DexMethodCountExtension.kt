@@ -19,7 +19,7 @@ package com.getkeepsafe.dexcount
 import java.util.Locale
 
 /**
- * Configuration properties for [DexMethodCountTask] instances.
+ * Configuration properties for [DexMethodCountTaskBase] instances.
  */
 open class DexMethodCountExtension {
     /**
@@ -120,4 +120,10 @@ open class DexMethodCountExtension {
      * Timeout when running Dx in seconds.
      */
     var dxTimeoutSec = 60
+
+    /**
+     * When true, the plugin is enabled and will be run as normal.  When false,
+     * the plugin is disabled and will not be run.
+     */
+    var enabled: Boolean = true
 }
