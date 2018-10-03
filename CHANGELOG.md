@@ -1,6 +1,7 @@
-0.8.4 (unreleased)
+0.8.4 (released 2 October 2018)
 ---------
-* Add `enabled` configuration flag
+* Add `enabled` configuration flag (#255)
+* Enable TeamCity by default when running on TeamCity (#252)
 
 0.8.3 (released 19 June 2018)
 ---------
