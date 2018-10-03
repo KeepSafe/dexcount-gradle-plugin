@@ -291,4 +291,28 @@ final class DexMethodCountPluginSpec extends Specification {
         actualSummaryFile == expectedSummaryFile
         actualChartDir == expectedChartDir
     }
+
+    def "when enabled is false, no dexcount tasks are added"() {
+        given:
+        project.apply plugin: "com.android.application"
+        project.apply plugin: "com.getkeepsafe.dexcount"
+        project.android {
+            compileSdkVersion COMPILE_SDK_VERSION
+            buildToolsVersion BUILD_TOOLS_VERSION
+
+            defaultConfig {
+                applicationId APPLICATION_ID
+            }
+        }
+
+        project.dexcount {
+            enabled = false
+        }
+
+        when:
+        project.evaluate()
+
+        then:
+        project.tasks.findByName("countDebugDexMethods") == null
+    }
 }

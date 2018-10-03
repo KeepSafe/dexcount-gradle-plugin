@@ -98,6 +98,7 @@ dexcount {
     teamCitySlug = null
     runOnEachPackage = true
     maxMethodCount = 64000
+    enabled = true
 }
 ```
 
@@ -114,6 +115,7 @@ Each flag controls some aspect of the printed output:
 - `teamCitySlug`: A string which, if specified, will be added to TeamCity stat names.  Null by default.
 - `runOnEachPackage`: When false, does not run count method during package task. True by default.  Synonym for `runOnEachAssemble`, which is deprecated.
 - `maxMethodCount`: When set, the build will fail when the APK/AAR has more methods than the max. 0 by default.
+- `enabled`: When false, no build outputs will be counted.  Defaults to true.
 
 ## Use with Jenkins Plot Plugin
 

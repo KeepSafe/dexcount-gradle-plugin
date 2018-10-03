@@ -1,3 +1,7 @@
+0.8.4 (unreleased)
+---------
+* Add `enabled` configuration flag
+
 0.8.3 (released 19 June 2018)
 ---------
 * Update dexdeps to handle .dex format version 038 (#248)

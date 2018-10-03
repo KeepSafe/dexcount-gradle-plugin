@@ -138,6 +138,10 @@ abstract class TaskProvider(
         }
 
         variants.all { variant ->
+            if (!ext.enabled) {
+                return@all
+            }
+
             when (variant) {
                 is ApplicationVariant -> applyToApplicationVariant(variant)
                 is TestVariant -> applyToTestVariant(variant)
