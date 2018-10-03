@@ -1,3 +1,6 @@
+unreleased
+---------
+
 0.8.4 (released 2 October 2018)
 ---------
 * Add `enabled` configuration flag (#255)
