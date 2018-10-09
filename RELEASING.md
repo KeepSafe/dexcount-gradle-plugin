@@ -7,7 +7,7 @@ you through it.  It won't do anyone outside of KeepSafe any good, but the workfl
 is representative of just about any project deploying via Sonatype.
 
 We currently deploy to both Maven Central (via Sonatype's OSS Nexus instance) and to
-plugins.gradle.org.  The latter requires
+plugins.gradle.org.
 
 ### Prerequisites
 
@@ -78,7 +78,7 @@ plugins.gradle.org.  The latter requires
 1. Edit gradle.properties, bump the version number and add '-SNAPSHOT'
 1. Make a *signed* commit:
    ```bash
-   git commit -s -m "Prepare next development version"
+   git commit -S -m "Prepare next development version"
    ```
 1. Push all of our work to Github to make it official:
    ```bash
