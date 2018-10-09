@@ -1,0 +1,19 @@
+pluginBundle {
+    website = POM_URL
+    vcsUrl = POM_SCM_URL
+    description = POM_DESCRIPTION
+    tags = ['android', 'dex', 'method count']
+
+    plugins {
+        dexcount {
+            id = "com.getkeepsafe.dexcount"
+            displayName = POM_NAME
+        }
+    }
+
+    mavenCoordinates {
+        groupId = GROUP
+        artifactId = POM_ARTIFACT_ID
+        version = VERSION_NAME
+    }
+}
