@@ -27,6 +27,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.gradle.plugin-publish" version "0.10.0"
+}
+
 allprojects {
     repositories {
         mavenLocal()
@@ -77,6 +81,7 @@ dependencies {
 
 apply from: "gradle/gradle-mvn-push.gradle"
 apply from: "gradle/compile.gradle"
+apply from: "gradle/gradle-plugin-portal.gradle"
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     kotlinOptions {
