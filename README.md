@@ -30,6 +30,33 @@ buildscript {
 apply plugin: 'com.getkeepsafe.dexcount'
 ```
 
+Alternately, if you are using the Gradle Kotlinscript DSL:
+
+```kotlin
+// app/build.gradle.kts
+plugins {
+    id("com.android.application")
+    id("com.getkeepsafe.dexcount")
+}
+
+// but also add to the classpath because google didn't bother to publish the necessary artifacts for the android gradle plugin
+// build.gradle.kts
+buildscript {
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:3.2.0")
+        classpath("com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.3")
+    }
+}
+```
+
+Please note that Google has not, as of this writing, published their own Android plugins to Gradle's plugin portal.  This means that you must manually add the `com.android.tools.build:gradle:3.2.0` dependency to a `buildscript` block.  Until such time as Google changes their publishing practices, it will remain inconvenient to use dexcount with the new `plugins` syntax.
+
 #### Note
 `dexcount-gradle-plugin` "requires" Java 8 to run.  "Requires" means that, while it will technically work if Gradle is being run on Java 7, there are situations where it may crash.  This is caused by dependencies we don't bundle targeting JRE 8; these cannot be loaded on older runtimes.  Attempting to load them will crash Gradle.  This currently applies only to counting `.aar` library projects, but as time goes by the JRE-8-only surface area will only increase.
 
