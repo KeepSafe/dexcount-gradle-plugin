@@ -3,7 +3,6 @@ apply plugin: "com.getkeepsafe.dexcount"
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -25,7 +24,6 @@ android {
 
 dependencies {
     // Android Testing Support Library"s runner and rules and hamcrest matchers
-    compile deps.runner
-    compile deps.rules
+    compile deps.droidTest
     compile deps.hamcrestCore
 }

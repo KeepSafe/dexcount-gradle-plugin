@@ -1,22 +1,21 @@
 // Variables for entire project
 ext {
     minSdkVersion = 19
-    targetSdkVersion = 27
-    compileSdkVersion = 27
-    buildToolsVersion = "27.0.3"
+    targetSdkVersion = 28
+    compileSdkVersion = 28
     javaVersion = "1.7"
-    kotlinVersion = "1.2.50"
+    kotlinVersion = "1.3.11"
 }
 
 ext.deps = [
     // Plugins
     "gradle"              : [
-        dependencies.create("com.android.tools.build:gradle:3.2.0-alpha18") {
+        dependencies.create("com.android.tools.build:gradle:3.3.0-rc03") {
             // Android build tools (as of 3.2.0-alpha18) bundle the deprecated
             // 'jre' stdlib modules, which cause warnings at build-time that
             // fail the build.
-            exclude module: 'kotlin-stdlib-jre7'
-            exclude module: 'kotlin-stdlib-jre8'
+            exclude module: 'kotlin-stdlib-jdk7'
+            exclude module: 'kotlin-stdlib-jdk8'
         }
     ],
     "kotlinGradlePlugin"  : "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion",
@@ -32,8 +31,14 @@ ext.deps = [
     "spockCore"           : "org.spockframework:spock-core:1.1-groovy-2.4",
 
     // integration - if you change these, you need to update the values in ./.buildscript/test.sh
-    "appcompatv7"         : "com.android.support:appcompat-v7:25.2.0",
-    "runner"              : "com.android.support.test:runner:0.4.1",
-    "rules"               : "com.android.support.test:rules:0.4.1",
+    "appcompatv7"         : ["com.android.support:appcompat-v7:28.0.0"],
+    "droidTest"           : [
+            dependencies.create("com.android.support.test:runner:1.0.2") {
+                exclude module: 'support-annotations'
+            },
+            dependencies.create("com.android.support.test:rules:1.0.2") {
+                exclude module: 'support-annotations'
+            }
+    ],
     "hamcrestCore"        : "org.hamcrest:hamcrest-core:1.3"
 ]

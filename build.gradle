@@ -19,6 +19,7 @@ buildscript {
 
     repositories {
         gradlePluginPortal()
+        google()
     }
 
     dependencies {
@@ -85,6 +86,9 @@ apply from: "gradle/gradle-plugin-portal.gradle"
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     kotlinOptions {
-        allWarningsAsErrors = true
+        // Disabling until there's some workaround for the warning
+        // about AGP's builder.jar containing its own bundled Kotlin
+        // runtime library.
+        allWarningsAsErrors = false
     }
 }
