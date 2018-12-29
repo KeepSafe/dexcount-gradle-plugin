@@ -35,13 +35,14 @@ import java.io.File
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 
-open class DexMethodCountPlugin: Plugin<Project> {
+open class DexMethodCountPlugin : Plugin<Project> {
     companion object {
         var sdkLocation: File? = null
         private const val VERSION_3_ZERO_FIELD: String = "com.android.builder.Version" // <= 3.0
         private const val VERSION_3_ONE_FIELD: String = "com.android.builder.model.Version" // > 3.1
         private const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
         private const val AGP_VERSION_3: String = "3.0.0"
+        private const val AGP_VERSION_3_3 = "3.3.0"
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
     }
@@ -77,13 +78,15 @@ open class DexMethodCountPlugin: Plugin<Project> {
 
         val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
         val threeOhRevision = Revision.parseRevision(AGP_VERSION_3)
+        val threeThreeRevision = Revision.parseRevision(AGP_VERSION_3_3)
 
         val isBuildTools3 = gradlePluginRevision.compareTo(threeOhRevision, Revision.PreviewComparison.IGNORE) >= 0
+        val isBuildTools33 = gradlePluginRevision.compareTo(threeThreeRevision, Revision.PreviewComparison.IGNORE) >= 0
 
-        val provider = if (isBuildTools3) {
-            ThreeOhProvider(project)
-        } else {
-            LegacyProvider(project)
+        val provider = when {
+            isBuildTools33 -> ThreeThreeProvider(project)
+            isBuildTools3 -> ThreeOhProvider(project)
+            else -> LegacyProvider(project)
         }
 
         provider.apply()
@@ -208,7 +211,7 @@ abstract class TaskProvider(
     }
 }
 
-class LegacyProvider(project: Project): TaskProvider(project) {
+class LegacyProvider(project: Project) : TaskProvider(project) {
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
         applyToApkVariant(variant)
     }
@@ -232,7 +235,7 @@ class LegacyProvider(project: Project): TaskProvider(project) {
     }
 }
 
-class ThreeOhProvider(project: Project): TaskProvider(project) {
+class ThreeOhProvider(project: Project) : TaskProvider(project) {
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
         applyToApkVariant(variant)
     }
@@ -257,6 +260,47 @@ class ThreeOhProvider(project: Project): TaskProvider(project) {
                     t.inputFileProvider = { output.outputFile }
                 }
                 addDexcountTaskToGraph(output.packageApplication, task)
+            } else {
+                throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
+            }
+        }
+    }
+}
+
+class ThreeThreeProvider(project: Project): TaskProvider(project) {
+    override fun applyToApplicationVariant(variant: ApplicationVariant) {
+        applyToApkVariant(variant)
+    }
+
+    override fun applyToTestVariant(variant: TestVariant) {
+        applyToApkVariant(variant)
+    }
+
+    override fun applyToLibraryVariant(variant: LibraryVariant) {
+        val packageTaskProvider = variant.packageLibraryProvider
+        val packageTask = packageTaskProvider.orNull
+        if (packageTask == null) {
+            project.logger.error("LibraryVariant.getPackageLibraryProvider().getOrNull() unexpectedly returned null")
+            return
+        }
+
+        val dexcountTask = createTask(ModernMethodCountTask::class, variant, null) { t ->
+            t.inputFileProvider = { packageTask.archivePath }
+        }
+
+        addDexcountTaskToGraph(packageTask, dexcountTask)
+    }
+
+    private fun applyToApkVariant(variant: ApkVariant) {
+        variant.outputs.all { output ->
+            if (output is ApkVariantOutput) {
+                // why wouldn't it be?
+                val task = createTask(ModernMethodCountTask::class, variant, output) { t ->
+                    t.inputFileProvider = { output.outputFile }
+                }
+                variant.packageApplicationProvider.orNull?.let { packageApplication ->
+                    addDexcountTaskToGraph(packageApplication, task)
+                }
             } else {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
             }
