@@ -13,8 +13,8 @@ VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 echo "Building integration test project..."
 cd integration
 ../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:assembleDebug 2>&1 --stacktrace | tee app.log
-../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true:lib:assembleDebug 2>&1 --stacktrace | tee lib.log
-../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true:tests:assembleDebug 2>&1 --stacktrace | tee tests.log
+../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :lib:assembleDebug 2>&1 --stacktrace | tee lib.log
+../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :tests:assembleDebug 2>&1 --stacktrace | tee tests.log
 
 echo "Integration build done!  Running tests..."
 
