@@ -293,17 +293,21 @@ class ThreeThreeProvider(project: Project): TaskProvider(project) {
 
     private fun applyToApkVariant(variant: ApkVariant) {
         variant.outputs.all { output ->
-            if (output is ApkVariantOutput) {
-                // why wouldn't it be?
-                val task = createTask(ModernMethodCountTask::class, variant, output) { t ->
-                    t.inputFileProvider = { output.outputFile }
-                }
-                variant.packageApplicationProvider.orNull?.let { packageApplication ->
-                    addDexcountTaskToGraph(packageApplication, task)
-                }
-            } else {
+            if (output !is ApkVariantOutput) {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
             }
+
+            val packageTask = variant.packageApplicationProvider.orNull
+            if (packageTask == null) {
+                project.logger.error("ApkVariant.getPackageApplicationProvider().getOrNull() unexpectedly returned null")
+                return@all
+            }
+
+            val dexcountTask = createTask(ModernMethodCountTask::class, variant, output) { t ->
+                t.inputFileProvider = { File(packageTask.outputDirectory, output.outputFileName) }
+            }
+
+            addDexcountTaskToGraph(packageTask, dexcountTask)
         }
     }
 }

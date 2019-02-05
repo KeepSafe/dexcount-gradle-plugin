@@ -12,9 +12,9 @@ VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 
 echo "Building integration test project..."
 cd integration
-../gradlew clean -PdexcountVersion="$VERSION" :app:assembleDebug 2>&1 --stacktrace | tee app.log
-../gradlew clean -PdexcountVersion="$VERSION" :lib:assembleDebug 2>&1 --stacktrace | tee lib.log
-../gradlew clean -PdexcountVersion="$VERSION" :tests:assembleDebug 2>&1 --stacktrace | tee tests.log
+../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:assembleDebug 2>&1 --stacktrace | tee app.log
+../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :lib:assembleDebug 2>&1 --stacktrace | tee lib.log
+../gradlew clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :tests:assembleDebug 2>&1 --stacktrace | tee tests.log
 
 echo "Integration build done!  Running tests..."
 
@@ -47,5 +47,12 @@ grep -F 'Total classes in lib-debug.aar:  5 (0.01% used)' lib.log || die "Incorr
 grep -F 'Methods remaining in lib-debug.aar: 65528' lib.log || die "Incorrect remaining-method count in lib-debug.aar"
 grep -F 'Fields remaining in lib-debug.aar:  65529' lib.log || die "Incorrect remaining-field count in lib-debug.aar"
 grep -F 'Classes remaining in lib-debug.aar:  65530' lib.log || die "Incorrect remaining-class count in lib-debug.aar"
+
+# Note the '&&' here - grep exits with an error if no lines match,
+# which is the condition we want here.  If any lines match, that
+# signifies that we're using deprecated Gradle APIs and is a bug.
+grep -F "WARNING: API 'variantOutput.getPackageApplication()'" app.log && die "Deprecated API use detected"
+grep -F "WARNING: API 'variantOutput.getPackageApplication()'" lib.log && die "Deprecated API use detected"
+grep -F "WARNING: API 'variantOutput.getPackageApplication()'" tests.log && die "Deprecated API use detected"
 
 echo "Tests complete."
