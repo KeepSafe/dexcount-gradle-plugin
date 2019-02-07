@@ -1,23 +1,19 @@
 language: android
 
-jdk:
-  - oraclejdk8
+jdk: oraclejdk8
 
 before_install:
   # Download SDK
   - echo yes | sdkmanager "tools" &>/dev/null
   - echo yes | sdkmanager "platform-tools" &>/dev/null
-  - echo yes | sdkmanager "build-tools;27.0.3" &>/dev/null
-  - echo yes | sdkmanager "platforms;android-27" &>/dev/null
+  - echo yes | sdkmanager "platforms;android-28" &>/dev/null
   # Update remaining dependencies and accept licenses
   - echo yes | sdkmanager --update &>/dev/null
   - echo yes | sdkmanager --licenses &>/dev/null
 
-script:
-  - ./.buildscript/test.sh
+script: ./.buildscript/test.sh
 
-after_success:
-  - ./.buildscript/deploy_snapshot.sh
+after_success: ./.buildscript/deploy_snapshot.sh
 
 env:
   global:

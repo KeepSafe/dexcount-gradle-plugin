@@ -25,11 +25,8 @@ import spock.lang.Specification
 
 final class DexMethodCountExtensionSpec extends Specification {
     @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
-    def COMPILE_SDK_VERSION = 27
-    def BUILD_TOOLS_VERSION = "27.0.0"
-    def APPLICATION_ID = "com.example"
-    Project project
-    File apkFile
+    private Project project
+    private File apkFile
 
     def "setup"() {
         project = ProjectBuilder.builder().build()
@@ -55,11 +52,10 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.apply plugin: "com.android.application"
         project.apply plugin: "com.getkeepsafe.dexcount"
         project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+            compileSdkVersion 28
 
             defaultConfig {
-                applicationId APPLICATION_ID
+                applicationId 'com.example'
             }
         }
         project.dexcount {
@@ -70,8 +66,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName(
-            "countDebugDexMethods") as DexMethodCountTaskBase
+        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
         task.inputFileProvider = {apkFile}
         task.execute()
@@ -85,11 +80,10 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.apply plugin: "com.android.application"
         project.apply plugin: "com.getkeepsafe.dexcount"
         project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+            compileSdkVersion 28
 
             defaultConfig {
-                applicationId APPLICATION_ID
+                applicationId 'com.example'
             }
         }
         project.dexcount {
@@ -100,8 +94,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName(
-            "countDebugDexMethods") as DexMethodCountTaskBase
+        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
         task.variantOutputName = "extensionSpec"
         task.inputFileProvider = {apkFile}
         task.execute()

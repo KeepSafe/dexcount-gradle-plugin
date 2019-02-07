@@ -68,11 +68,26 @@ configurations.all {
     }
 }
 
+task createClasspathManifest() {
+    def outputDir = file("$buildDir/$name")
+
+    inputs.files sourceSets.main.runtimeClasspath
+    outputs.dir outputDir
+
+    doLast {
+        outputDir.mkdirs()
+        // Combine both main and test plugin classpaths
+        file("$outputDir/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join('\n') + '\n' + sourceSets.test.runtimeClasspath.join('\n')
+    }
+}
+
 dependencies {
     implementation deps.kotlinStdlib
     implementation deps.gson
 
     compileOnly deps.gradle
+
+    testRuntimeOnly files(createClasspathManifest)
 
     testImplementation localGroovy()
     testImplementation deps.gradle

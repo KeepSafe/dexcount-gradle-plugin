@@ -20,6 +20,10 @@ import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 
 final class RefHelpers {
+    private RefHelpers() {
+        throw new AssertionError('No instances')
+    }
+
     static MethodRef methodRef(String className, String methodName = null) {
         if (methodName == null) {
             methodName = randomName()
