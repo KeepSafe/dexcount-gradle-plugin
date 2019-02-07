@@ -25,9 +25,9 @@ final class PackageTreeSpec extends Specification {
     def "adding different methods increments count"() {
         given:
         def tree = new PackageTree()
-        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         when:
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "bar"))
 
         then:
@@ -37,9 +37,9 @@ final class PackageTreeSpec extends Specification {
     def "adding duplicate methods does not increment count"() {
         given:
         def tree = new PackageTree()
-        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         when:
+        tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         then:

@@ -1,192 +1,389 @@
 package com.getkeepsafe.dexcount
 
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
+
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
+import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
 
 final class DexMethodCountPluginSpec extends Specification {
-    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
-    def COMPILE_SDK_VERSION = 27
-    def BUILD_TOOLS_VERSION = "27.0.1"
-    def APPLICATION_ID = "com.example"
-    def MANIFEST_FILE_TEXT = """<?xml version="1.0" encoding="utf-8"?>
-      <manifest package="com.getkeepsafe.dexcount.integration"
-                xmlns:android="http://schemas.android.com/apk/res/android">
-          <application/>
-      </manifest>
-  """
+    @Rule public TemporaryFolder testProjectDir = new TemporaryFolder()
+    private List<File> pluginClasspath
+    private File buildFile
+    private String reportFolder
+    private Project project
+    private File manifestFile
+    def MANIFEST_FILE_PATH = 'src/main/AndroidManifest.xml'
+    def MANIFEST_FILE_TEXT = "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"com.example\"/>"
 
-    Project project
-    File manifestFile
+    def 'setup'() {
+        def pluginClasspathResource = getClass().classLoader.findResource('plugin-classpath.txt')
+        if (pluginClasspathResource == null) {
+            throw new IllegalStateException(
+                'Did not find plugin classpath resource, run `testClasses` build task.')
+        }
 
-    def "setup"() {
+        pluginClasspath = pluginClasspathResource.readLines().collect { new File(it) }
+        buildFile = testProjectDir.newFile('build.gradle')
+        reportFolder = "${testProjectDir.root.path}/build/outputs/dexcount"
+        testProjectDir.newFolder('src', 'main')
+        testProjectDir.newFile(MANIFEST_FILE_PATH) << MANIFEST_FILE_TEXT
+
+        // TODO remove old testing strategy
         project = ProjectBuilder.builder().build()
-        manifestFile = new File(project.projectDir, "src/main/AndroidManifest.xml")
+        manifestFile = new File(project.projectDir, 'src/main/AndroidManifest.xml')
         manifestFile.parentFile.mkdirs()
         manifestFile.write(MANIFEST_FILE_TEXT)
     }
 
-    def "unsupported project project"() {
+    def 'unsupported project project'() {
+        given:
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
+
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            applicationId 'com.example'
+          }
+        }
+      """.stripIndent().trim()
+
         when:
-        new DexMethodCountPlugin().apply(project)
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .buildAndFail()
 
         then:
-        def e = thrown(IllegalArgumentException)
-        e.message == "Dexcount plugin requires the Android plugin to be configured"
+        result.output.contains('Dexcount plugin requires the Android plugin to be configured')
     }
 
-    @Unroll "#projectPlugin project"() {
+    @Unroll def '#projectPlugin project'() {
         given:
-        project.apply plugin: projectPlugin
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
+
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+
+        apply plugin: "${projectPlugin}"
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            if ("${projectPlugin}" == 'com.android.application') { 
+              applicationId 'com.example'
+            }
+          }
+        }
+      """.stripIndent().trim()
 
         when:
-        project.apply plugin: "com.getkeepsafe.dexcount"
+        GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .build()
 
         then:
         noExceptionThrown()
 
         where:
-        projectPlugin << ["com.android.application", "com.android.library", "com.android.test"]
+        projectPlugin << ['com.android.application', 'com.android.library']
     }
 
-    def "android - all tasks created"() {
+    @Unroll def '#taskName with default buildTypes'() {
         given:
-        project.apply plugin: "com.android.application"
-        project.apply plugin: "com.getkeepsafe.dexcount"
-        project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
 
-            defaultConfig {
-                applicationId APPLICATION_ID
-            }
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+        
+        // TODO(???) - Repositories from test
+        repositories {
+          google()
+          jcenter()
         }
 
+        apply plugin: 'com.android.application'
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            applicationId 'com.example'
+          }
+        }
+      """.stripIndent().trim()
+
         when:
-        project.evaluate()
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("${taskName}")
+            .build()
 
         then:
-        project.tasks.getByName("countDebugDexMethods")
-        project.tasks.getByName("countReleaseDexMethods")
+        result.task(":${taskName}").outcome == SUCCESS
+
+        where:
+        taskName << ['countDebugDexMethods', 'countReleaseDexMethods']
     }
 
-    def "android [buildTypes] - all tasks created"() {
+    @Unroll def '#taskName with buildTypes'() {
         given:
-        project.apply plugin: "com.android.application"
-        project.apply plugin: "com.getkeepsafe.dexcount"
-        project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
 
-            defaultConfig {
-                applicationId APPLICATION_ID
-            }
-
-            buildTypes {
-                debug {}
-                release {}
-            }
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+        
+        // TODO(???) - Repositories from test
+        repositories {
+          google()
+          jcenter()
         }
 
+        apply plugin: 'com.android.application'
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            applicationId 'com.example'
+          }
+          
+          buildTypes {
+           debug {}
+           release {}
+          }
+        }
+      """.stripIndent().trim()
+
         when:
-        project.evaluate()
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("${taskName}")
+            .build()
 
         then:
-        project.tasks.getByName("countDebugDexMethods")
-        project.tasks.getByName("countReleaseDexMethods")
+        result.task(":${taskName}").outcome == SUCCESS
+
+        where:
+        taskName << ['countDebugDexMethods', 'countReleaseDexMethods']
     }
 
-    def "android [buildTypes + productFlavors] - all tasks created"() {
+    @Unroll def '#taskName with buildTypes + productFlavors + flavorDimensions'() {
         given:
-        project.apply plugin: "com.android.application"
-        project.apply plugin: "com.getkeepsafe.dexcount"
-        project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
 
-            defaultConfig {
-                applicationId APPLICATION_ID
-            }
-
-            buildTypes {
-                debug {}
-                release {}
-            }
-
-            flavorDimensions "flav"
-
-            productFlavors {
-                flavor1 { dimension "flav" }
-                flavor2 { dimension "flav" }
-            }
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+        
+        // TODO(???) - Repositories from test
+        repositories {
+          google()
+          jcenter()
         }
 
+        apply plugin: 'com.android.application'
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            applicationId 'com.example'
+          }
+          
+          buildTypes {
+            debug {}
+            release {}
+          }
+    
+          flavorDimensions 'a', 'b'
+    
+          productFlavors {
+            flavor1 { dimension 'a' }
+            flavor2 { dimension 'a' }
+            flavor3 { dimension 'b' }
+            flavor4 { dimension 'b' }
+          }
+        }
+      """.stripIndent().trim()
+
         when:
-        project.evaluate()
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("${taskName}")
+            .build()
 
         then:
-        project.tasks.getByName("countFlavor1DebugDexMethods")
-        project.tasks.getByName("countFlavor1ReleaseDexMethods")
-        project.tasks.getByName("countFlavor2DebugDexMethods")
-        project.tasks.getByName("countFlavor2ReleaseDexMethods")
+        result.task(":${taskName}").outcome == SUCCESS
+
+        where:
+        taskName << ['countFlavor1Flavor3DebugDexMethods', 'countFlavor1Flavor3ReleaseDexMethods',
+                     'countFlavor2Flavor4DebugDexMethods', 'countFlavor2Flavor4ReleaseDexMethods']
     }
 
-    def "android [buildTypes + productFlavors + flavorDimensions] - all tasks created"() {
+    @Unroll def '#taskName with apk report example'() {
         given:
-        project.apply plugin: "com.android.application"
-        project.apply plugin: "com.getkeepsafe.dexcount"
-        project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+        testProjectDir.newFolder('build', 'outputs', 'apk', "${taskName}")
+        def apkFile = testProjectDir.newFile("build/outputs/apk/${taskName}/tiniest-smallest-app.apk")
+        def apkResource = getClass().getResourceAsStream('/tiniest-smallest-app.apk')
+        apkResource.withStream { input ->
+            apkFile.append(input)
+        }
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
 
-            defaultConfig {
-                applicationId APPLICATION_ID
-            }
-
-            buildTypes {
-                debug {}
-                release {}
-            }
-
-            flavorDimensions "a", "b"
-
-            productFlavors {
-                flavor1 { dimension "a" }
-                flavor2 { dimension "a" }
-                flavor3 { dimension "b" }
-                flavor4 { dimension "b" }
-            }
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+        
+        // TODO(???) - Repositories from test
+        repositories {
+          google()
+          jcenter()
         }
 
+        apply plugin: 'com.android.application'
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            applicationId 'com.example'
+          }
+        }
+      """.stripIndent().trim()
+
         when:
-        project.evaluate()
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("${taskName}")
+            .build()
 
         then:
-        project.tasks.getByName("countFlavor1Flavor3DebugDexMethods")
-        project.tasks.getByName("countFlavor1Flavor3ReleaseDexMethods")
-        project.tasks.getByName("countFlavor2Flavor4DebugDexMethods")
-        project.tasks.getByName("countFlavor2Flavor4ReleaseDexMethods")
+        result.task(":${taskName}").outcome == SUCCESS
+
+        where:
+        taskName << ['countDebugDexMethods', 'countReleaseDexMethods']
     }
 
-    def "android apk report example"() {
+    def 'when enabled is false, no dexcount tasks are added'() {
         given:
-        def apkFile = temporaryFolder.newFile("tiniest-smallest-app.apk")
-        def apkResource = getClass().getResourceAsStream("/tiniest-smallest-app.apk")
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
+
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+
+        apply plugin: 'com.android.application'
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        android {
+          compileSdkVersion 28
+
+          defaultConfig {
+            applicationId 'com.example'
+          }
+        }
+        
+        dexcount {
+          enabled = false
+        }
+      """.stripIndent().trim()
+
+        when:
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments('tasks')
+            .build()
+
+        then:
+        result.task(':tasks').outcome == SUCCESS
+        !result.output.contains('countDebugDexMethods')
+    }
+
+    // TODO migrate to new test strategy
+    def 'android apk report example'() {
+        given:
+        def apkFile = testProjectDir.newFile('tiniest-smallest-app.apk')
+        def apkResource = getClass().getResourceAsStream('/tiniest-smallest-app.apk')
         apkResource.withStream { input ->
             apkFile.append(input)
         }
 
-        project.apply plugin: "com.android.application"
-        project.apply plugin: "com.getkeepsafe.dexcount"
+        project.apply plugin: 'com.android.application'
+        project.apply plugin: 'com.getkeepsafe.dexcount'
         project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
+            compileSdkVersion 28
 
             defaultConfig {
-                applicationId APPLICATION_ID
+                applicationId 'com.example'
             }
         }
 
@@ -194,8 +391,8 @@ final class DexMethodCountPluginSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
-        task.variantOutputName = "pluginSpec"
+        DexMethodCountTaskBase task = project.tasks.getByName('countDebugDexMethods') as DexMethodCountTaskBase
+        task.variantOutputName = 'pluginSpec'
         task.inputFileProvider = {apkFile}
         task.execute()
 
@@ -290,29 +487,5 @@ final class DexMethodCountPluginSpec extends Specification {
         actualOutputFile == expectedOutputFile
         actualSummaryFile == expectedSummaryFile
         actualChartDir == expectedChartDir
-    }
-
-    def "when enabled is false, no dexcount tasks are added"() {
-        given:
-        project.apply plugin: "com.android.application"
-        project.apply plugin: "com.getkeepsafe.dexcount"
-        project.android {
-            compileSdkVersion COMPILE_SDK_VERSION
-            buildToolsVersion BUILD_TOOLS_VERSION
-
-            defaultConfig {
-                applicationId APPLICATION_ID
-            }
-        }
-
-        project.dexcount {
-            enabled = false
-        }
-
-        when:
-        project.evaluate()
-
-        then:
-        project.tasks.findByName("countDebugDexMethods") == null
     }
 }
