@@ -23,6 +23,7 @@ import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
 import java.io.Closeable
 import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.IOException
 import java.io.RandomAccessFile
@@ -32,45 +33,39 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
+internal sealed class SourceFile : Closeable {
+    abstract val methodRefs: List<MethodRef>
+    abstract val fieldRefs: List<FieldRef>
+}
 
 /**
  * A physical file and the {@link DexData} contained therein.
  *
  * A DexFile contains an open file, possibly a temp file.  When consumers are
- * finished with the DexFile, it should be cleaned up with
- * {@link DexFile#dispose()}.
+ * finished with the DexFile, it should be cleaned up with [DexFile.close].
  */
 @Suppress("ConvertSecondaryConstructorToPrimary")
-internal class DexFile: Closeable {
-    private val file: File
-    private val isTemp: Boolean
-    private val raf: RandomAccessFile
-    private val data: DexData
-
-    val isInstantRun: Boolean
-
-    val methodRefs: List<MethodRef>
-        get() = data.methodRefs.toList()
-
-    val fieldRefs: List<FieldRef>
-        get() = data.fieldRefs.toList()
-
-    private constructor(file: File, isTemp: Boolean, isInstantRun: Boolean = false) {
-        this.file = file
-        this.isTemp = isTemp
-        this.isInstantRun = isInstantRun
-
-        this.raf = RandomAccessFile(file, "r")
-        this.data = DexData(raf)
-
+internal class DexFile(
+    private val file: File,
+    private val isTemp: Boolean,
+    val isInstantRun: Boolean = false
+): SourceFile() {
+    private val raf = RandomAccessFile(file, "r")
+    private val data = DexData(raf).also {
         try {
-            data.load()
+            it.load()
         } catch (e: IOException) {
             throw DexCountException("Error loading dex file", e)
         } catch (e: DexDataException) {
             throw DexCountException("Error loading dex file", e)
         }
     }
+
+    override val methodRefs: List<MethodRef>
+        get() = data.methodRefs.toList()
+
+    override val fieldRefs: List<FieldRef>
+        get() = data.fieldRefs.toList()
 
     override fun close() {
         raf.close()
@@ -200,6 +195,178 @@ internal class DexFile: Closeable {
     }
 }
 
+internal class JarFile(
+    override val methodRefs: List<MethodRef>,
+    override val fieldRefs: List<FieldRef>
+) : SourceFile() {
+
+    override fun close() = Unit
+
+    companion object {
+        @JvmStatic
+        fun extractJarFromAar(file: File): JarFile {
+            // Extract the classes.jar file from the AAR.
+            val tempClasses = file.unzip { entries ->
+                val jarFile = entries.find { it.name.matches(Regex("classes\\.jar")) }
+                makeTempFile("classes.jar").also {
+                    jarFile!!.writeTo(it)
+                }
+            }
+
+            // Unzip the classes.jar file and store all .class files in this directory.
+            val classFilesDir = createTempDir(prefix = "classFilesDir")
+
+            ZipFile(tempClasses).use { zip ->
+                zip.entries()
+                    .asSequence()
+                    .filter { it.name.endsWith(".class") }
+                    .forEach { zipEntry ->
+                        val fileName = zipEntry.name.replace('/', '_')
+
+                        FileOutputStream(File(classFilesDir, fileName)).use { outStream ->
+                            zip.getInputStream(zipEntry).use { inStream -> inStream.copyTo(outStream) }
+                        }
+                    }
+            }
+
+            // Join all .class file paths to one string.
+            val classFiles = classFilesDir.walk()
+                .filter { it.extension == "class" }
+                .map { it.absolutePath }
+                .joinToString(separator = " ")
+
+            /*
+             * Call javap for for all class files. This returns an output similar like this:
+             *
+             * Compiled from "CreateBody.java"
+             * public class com.abc.CreateBody {
+             *   public final java.lang.String email;
+             *   public com.abc.CreateBody(java.lang.String);
+             *   private com.abc.CreateBody withPassword(java.lang.String);
+             * }
+             * Compiled from "AppAccountCache.kt"
+             * public interface com.abc.AppAccountCache {
+             *   public abstract void clearCache();
+             * }
+             */
+            val lines = Runtime.getRuntime()
+                .exec("javap -private $classFiles")
+                .inputStream.reader()
+                .use { it.readLines() }
+                .map { it.trim() }
+
+            check(tempClasses.deleteRecursively()) { "Couldn't delete $tempClasses" }
+            check(classFilesDir.deleteRecursively()) { "Couldn't delete $classFilesDir" }
+
+            return parseJavapOutput(lines)
+        }
+
+        private fun parseJavapOutput(lines: List<String>): JarFile {
+            val methodRefs = mutableListOf<MethodRef>()
+            val fieldRefs = mutableListOf<FieldRef>()
+
+            var startIndex = 0
+
+            while (startIndex < lines.size) {
+                val begin = lines.indexOfFirstAfter(startIndex) {
+                    it.endsWith("{") && (it.contains(" class ") || it.contains(" interface "))
+                }
+
+                val end = lines.indexOfFirstAfter(begin) { it == "}" }
+
+                // Look either for "class" or "interface", substringABC returns the string itself
+                // if the delimiter can't be found.
+                val className = lines[begin].substringAfter("class ")
+                    .substringAfter("interface ")
+                    .substringBefore(" {")
+
+                lines.subList(begin + 1, end)
+                    // Ignore the static initializer.
+                    .filterNot { it == "static {};" }
+                    .forEach { line ->
+                        when {
+                            line.contains(" throws ") -> methodRefs += parseMethod(
+                                line.substringBefore(" throws "), className
+                            )
+                            line.endsWith(");") -> methodRefs += parseMethod(line, className)
+                            line.endsWith(";") -> fieldRefs += parseField(line, className)
+                            else -> throw Exception(
+                                "Unexpected line from javap in class $className: $line"
+                            )
+                        }
+                    }
+
+                startIndex = if (end >= 0) end + 1 else lines.size
+            }
+
+            return JarFile(methodRefs, fieldRefs)
+        }
+
+        private val JAVA_KEYWORDS = listOf(
+            "public", "protected", "private", "final", "transient", "abstract", "class", "interface",
+            "extends", "volatile", "synchronized", "native", "static", "implements"
+        )
+
+        private fun parseMethod(argLine: String, className: String): MethodRef {
+            // Samples:
+            // public com.abc.CreateBody(java.lang.String, java.lang.String);
+            // private com.abc.CreateBody withPassword(java.lang.String);
+            // private final com.abc.CreateBody withPassword(java.lang.String);
+            // void something();
+            // public boolean checkAvailability() throws org.altbeacon.beacon.BleNotAvailableException;
+
+            val line = removeSpacesInLists(argLine)
+
+            val argList = line.substringAfter("(").substringBefore(")")
+            val args = argList.split(",").toTypedArray().filter { it.trim().isNotEmpty() }
+
+            val split = line.substringBefore("(")
+                .split(" ")
+                .filterNot { JAVA_KEYWORDS.contains(it) }
+
+            lateinit var returnType :String
+            lateinit var methodName :String
+
+            when (split.size) {
+                1 -> {
+                    returnType = split[0]
+                    methodName = "constructor"
+                }
+                2 -> {
+                    returnType = split[0]
+                    methodName = split[1]
+                }
+                else -> throw Exception("Unexpected method in class $className with line $line")
+            }
+
+            return MethodRef(className, args.toTypedArray(), returnType, methodName)
+        }
+
+        private fun parseField(argLine: String, className: String): FieldRef {
+            // Samples:
+            //  public final java.lang.String name;
+            //  public java.lang.String country_code;
+            //  private final java.util.concurrent.ConcurrentMap<org.altbeacon.beacon.BeaconConsumer, org.altbeacon.beacon.BeaconManager$ConsumerInfo> consumers;
+
+            val line = removeSpacesInLists(argLine)
+
+            val split = line.substringBefore(";")
+                .split(" ")
+                .filterNot { JAVA_KEYWORDS.contains(it) }
+
+            check(split.size == 2) { "Unexpected field in class $className with line $line" }
+            return FieldRef(className, split[0], split[1])
+        }
+
+        private fun removeSpacesInLists(arg: String): String {
+            // Generics are causing issues with splitting lines and using space as delimiter,
+            // e.g. Pair<A, Pair<B, C>>. This method removes the spaces. Note that this also removes
+            // the spaces in the parameters list, e.g. public Constructor(String, int, boolean).
+            return arg.replace(", ", ",")
+        }
+    }
+}
+
 private fun <T> File.unzip(fn: (Sequence<StreamableZipEntry>) -> T): T {
     return ZipFile(this).use { zip ->
         val streamableEntries = zip.entries().asSequence().map { StreamableZipEntry(zip, it) }
@@ -209,7 +376,7 @@ private fun <T> File.unzip(fn: (Sequence<StreamableZipEntry>) -> T): T {
 
 private fun makeTempFile(pattern: String): File {
     val ix = pattern.indexOf('.')
-    val prefix = pattern.substring(0..(ix - 1))
+    val prefix = pattern.substring(0 until ix)
     val suffix = pattern.substring(ix)
     return File.createTempFile(prefix, suffix).apply { deleteOnExit() }
 }
@@ -255,6 +422,22 @@ private fun Process.consumeStderr(stderr: Appendable): Thread {
 private fun Closeable.closeQuietly() = try { close() } catch (ignored: IOException) {}
 
 private fun Thread.joinQuietly() = try { join() } catch (ignored: InterruptedException) {}
+
+/**
+ * Returns index of the first element matching the given [predicate] starting the search
+ * at [startIndex], or -1 if the list does not contain such element.
+ */
+inline fun <T> List<T>.indexOfFirstAfter(
+    startIndex: Int,
+    predicate: (T) -> Boolean
+): Int {
+    var index = startIndex
+    for (item in subList(startIndex, size)) {
+        if (predicate(item)) return index
+        index++
+    }
+    return -1
+}
 
 private fun Process.dispose() {
     inputStream.closeQuietly()
