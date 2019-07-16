@@ -209,6 +209,10 @@ abstract class TaskProvider(
             applyInputConfiguration(this)
         }
     }
+
+    protected fun checkPrintDeclarationsIsFalse() {
+        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+    }
 }
 
 class LegacyProvider(project: Project) : TaskProvider(project) {
@@ -228,6 +232,8 @@ class LegacyProvider(project: Project) : TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
+        checkPrintDeclarationsIsFalse()
+
         getOutputsForVariant(variant).forEach { output ->
             val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
             addDexcountTaskToGraph(output.assemble, task)
@@ -253,6 +259,8 @@ class ThreeOhProvider(project: Project) : TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
+        checkPrintDeclarationsIsFalse()
+
         variant.outputs.all { output ->
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
@@ -292,6 +300,8 @@ class ThreeThreeProvider(project: Project): TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
+        checkPrintDeclarationsIsFalse()
+
         variant.outputs.all { output ->
             if (output !is ApkVariantOutput) {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
