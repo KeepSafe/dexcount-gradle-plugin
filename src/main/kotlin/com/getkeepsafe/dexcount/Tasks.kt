@@ -117,6 +117,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     }
 
     private var isInstantRun = false
+    private var isAndroidProject = true
 
     abstract val fileToCount: File?
 
@@ -166,12 +167,23 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
      * counts of the current dex/apk file.
      */
     private fun generatePackageTree() {
-        val file = fileToCount ?: throw AssertionError("file is null: rawInput=${rawInputRepresentation}")
+        val file = fileToCount ?: throw AssertionError("file is null: rawInput=$rawInputRepresentation")
+
+        val isApk = file.extension == "apk"
+        val isAar = file.extension == "aar"
+        val isJar = file.extension == "jar"
+        isAndroidProject = isAar || isApk
+
+        check(isApk || isAar || isJar) { "File extension is unclear: $file" }
 
         startTime = System.currentTimeMillis()
 
-        val dataList = DexFile.extractDexData(file, config.dxTimeoutSec)
-        val jarFile = if (config.printDeclarations) JarFile.extractJarFromAar(file) else null
+        val dataList = if (isAndroidProject) DexFile.extractDexData(file, config.dxTimeoutSec) else emptyList()
+        val jarFile = when {
+            isAar && config.printDeclarations -> JarFile.extractJarFromAar(file)
+            isJar && config.printDeclarations -> JarFile.extractJarFromJar(file)
+            else -> null
+        }
 
         ioTime = System.currentTimeMillis()
         try {
@@ -223,12 +235,18 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
             val fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
             val classesRemaining = Math.max(MAX_DEX_REFS - tree.classCount, 0)
 
-            out.println("Total methods in $filename: ${tree.methodCount} ($percentMethodsUsed% used)")
-            out.println("Total fields in $filename:  ${tree.fieldCount} ($percentFieldsUsed% used)")
-            out.println("Total classes in $filename:  ${tree.classCount} ($percentClassesUsed% used)")
-            out.println("Methods remaining in $filename: $methodsRemaining")
-            out.println("Fields remaining in $filename:  $fieldsRemaining")
-            out.println("Classes remaining in $filename:  $classesRemaining")
+            if (isAndroidProject) {
+                out.println("Total methods in $filename: ${tree.methodCount} ($percentMethodsUsed% used)")
+                out.println("Total fields in $filename:  ${tree.fieldCount} ($percentFieldsUsed% used)")
+                out.println("Total classes in $filename:  ${tree.classCount} ($percentClassesUsed% used)")
+                out.println("Methods remaining in $filename: $methodsRemaining")
+                out.println("Fields remaining in $filename:  $fieldsRemaining")
+                out.println("Classes remaining in $filename:  $classesRemaining")
+            } else {
+                out.println("Total methods in $filename: ${tree.methodCountDeclared} ($percentMethodsUsed% used)")
+                out.println("Total fields in $filename:  ${tree.fieldCountDeclared} ($percentFieldsUsed% used)")
+                out.println("Total classes in $filename:  ${tree.classCountDeclared} ($percentClassesUsed% used)")
+            }
         }
 
         summaryFile.parentFile.mkdirs()

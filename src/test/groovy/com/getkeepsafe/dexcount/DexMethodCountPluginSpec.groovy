@@ -1,14 +1,15 @@
 package com.getkeepsafe.dexcount
 
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
-
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildResultException
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 final class DexMethodCountPluginSpec extends Specification {
     @Rule public TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -114,6 +115,78 @@ final class DexMethodCountPluginSpec extends Specification {
 
         where:
         projectPlugin << ['com.android.application', 'com.android.library']
+    }
+
+    @Unroll def '#projectPlugin project success'() {
+        given:
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
+
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+
+        apply plugin: "${projectPlugin}"
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        dexcount {
+          printDeclarations = true
+        }
+      """.stripIndent().trim()
+
+        when:
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("countDeclaredMethods")
+            .build()
+
+        then:
+        result.task(":countDeclaredMethods").outcome == SUCCESS
+
+        where:
+        projectPlugin << ['java', 'java-library']
+    }
+
+    @Unroll def '#projectPlugin project failure when printDeclaration is false'() {
+        given:
+        def classpathString = pluginClasspath
+            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
+            .collect { "'$it'" }
+            .join(", ")
+
+        buildFile <<
+            """
+        buildscript {
+          dependencies {
+            classpath files($classpathString)
+          }
+        }
+
+        apply plugin: "${projectPlugin}"
+        apply plugin: 'com.getkeepsafe.dexcount'
+
+        dexcount {
+          printDeclarations = false
+        }
+      """.stripIndent().trim()
+
+        when:
+        def result = GradleRunner.create()
+            .withProjectDir(testProjectDir.root)
+            .withArguments("countDeclaredMethods")
+            .build()
+
+        then:
+        thrown(UnexpectedBuildResultException) // Should be GradleException?
+
+        where:
+        projectPlugin << ['java', 'java-library']
     }
 
     @Unroll def '#taskName with default buildTypes'() {

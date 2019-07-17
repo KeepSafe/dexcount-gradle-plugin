@@ -213,10 +213,17 @@ internal class JarFile(
                 }
             }
 
+            return extractJarFromJar(tempClasses).also {
+                check(tempClasses.deleteRecursively()) { "Couldn't delete $tempClasses" }
+            }
+        }
+
+        @JvmStatic
+        fun extractJarFromJar(jarFile: File): JarFile {
             // Unzip the classes.jar file and store all .class files in this directory.
             val classFilesDir = createTempDir(prefix = "classFilesDir")
 
-            ZipFile(tempClasses).use { zip ->
+            ZipFile(jarFile).use { zip ->
                 zip.entries()
                     .asSequence()
                     .filter { it.name.endsWith(".class") }
@@ -255,7 +262,6 @@ internal class JarFile(
                 .use { it.readLines() }
                 .map { it.trim() }
 
-            check(tempClasses.deleteRecursively()) { "Couldn't delete $tempClasses" }
             check(classFilesDir.deleteRecursively()) { "Couldn't delete $classFilesDir" }
 
             return parseJavapOutput(lines)

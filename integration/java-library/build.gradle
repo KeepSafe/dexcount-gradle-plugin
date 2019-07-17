@@ -1,0 +1,10 @@
+apply plugin: "java-library"
+apply plugin: "com.getkeepsafe.dexcount"
+
+dexcount {
+    printDeclarations = true
+}
+
+dependencies {
+    testCompile deps.junit
+}
