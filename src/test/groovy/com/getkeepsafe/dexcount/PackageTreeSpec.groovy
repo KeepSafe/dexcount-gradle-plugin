@@ -29,9 +29,12 @@ final class PackageTreeSpec extends Specification {
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "bar"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;", "bar"))
 
         then:
         tree.methodCount == 2
+        tree.methodCountDeclared == 2
     }
 
     def "adding duplicate methods does not increment count"() {
@@ -41,9 +44,12 @@ final class PackageTreeSpec extends Specification {
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
         tree.addMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;", "foo"))
 
         then:
         tree.methodCount == 1
+        tree.methodCountDeclared == 1
     }
 
     def "can print a package list with classes included"() {
