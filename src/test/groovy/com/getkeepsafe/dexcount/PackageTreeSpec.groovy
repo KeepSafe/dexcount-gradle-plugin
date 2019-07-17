@@ -638,6 +638,48 @@ final class PackageTreeSpec extends Specification {
         trimmed == expected
     }
 
+    def "package list can include class count in java project"() {
+        given:
+        def tree = new PackageTree()
+        def sb = new StringBuilder()
+        def opts = new PrintOptions()
+        opts.isAndroidProject = false
+        opts.printHeader = true
+        opts.includeClassCount = true
+        opts.includeMethodCount = true
+        opts.includeFieldCount = true
+        opts.printDeclarations = true
+
+        when:
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Class1;"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Class1;"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Class2;"))
+        tree.addDeclaredMethodRef(methodRef("Lorg/whatever/Foo;"))
+        tree.addDeclaredMethodRef(methodRef("Lorg/foo/Whatever;"))
+        tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Class1;"))
+        tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Class2;"))
+        tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Class2;"))
+        tree.addDeclaredFieldRef(fieldRef("Lx/y/Z;"))
+        tree.addDeclaredFieldRef(fieldRef("Lx/y/W;"))
+
+        tree.printPackageList(sb, opts)
+
+        then:
+        def trimmed = sb.toString().stripIndent().trim()
+        def expected = """
+            classes  declared methods declared fields  package/class name
+            2        3                3                com
+            2        3                3                com.foo
+            2        2                0                org
+            1        1                0                org.foo
+            1        1                0                org.whatever
+            2        0                2                x
+            2        0                2                x.y
+            """.stripIndent().trim()
+
+        trimmed == expected
+    }
+
     def "package list can be depth-limited"() {
         given:
         def tree = new PackageTree()

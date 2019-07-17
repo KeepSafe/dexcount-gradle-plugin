@@ -90,18 +90,19 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     private var outputTime  = 0L
 
     private val printOptions by lazy { // needs to be lazy because config is lateinit
-        PrintOptions().apply {
-            includeClassCount       = config.includeClassCount
-            includeMethodCount      = true
-            includeFieldCount       = config.includeFieldCount
-            includeTotalMethodCount = config.includeTotalMethodCount
-            teamCityIntegration     = config.teamCityIntegration
-            orderByMethodCount      = config.orderByMethodCount
-            includeClasses          = config.includeClasses
-            printHeader             = true
-            maxTreeDepth            = config.maxTreeDepth
-            printDeclarations       = config.printDeclarations
-        }
+        PrintOptions(
+            includeClassCount = config.includeClassCount,
+            includeMethodCount = true,
+            includeFieldCount = config.includeFieldCount,
+            includeTotalMethodCount = config.includeTotalMethodCount,
+            teamCityIntegration = config.teamCityIntegration,
+            orderByMethodCount = config.orderByMethodCount,
+            includeClasses = config.includeClasses,
+            printHeader = true,
+            maxTreeDepth = config.maxTreeDepth,
+            printDeclarations = config.printDeclarations,
+            isAndroidProject = isAndroidProject
+        )
     }
 
     private val deobfuscator by lazy {

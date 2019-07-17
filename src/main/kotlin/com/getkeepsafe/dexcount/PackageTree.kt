@@ -132,7 +132,9 @@ class PackageTree(
         val sb = StringBuilder(64)
 
         if (opts.includeTotalMethodCount) {
-            out.appendln("Total methods: $methodCount")
+            if (opts.isAndroidProject) {
+                out.appendln("Total methods: $methodCount")
+            }
 
             if (opts.printDeclarations) {
                 out.appendln("Total declared methods: $methodCountDeclared")
@@ -151,12 +153,14 @@ class PackageTree(
             out.append(String.format("%-8s ", "classes"))
         }
 
-        if (opts.includeMethodCount) {
-            out.append(String.format("%-8s ", "methods"))
-        }
+        if (opts.isAndroidProject) {
+            if (opts.includeMethodCount) {
+                out.append(String.format("%-8s ", "methods"))
+            }
 
-        if (opts.includeFieldCount) {
-            out.append(String.format("%-8s ", "fields"))
+            if (opts.includeFieldCount) {
+                out.append(String.format("%-8s ", "fields"))
+            }
         }
 
         if (opts.printDeclarations) {
@@ -184,12 +188,14 @@ class PackageTree(
                 out.append(String.format("%-8d ", classCount))
             }
 
-            if (opts.includeMethodCount) {
-                out.append(String.format("%-8d ", methodCount))
-            }
+            if (opts.isAndroidProject) {
+                if (opts.includeMethodCount) {
+                    out.append(String.format("%-8d ", methodCount))
+                }
 
-            if (opts.includeFieldCount) {
-                out.append(String.format("%-8d ", fieldCount))
+                if (opts.includeFieldCount) {
+                    out.append(String.format("%-8d ", fieldCount))
+                }
             }
 
             if (opts.printDeclarations) {
@@ -232,20 +238,22 @@ class PackageTree(
                 appended = true
             }
 
-            if (opts.includeMethodCount) {
-                if (appended) {
-                    out.append(", ")
+            if (opts.isAndroidProject) {
+                if (opts.includeMethodCount) {
+                    if (appended) {
+                        out.append(", ")
+                    }
+                    out.append("$methodCount ${pluralizedMethods(methodCount)}")
+                    appended = true
                 }
-                out.append("$methodCount ${pluralizedMethods(methodCount)}")
-                appended = true
-            }
 
-            if (opts.includeFieldCount) {
-                if (appended) {
-                    out.append(", ")
+                if (opts.includeFieldCount) {
+                    if (appended) {
+                        out.append(", ")
+                    }
+                    out.append("$fieldCount ${pluralizedFields(fieldCount)}")
+                    appended = true
                 }
-                out.append("$fieldCount ${pluralizedFields(fieldCount)}")
-                appended = true
             }
 
             if (opts.printDeclarations) {
@@ -300,12 +308,14 @@ class PackageTree(
             json.name("classes").value(classCount)
         }
 
-        if (opts.includeMethodCount) {
-            json.name("methods").value(methodCount)
-        }
+        if (opts.isAndroidProject) {
+            if (opts.includeMethodCount) {
+                json.name("methods").value(methodCount)
+            }
 
-        if (opts.includeFieldCount) {
-            json.name("fields").value(fieldCount)
+            if (opts.includeFieldCount) {
+                json.name("fields").value(fieldCount)
+            }
         }
 
         if (opts.printDeclarations) {
@@ -330,12 +340,14 @@ class PackageTree(
             out.append("classes: $classCount\n")
         }
 
-        if (opts.includeMethodCount) {
-            out.append("methods: $methodCount\n")
-        }
+        if (opts.isAndroidProject) {
+            if (opts.includeMethodCount) {
+                out.append("methods: $methodCount\n")
+            }
 
-        if (opts.includeFieldCount) {
-            out.append("fields: $fieldCount\n")
+            if (opts.includeFieldCount) {
+                out.append("fields: $fieldCount\n")
+            }
         }
 
         if (opts.printDeclarations) {
