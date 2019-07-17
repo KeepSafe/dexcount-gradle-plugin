@@ -26,4 +26,5 @@ class PrintOptions {
     var printHeader: Boolean = false
     var orderByMethodCount: Boolean = false
     var maxTreeDepth = Integer.MAX_VALUE
+    var printDeclarations = false
 }

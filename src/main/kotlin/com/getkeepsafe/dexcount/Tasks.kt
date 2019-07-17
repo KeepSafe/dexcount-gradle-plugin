@@ -100,6 +100,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
             includeClasses          = config.includeClasses
             printHeader             = true
             maxTreeDepth            = config.maxTreeDepth
+            printDeclarations       = config.printDeclarations
         }
     }
 
@@ -170,6 +171,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
         startTime = System.currentTimeMillis()
 
         val dataList = DexFile.extractDexData(file, config.dxTimeoutSec)
+        val jarFile = if (config.printDeclarations) JarFile.extractJarFromAar(file) else null
 
         ioTime = System.currentTimeMillis()
         try {
@@ -177,8 +179,14 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
 
             dataList.flatMap { it.methodRefs }.forEach(tree::addMethodRef)
             dataList.flatMap { it.fieldRefs }.forEach(tree::addFieldRef)
+
+            if (jarFile != null) {
+                jarFile.methodRefs.forEach(tree::addDeclaredMethodRef)
+                jarFile.fieldRefs.forEach(tree::addDeclaredFieldRef)
+            }
         } finally {
             dataList.forEach { it.close() }
+            jarFile?.close()
         }
 
         treegenTime = System.currentTimeMillis()

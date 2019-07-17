@@ -133,6 +133,10 @@ class PackageTree(
 
         if (opts.includeTotalMethodCount) {
             out.appendln("Total methods: $methodCount")
+
+            if (opts.printDeclarations) {
+                out.appendln("Total declared methods: $methodCountDeclared")
+            }
         }
 
         if (opts.printHeader) {
@@ -153,6 +157,11 @@ class PackageTree(
 
         if (opts.includeFieldCount) {
             out.append(String.format("%-8s ", "fields"))
+        }
+
+        if (opts.printDeclarations) {
+            out.append(String.format("%-16s ", "declared methods"))
+            out.append(String.format("%-16s ", "declared fields"))
         }
 
         out.append("package/class name")
@@ -181,6 +190,17 @@ class PackageTree(
 
             if (opts.includeFieldCount) {
                 out.append(String.format("%-8d ", fieldCount))
+            }
+
+            if (opts.printDeclarations) {
+                if (opts.printHeader) {
+                    // The header for the these two columns uses more space.
+                    out.append(String.format("%-16d ", methodCountDeclared))
+                    out.append(String.format("%-16d ", fieldCountDeclared))
+                } else {
+                    out.append(String.format("%-8d ", methodCountDeclared))
+                    out.append(String.format("%-8d ", fieldCountDeclared))
+                }
             }
 
             out.appendln(sb.toString())
@@ -224,7 +244,17 @@ class PackageTree(
                 if (appended) {
                     out.append(", ")
                 }
-                out.append("$fieldCount ${pluralizeFields(fieldCount)}")
+                out.append("$fieldCount ${pluralizedFields(fieldCount)}")
+                appended = true
+            }
+
+            if (opts.printDeclarations) {
+                if (appended) {
+                    out.append(", ")
+                }
+                out.append("$methodCountDeclared declared ${pluralizedMethods(methodCountDeclared)}")
+                    .append(", ")
+                    .append("$fieldCountDeclared declared ${pluralizedFields(fieldCountDeclared)}")
             }
 
             out.append(")")
@@ -278,6 +308,11 @@ class PackageTree(
             json.name("fields").value(fieldCount)
         }
 
+        if (opts.printDeclarations) {
+            json.name("declared_methods").value(methodCountDeclared)
+            json.name("declared_fields").value(fieldCountDeclared)
+        }
+
         json.name("children")
         json.beginArray()
 
@@ -301,6 +336,11 @@ class PackageTree(
 
         if (opts.includeFieldCount) {
             out.append("fields: $fieldCount\n")
+        }
+
+        if (opts.printDeclarations) {
+            out.append("declared_methods: $methodCountDeclared\n")
+            out.append("declared_fields: $fieldCountDeclared\n")
         }
 
         out.append("counts:\n")
@@ -329,6 +369,11 @@ class PackageTree(
 
         if (opts.includeFieldCount) {
             out.appendln("${indentText}fields: $fieldCount")
+        }
+
+        if (opts.printDeclarations) {
+            out.appendln("${indentText}declared_methods: $methodCountDeclared")
+            out.appendln("${indentText}declared_fields: $fieldCountDeclared")
         }
 
         val children = if ((depth + 1) == opts.maxTreeDepth) emptyList() else getChildren(opts)
@@ -362,7 +407,7 @@ class PackageTree(
 
     private fun pluralizedMethods(n: Int) = if (n == 1) "method" else "methods"
 
-    private fun pluralizeFields(n: Int) = if (n == 1) "field" else "fields"
+    private fun pluralizedFields(n: Int) = if (n == 1) "field" else "fields"
 
     private fun descriptorToDot(ref: HasDeclaringClass): String {
         val descriptor = ref.declClassName
