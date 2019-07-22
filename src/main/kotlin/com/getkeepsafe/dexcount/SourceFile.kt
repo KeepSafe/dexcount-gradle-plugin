@@ -21,13 +21,16 @@ import com.android.dexdeps.DexData
 import com.android.dexdeps.DexDataException
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
+import javassist.ByteArrayClassPath
+import javassist.ClassPool
+import javassist.CtBehavior
+import javassist.CtMethod
 import java.io.Closeable
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.io.IOException
+import java.io.InputStream
 import java.io.RandomAccessFile
-
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
@@ -120,8 +123,8 @@ internal class DexFile(
             val buildToolsSubDirs = File(androidSdkHome, "build-tools")
 
             // get latest Dx tool by sorting by name
-            val dirs = buildToolsSubDirs.listFiles().sortedBy { it.name }.asReversed()
-            if (dirs.isEmpty()) {
+            val dirs = buildToolsSubDirs.listFiles()?.sortedBy { it.name }?.asReversed()
+            if (dirs == null || dirs.isEmpty()) {
                 throw Exception ("No Build Tools found in " + buildToolsSubDirs.absolutePath)
             }
 
@@ -228,148 +231,85 @@ internal class JarFile(
                     .asSequence()
                     .filter { it.name.endsWith(".class") }
                     .forEach { zipEntry ->
-                        val fileName = zipEntry.name.replace('/', '_')
+                        val fileName = zipEntry.name
+                        val file = File(classFilesDir, fileName)
 
-                        FileOutputStream(File(classFilesDir, fileName)).use { outStream ->
+                        if (!file.parentFile.exists()) {
+                            check(file.parentFile.mkdirs()) { "Couldn't create parent dir." }
+                        }
+
+                        FileOutputStream(file).use { outStream ->
                             zip.getInputStream(zipEntry).use { inStream -> inStream.copyTo(outStream) }
                         }
                     }
             }
 
-            // Join all .class file paths to one string.
-            val classFiles = classFilesDir.walk()
+            val classPool = ClassPool()
+            classPool.appendSystemPath()
+
+            val classes = classFilesDir.walk()
                 .filter { it.extension == "class" }
-                .map { it.absolutePath }
-                .joinToString(separator = " ")
+                .map { file ->
+                    val fullyQualifiedClassName = file.relativeTo(classFilesDir)
+                        .path
+                        .replace('/', '.')
+                        .substringBeforeLast(".class")
 
-            /*
-             * Call javap for for all class files. This returns an output similar like this:
-             *
-             * Compiled from "CreateBody.java"
-             * public class com.abc.CreateBody {
-             *   public final java.lang.String email;
-             *   public com.abc.CreateBody(java.lang.String);
-             *   private com.abc.CreateBody withPassword(java.lang.String);
-             * }
-             * Compiled from "AppAccountCache.kt"
-             * public interface com.abc.AppAccountCache {
-             *   public abstract void clearCache();
-             * }
-             */
-            val lines = Runtime.getRuntime()
-                .exec("javap -private $classFiles")
-                .inputStream.reader()
-                .use { it.readLines() }
-                .map { it.trim() }
+                    classPool.appendClassPath(ByteArrayClassPath(fullyQualifiedClassName, file.readBytes()))
+                    classPool.get(fullyQualifiedClassName)
+                }
+                .toList()
 
-            check(classFilesDir.deleteRecursively()) { "Couldn't delete $classFilesDir" }
+            // Note that methodRefs contains synthetic methods.
+            val methodRefs = classes
+                .flatMap { clazz ->
+                    val declaringClass = "L${clazz.name.replace('.', '/')};"
 
-            return parseJavapOutput(lines)
-        }
+                    // Unfortunately, it's necessary to parse the types from the strings manually.
+                    // We can't use the proper API because this requires all classes that are used
+                    // in parameters and return types to be loaded in the classpath. However,
+                    // that's not the case when we analyze a single jar file.
+                    val classInitializer = if (clazz.classInitializer != null) {
+                        listOf(MethodRef(declaringClass, emptyArray(), "V", "<clinit>"))
+                    } else emptyList()
 
-        private fun parseJavapOutput(lines: List<String>): JarFile {
-            val methodRefs = mutableListOf<MethodRef>()
-            val fieldRefs = mutableListOf<FieldRef>()
+                    classInitializer + clazz.declaredConstructors.map { constructor ->
+                        val parameterTypes = constructor.parseParameters()
+                            .toTypedArray()
+                        // V as return type stands for void.
+                        MethodRef(declaringClass, parameterTypes, "V", "<init>")
+                    } + clazz.declaredMethods.map { method ->
+                        val parameterTypes = method.parseParameters()
+                            .toTypedArray()
+                        val returnType = method.parseReturnType()
 
-            var startIndex = 0
-
-            while (startIndex < lines.size) {
-                val begin = lines.indexOfFirstAfter(startIndex) {
-                    it.endsWith("{") && (it.contains(" class ") || it.contains(" interface "))
+                        MethodRef(declaringClass, parameterTypes, returnType, method.name)
+                    }
                 }
 
-                val end = lines.indexOfFirstAfter(begin) { it == "}" }
-
-                // Look either for "class" or "interface", substringABC returns the string itself
-                // if the delimiter can't be found.
-                val className = lines[begin].substringAfter("class ")
-                    .substringAfter("interface ")
-                    .substringBefore(" {")
-
-                lines.subList(begin + 1, end)
-                    // Ignore the static initializer.
-                    .filterNot { it == "static {};" }
-                    .forEach { line ->
-                        when {
-                            line.contains(" throws ") -> methodRefs += parseMethod(
-                                line.substringBefore(" throws "), className
-                            )
-                            line.endsWith(");") -> methodRefs += parseMethod(line, className)
-                            line.endsWith(";") -> fieldRefs += parseField(line, className)
-                            else -> throw Exception(
-                                "Unexpected line from javap in class $className: $line"
-                            )
-                        }
-                    }
-
-                startIndex = if (end >= 0) end + 1 else lines.size
+            val fieldRefs = classes.flatMap { clazz ->
+                clazz.declaredFields.map { field ->
+                    val type = field.fieldInfo.descriptor
+                    FieldRef(clazz.simpleName, type, field.name)
+                }
             }
 
             return JarFile(methodRefs, fieldRefs)
         }
 
-        private val JAVA_KEYWORDS = listOf(
-            "public", "protected", "private", "final", "transient", "abstract", "class", "interface",
-            "extends", "volatile", "synchronized", "native", "static", "implements"
-        )
-
-        private fun parseMethod(argLine: String, className: String): MethodRef {
+        private fun CtBehavior.parseParameters(): List<String> {
             // Samples:
-            // public com.abc.CreateBody(java.lang.String, java.lang.String);
-            // private com.abc.CreateBody withPassword(java.lang.String);
-            // private final com.abc.CreateBody withPassword(java.lang.String);
-            // void something();
-            // public boolean checkAvailability() throws org.altbeacon.beacon.BleNotAvailableException;
+            // ()Lcom/abc/SomeType<Lcom/def/OtherType;>;
+            // (Ljava/lang/String;)Lcom/abc/SomeType<Lcom/def/OtherType;>;
+            // (Ljava/lang/String;Lcom/abc/SomeType;)Lcom/def/OtherType<Lcom/def/ThirdType;>;
+            val parameterString = signature
+                .substringAfter("(")
+                .substringBefore(")")
 
-            val line = removeSpacesInLists(argLine)
-
-            val argList = line.substringAfter("(").substringBefore(")")
-            val args = argList.split(",").toTypedArray().filter { it.trim().isNotEmpty() }
-
-            val split = line.substringBefore("(")
-                .split(" ")
-                .filterNot { JAVA_KEYWORDS.contains(it) }
-
-            lateinit var returnType :String
-            lateinit var methodName :String
-
-            when (split.size) {
-                1 -> {
-                    returnType = split[0]
-                    methodName = "constructor"
-                }
-                2 -> {
-                    returnType = split[0]
-                    methodName = split[1]
-                }
-                else -> throw Exception("Unexpected method in class $className with line $line")
-            }
-
-            return MethodRef(className, args.toTypedArray(), returnType, methodName)
+            return parameterString.split(";")
         }
 
-        private fun parseField(argLine: String, className: String): FieldRef {
-            // Samples:
-            //  public final java.lang.String name;
-            //  public java.lang.String country_code;
-            //  private final java.util.concurrent.ConcurrentMap<org.altbeacon.beacon.BeaconConsumer, org.altbeacon.beacon.BeaconManager$ConsumerInfo> consumers;
-
-            val line = removeSpacesInLists(argLine)
-
-            val split = line.substringBefore(";")
-                .split(" ")
-                .filterNot { JAVA_KEYWORDS.contains(it) }
-
-            check(split.size == 2) { "Unexpected field in class $className with line $line" }
-            return FieldRef(className, split[0], split[1])
-        }
-
-        private fun removeSpacesInLists(arg: String): String {
-            // Generics are causing issues with splitting lines and using space as delimiter,
-            // e.g. Pair<A, Pair<B, C>>. This method removes the spaces. Note that this also removes
-            // the spaces in the parameters list, e.g. public Constructor(String, int, boolean).
-            return arg.replace(", ", ",")
-        }
+        private fun CtMethod.parseReturnType(): String = signature.substringAfter(")")
     }
 }
 
@@ -428,22 +368,6 @@ private fun Process.consumeStderr(stderr: Appendable): Thread {
 private fun Closeable.closeQuietly() = try { close() } catch (ignored: IOException) {}
 
 private fun Thread.joinQuietly() = try { join() } catch (ignored: InterruptedException) {}
-
-/**
- * Returns index of the first element matching the given [predicate] starting the search
- * at [startIndex], or -1 if the list does not contain such element.
- */
-inline fun <T> List<T>.indexOfFirstAfter(
-    startIndex: Int,
-    predicate: (T) -> Boolean
-): Int {
-    var index = startIndex
-    for (item in subList(startIndex, size)) {
-        if (predicate(item)) return index
-        index++
-    }
-    return -1
-}
 
 private fun Process.dispose() {
     inputStream.closeQuietly()

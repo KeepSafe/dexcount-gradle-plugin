@@ -36,7 +36,7 @@ final class JarFileSpec extends Specification {
 
         then:
         jarFile != null
-        jarFile.methodRefs.size() == 588
-        jarFile.fieldRefs.size() == 372
+        jarFile.methodRefs.size() == 659
+        jarFile.fieldRefs.size() == 405
     }
 }
