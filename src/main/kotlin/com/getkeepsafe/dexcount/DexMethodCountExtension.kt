@@ -122,6 +122,13 @@ open class DexMethodCountExtension {
     var dxTimeoutSec = 60
 
     /**
+     * When true, then the plugin only counts the declared methods and fields inside this module.
+     * This does NOT represent the actual reference method count, because method references are
+     * ignored. This flag is false by default and can only be turned on for library modules.
+     */
+    var printDeclarations = false
+
+    /**
      * When true, the plugin is enabled and will be run as normal.  When false,
      * the plugin is disabled and will not be run.
      */

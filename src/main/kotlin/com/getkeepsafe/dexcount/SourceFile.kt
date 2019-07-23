@@ -21,56 +21,54 @@ import com.android.dexdeps.DexData
 import com.android.dexdeps.DexDataException
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
+import javassist.ByteArrayClassPath
+import javassist.ClassPool
+import javassist.CtBehavior
+import javassist.CtMethod
 import java.io.Closeable
 import java.io.File
-import java.io.InputStream
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.io.RandomAccessFile
-
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 
+internal sealed class SourceFile : Closeable {
+    abstract val methodRefs: List<MethodRef>
+    abstract val fieldRefs: List<FieldRef>
+}
 
 /**
  * A physical file and the {@link DexData} contained therein.
  *
  * A DexFile contains an open file, possibly a temp file.  When consumers are
- * finished with the DexFile, it should be cleaned up with
- * {@link DexFile#dispose()}.
+ * finished with the DexFile, it should be cleaned up with [DexFile.close].
  */
 @Suppress("ConvertSecondaryConstructorToPrimary")
-internal class DexFile: Closeable {
-    private val file: File
-    private val isTemp: Boolean
-    private val raf: RandomAccessFile
-    private val data: DexData
-
-    val isInstantRun: Boolean
-
-    val methodRefs: List<MethodRef>
-        get() = data.methodRefs.toList()
-
-    val fieldRefs: List<FieldRef>
-        get() = data.fieldRefs.toList()
-
-    private constructor(file: File, isTemp: Boolean, isInstantRun: Boolean = false) {
-        this.file = file
-        this.isTemp = isTemp
-        this.isInstantRun = isInstantRun
-
-        this.raf = RandomAccessFile(file, "r")
-        this.data = DexData(raf)
-
+internal class DexFile(
+    private val file: File,
+    private val isTemp: Boolean,
+    val isInstantRun: Boolean = false
+): SourceFile() {
+    private val raf = RandomAccessFile(file, "r")
+    private val data = DexData(raf).also {
         try {
-            data.load()
+            it.load()
         } catch (e: IOException) {
             throw DexCountException("Error loading dex file", e)
         } catch (e: DexDataException) {
             throw DexCountException("Error loading dex file", e)
         }
     }
+
+    override val methodRefs: List<MethodRef>
+        get() = data.methodRefs.toList()
+
+    override val fieldRefs: List<FieldRef>
+        get() = data.fieldRefs.toList()
 
     override fun close() {
         raf.close()
@@ -125,8 +123,8 @@ internal class DexFile: Closeable {
             val buildToolsSubDirs = File(androidSdkHome, "build-tools")
 
             // get latest Dx tool by sorting by name
-            val dirs = buildToolsSubDirs.listFiles().sortedBy { it.name }.asReversed()
-            if (dirs.isEmpty()) {
+            val dirs = buildToolsSubDirs.listFiles()?.sortedBy { it.name }?.asReversed()
+            if (dirs == null || dirs.isEmpty()) {
                 throw Exception ("No Build Tools found in " + buildToolsSubDirs.absolutePath)
             }
 
@@ -200,6 +198,121 @@ internal class DexFile: Closeable {
     }
 }
 
+internal class JarFile(
+    override val methodRefs: List<MethodRef>,
+    override val fieldRefs: List<FieldRef>
+) : SourceFile() {
+
+    override fun close() = Unit
+
+    companion object {
+        @JvmStatic
+        fun extractJarFromAar(file: File): JarFile {
+            // Extract the classes.jar file from the AAR.
+            val tempClasses = file.unzip { entries ->
+                val jarFile = entries.find { it.name.matches(Regex("classes\\.jar")) }
+                makeTempFile("classes.jar").also {
+                    jarFile!!.writeTo(it)
+                }
+            }
+
+            return extractJarFromJar(tempClasses).also {
+                check(tempClasses.deleteRecursively()) { "Couldn't delete $tempClasses" }
+            }
+        }
+
+        @JvmStatic
+        fun extractJarFromJar(jarFile: File): JarFile {
+            // Unzip the classes.jar file and store all .class files in this directory.
+            val classFilesDir = createTempDir(prefix = "classFilesDir")
+
+            ZipFile(jarFile).use { zip ->
+                zip.entries()
+                    .asSequence()
+                    .filter { it.name.endsWith(".class") }
+                    .forEach { zipEntry ->
+                        val fileName = zipEntry.name
+                        val file = File(classFilesDir, fileName)
+
+                        if (!file.parentFile.exists()) {
+                            check(file.parentFile.mkdirs()) { "Couldn't create parent dir." }
+                        }
+
+                        FileOutputStream(file).use { outStream ->
+                            zip.getInputStream(zipEntry).use { inStream -> inStream.copyTo(outStream) }
+                        }
+                    }
+            }
+
+            val classPool = ClassPool()
+            classPool.appendSystemPath()
+
+            val classes = classFilesDir.walk()
+                .filter { it.extension == "class" }
+                .map { file ->
+                    val fullyQualifiedClassName = file.relativeTo(classFilesDir)
+                        .path
+                        .replace('/', '.')
+                        .substringBeforeLast(".class")
+
+                    classPool.appendClassPath(ByteArrayClassPath(fullyQualifiedClassName, file.readBytes()))
+                    classPool.get(fullyQualifiedClassName)
+                }
+                .toList()
+
+            // Note that methodRefs contains synthetic methods.
+            val methodRefs = classes
+                .flatMap { clazz ->
+                    val declaringClass = "L${clazz.name.replace('.', '/')};"
+
+                    // Unfortunately, it's necessary to parse the types from the strings manually.
+                    // We can't use the proper API because this requires all classes that are used
+                    // in parameters and return types to be loaded in the classpath. However,
+                    // that's not the case when we analyze a single jar file.
+                    val classInitializer = if (clazz.classInitializer != null) {
+                        listOf(MethodRef(declaringClass, emptyArray(), "V", "<clinit>"))
+                    } else emptyList()
+
+                    classInitializer + clazz.declaredConstructors.map { constructor ->
+                        val parameterTypes = constructor.parseParameters()
+                            .toTypedArray()
+                        // V as return type stands for void.
+                        MethodRef(declaringClass, parameterTypes, "V", "<init>")
+                    } + clazz.declaredMethods.map { method ->
+                        val parameterTypes = method.parseParameters()
+                            .toTypedArray()
+                        val returnType = method.parseReturnType()
+
+                        MethodRef(declaringClass, parameterTypes, returnType, method.name)
+                    }
+                }
+
+            val fieldRefs = classes.flatMap { clazz ->
+                clazz.declaredFields.map { field ->
+                    val type = field.fieldInfo.descriptor
+                    FieldRef(clazz.simpleName, type, field.name)
+                }
+            }
+
+            return JarFile(methodRefs, fieldRefs)
+        }
+
+        private fun CtBehavior.parseParameters(): List<String> {
+            // Samples:
+            // ()Lcom/abc/SomeType<Lcom/def/OtherType;>;
+            // (Ljava/lang/String;)Lcom/abc/SomeType<Lcom/def/OtherType;>;
+            // (Ljava/lang/String;Lcom/abc/SomeType;)Lcom/def/OtherType<Lcom/def/ThirdType;>;
+            val parameterString = signature
+                .substringAfter("(")
+                .substringBefore(")")
+
+            return parameterString.split(";")
+        }
+
+        private fun CtMethod.parseReturnType(): String = signature.substringAfter(")")
+    }
+}
+
 private fun <T> File.unzip(fn: (Sequence<StreamableZipEntry>) -> T): T {
     return ZipFile(this).use { zip ->
         val streamableEntries = zip.entries().asSequence().map { StreamableZipEntry(zip, it) }
@@ -209,7 +322,7 @@ private fun <T> File.unzip(fn: (Sequence<StreamableZipEntry>) -> T): T {
 
 private fun makeTempFile(pattern: String): File {
     val ix = pattern.indexOf('.')
-    val prefix = pattern.substring(0..(ix - 1))
+    val prefix = pattern.substring(0 until ix)
     val suffix = pattern.substring(ix)
     return File.createTempFile(prefix, suffix).apply { deleteOnExit() }
 }

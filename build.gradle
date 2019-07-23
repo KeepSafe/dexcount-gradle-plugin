@@ -84,6 +84,7 @@ task createClasspathManifest() {
 dependencies {
     implementation deps.kotlinStdlib
     implementation deps.gson
+    implementation deps.javassist
 
     compileOnly deps.gradle
 

@@ -40,5 +40,6 @@ ext.deps = [
                 exclude module: 'support-annotations'
             }
     ],
-    "hamcrestCore"        : "org.hamcrest:hamcrest-core:1.3"
+    "hamcrestCore"        : "org.hamcrest:hamcrest-core:1.3",
+    "javassist"           : "org.javassist:javassist:3.25.0-GA"
 ]

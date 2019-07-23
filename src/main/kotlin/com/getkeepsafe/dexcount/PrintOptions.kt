@@ -16,14 +16,16 @@
 
 package com.getkeepsafe.dexcount
 
-class PrintOptions {
-    var includeClasses: Boolean = false
-    var includeClassCount: Boolean = false
-    var includeMethodCount: Boolean = true
-    var includeFieldCount: Boolean = false
-    var includeTotalMethodCount: Boolean = false
-    var teamCityIntegration: Boolean = false
-    var printHeader: Boolean = false
-    var orderByMethodCount: Boolean = false
-    var maxTreeDepth = Integer.MAX_VALUE
-}
+data class PrintOptions(
+    var includeClasses: Boolean = false,
+    var includeClassCount: Boolean = false,
+    var includeMethodCount: Boolean = true,
+    var includeFieldCount: Boolean = false,
+    var includeTotalMethodCount: Boolean = false,
+    var teamCityIntegration: Boolean = false,
+    var printHeader: Boolean = false,
+    var orderByMethodCount: Boolean = false,
+    var maxTreeDepth: Int = Integer.MAX_VALUE,
+    var printDeclarations: Boolean = false,
+    var isAndroidProject: Boolean = true
+)

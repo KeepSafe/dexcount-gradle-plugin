@@ -20,10 +20,13 @@ import com.android.dexdeps.FieldRef
 import com.android.dexdeps.HasDeclaringClass
 import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
+import com.getkeepsafe.dexcount.PackageTree.Type.DECLARED
+import com.getkeepsafe.dexcount.PackageTree.Type.REFERENCED
 import com.google.gson.stream.JsonWriter
 import java.io.Writer
 import java.nio.CharBuffer
 import java.util.*
+import kotlin.collections.HashSet
 
 class PackageTree(
         private val name_: String,
@@ -42,54 +45,36 @@ class PackageTree(
 
     // A cached sum of classes.
     // Set by `getClassCount()`, and invalidated by adding new nodes.
-    private var classTotal_: Int? = null
+    private var classTotal_ = mutableMapOf<Type, Int>()
 
     // A cached sum of this node and all children's method ref counts.
     // Set by `getMethodCount()`, and invalidated by adding new nodes.
-    private var methodTotal_: Int? = null
+    private var methodTotal_ = mutableMapOf<Type, Int>()
 
     // A cached sum of this node and all children's field-ref counts.
     // Same semantics as methodTotal_.
-    private var fieldTotal_: Int? = null
+    private var fieldTotal_ = mutableMapOf<Type, Int>()
 
     private val deobfuscator_: Deobfuscator = deobfuscator ?: Deobfuscator.empty
     private val children_: SortedMap<String, PackageTree> = TreeMap()
 
     // The set of methods declared on this node.  Will be empty for package
     // nodes and possibly non-empty for class nodes.
-    private val methods_ = HashSet<HasDeclaringClass>()
+    private val methods_ = mutableMapOf<Type, HashSet<HasDeclaringClass>>()
+        .apply { Type.values().forEach { put(it, HashSet<HasDeclaringClass>()) } }
 
     // The set of fields declared on this node.  Will be empty for package
     // nodes and possibly non-empty for class nodes.
-    private val fields_ = HashSet<HasDeclaringClass>()
+    private val fields_ = mutableMapOf<Type, HashSet<HasDeclaringClass>>()
+        .apply { Type.values().forEach { put(it, HashSet<HasDeclaringClass>()) } }
 
-    val classCount: Int
-        get() {
-            if (classTotal_ == null) {
-                if (isClass_) {
-                    classTotal_ = 1
-                } else {
-                    classTotal_ = children_.values.sumBy { it.classCount }
-                }
-            }
-            return classTotal_!!
-        }
+    val classCount: Int get() = classCount(REFERENCED)
+    val methodCount: Int get() = methodCount(REFERENCED)
+    val fieldCount: Int get() = fieldCount(REFERENCED)
 
-    val methodCount: Int
-        get() {
-            if (methodTotal_ == null) {
-                methodTotal_ = children_.values.sumBy(methods_.size) { it.methodCount }
-            }
-            return methodTotal_!!
-        }
-
-    val fieldCount: Int
-        get() {
-            if (fieldTotal_ == null) {
-                fieldTotal_ = children_.values.sumBy(fields_.size) { it.fieldCount }
-            }
-            return fieldTotal_!!
-        }
+    val classCountDeclared: Int get() = classCount(DECLARED)
+    val methodCountDeclared: Int get() = methodCount(DECLARED)
+    val fieldCountDeclared: Int get() = fieldCount(DECLARED)
 
     constructor() : this("", false, null)
 
@@ -98,31 +83,39 @@ class PackageTree(
     constructor(name: String, deobfuscator: Deobfuscator) : this(name, isClassName(name), deobfuscator)
 
     fun addMethodRef(method: MethodRef) {
-        addInternal(descriptorToDot(method), 0, true, method)
+        addInternal(descriptorToDot(method), 0, true, REFERENCED, method)
     }
 
     fun addFieldRef(field: FieldRef) {
-        addInternal(descriptorToDot(field), 0, false, field)
+        addInternal(descriptorToDot(field), 0, false, REFERENCED, field)
     }
 
-    private fun addInternal(name: String, startIndex: Int, isMethod: Boolean, ref: HasDeclaringClass) {
+    fun addDeclaredMethodRef(method: MethodRef) {
+        addInternal(descriptorToDot(method), 0, true, DECLARED, method)
+    }
+
+    fun addDeclaredFieldRef(field: FieldRef) {
+        addInternal(descriptorToDot(field), 0, false, DECLARED, field)
+    }
+
+    private fun addInternal(name: String, startIndex: Int, isMethod: Boolean, type: Type, ref: HasDeclaringClass) {
         val ix = name.indexOf('.', startIndex)
         val segment = if (ix == -1) name.substring(startIndex) else name.substring(startIndex, ix)
         val child = children_.getOrPut(segment) { PackageTree(segment, deobfuscator_) }
 
         if (ix == -1) {
             if (isMethod) {
-                child.methods_.add(ref as MethodRef)
+                child.methods_[type]!!.add(ref as MethodRef)
             } else {
-                child.fields_.add(ref as FieldRef)
+                child.fields_[type]!!.add(ref as FieldRef)
             }
         } else {
             if (isMethod) {
-                methodTotal_ = null
+                methodTotal_.remove(type)
             } else {
-                fieldTotal_ = null
+                fieldTotal_.remove(type)
             }
-            child.addInternal(name, ix + 1, isMethod, ref)
+            child.addInternal(name, ix + 1, isMethod, type, ref)
         }
     }
 
@@ -139,7 +132,13 @@ class PackageTree(
         val sb = StringBuilder(64)
 
         if (opts.includeTotalMethodCount) {
-            out.appendln("Total methods: $methodCount")
+            if (opts.isAndroidProject) {
+                out.appendln("Total methods: $methodCount")
+            }
+
+            if (opts.printDeclarations) {
+                out.appendln("Total declared methods: $methodCountDeclared")
+            }
         }
 
         if (opts.printHeader) {
@@ -154,12 +153,19 @@ class PackageTree(
             out.append(String.format("%-8s ", "classes"))
         }
 
-        if (opts.includeMethodCount) {
-            out.append(String.format("%-8s ", "methods"))
+        if (opts.isAndroidProject) {
+            if (opts.includeMethodCount) {
+                out.append(String.format("%-8s ", "methods"))
+            }
+
+            if (opts.includeFieldCount) {
+                out.append(String.format("%-8s ", "fields"))
+            }
         }
 
-        if (opts.includeFieldCount) {
-            out.append(String.format("%-8s ", "fields"))
+        if (opts.printDeclarations) {
+            out.append(String.format("%-16s ", "declared methods"))
+            out.append(String.format("%-16s ", "declared fields"))
         }
 
         out.append("package/class name")
@@ -182,12 +188,25 @@ class PackageTree(
                 out.append(String.format("%-8d ", classCount))
             }
 
-            if (opts.includeMethodCount) {
-                out.append(String.format("%-8d ", methodCount))
+            if (opts.isAndroidProject) {
+                if (opts.includeMethodCount) {
+                    out.append(String.format("%-8d ", methodCount))
+                }
+
+                if (opts.includeFieldCount) {
+                    out.append(String.format("%-8d ", fieldCount))
+                }
             }
 
-            if (opts.includeFieldCount) {
-                out.append(String.format("%-8d ", fieldCount))
+            if (opts.printDeclarations) {
+                if (opts.printHeader) {
+                    // The header for the these two columns uses more space.
+                    out.append(String.format("%-16d ", methodCountDeclared))
+                    out.append(String.format("%-16d ", fieldCountDeclared))
+                } else {
+                    out.append(String.format("%-8d ", methodCountDeclared))
+                    out.append(String.format("%-8d ", fieldCountDeclared))
+                }
             }
 
             out.appendln(sb.toString())
@@ -219,19 +238,31 @@ class PackageTree(
                 appended = true
             }
 
-            if (opts.includeMethodCount) {
-                if (appended) {
-                    out.append(", ")
+            if (opts.isAndroidProject) {
+                if (opts.includeMethodCount) {
+                    if (appended) {
+                        out.append(", ")
+                    }
+                    out.append("$methodCount ${pluralizedMethods(methodCount)}")
+                    appended = true
                 }
-                out.append("$methodCount ${pluralizedMethods(methodCount)}")
-                appended = true
+
+                if (opts.includeFieldCount) {
+                    if (appended) {
+                        out.append(", ")
+                    }
+                    out.append("$fieldCount ${pluralizedFields(fieldCount)}")
+                    appended = true
+                }
             }
 
-            if (opts.includeFieldCount) {
+            if (opts.printDeclarations) {
                 if (appended) {
                     out.append(", ")
                 }
-                out.append("$fieldCount ${pluralizeFields(fieldCount)}")
+                out.append("$methodCountDeclared declared ${pluralizedMethods(methodCountDeclared)}")
+                    .append(", ")
+                    .append("$fieldCountDeclared declared ${pluralizedFields(fieldCountDeclared)}")
             }
 
             out.append(")")
@@ -277,12 +308,19 @@ class PackageTree(
             json.name("classes").value(classCount)
         }
 
-        if (opts.includeMethodCount) {
-            json.name("methods").value(methodCount)
+        if (opts.isAndroidProject) {
+            if (opts.includeMethodCount) {
+                json.name("methods").value(methodCount)
+            }
+
+            if (opts.includeFieldCount) {
+                json.name("fields").value(fieldCount)
+            }
         }
 
-        if (opts.includeFieldCount) {
-            json.name("fields").value(fieldCount)
+        if (opts.printDeclarations) {
+            json.name("declared_methods").value(methodCountDeclared)
+            json.name("declared_fields").value(fieldCountDeclared)
         }
 
         json.name("children")
@@ -299,15 +337,22 @@ class PackageTree(
         out.append("---\n")
 
         if (opts.includeClassCount) {
-            out.append("classes: " + classCount + "\n")
+            out.append("classes: $classCount\n")
         }
 
-        if (opts.includeMethodCount) {
-            out.append("methods: " + methodCount + "\n")
+        if (opts.isAndroidProject) {
+            if (opts.includeMethodCount) {
+                out.append("methods: $methodCount\n")
+            }
+
+            if (opts.includeFieldCount) {
+                out.append("fields: $fieldCount\n")
+            }
         }
 
-        if (opts.includeFieldCount) {
-            out.append("fields: " + fieldCount + "\n")
+        if (opts.printDeclarations) {
+            out.append("declared_methods: $methodCountDeclared\n")
+            out.append("declared_fields: $fieldCountDeclared\n")
         }
 
         out.append("counts:\n")
@@ -336,6 +381,11 @@ class PackageTree(
 
         if (opts.includeFieldCount) {
             out.appendln("${indentText}fields: $fieldCount")
+        }
+
+        if (opts.printDeclarations) {
+            out.appendln("${indentText}declared_methods: $methodCountDeclared")
+            out.appendln("${indentText}declared_fields: $fieldCountDeclared")
         }
 
         val children = if ((depth + 1) == opts.maxTreeDepth) emptyList() else getChildren(opts)
@@ -369,7 +419,7 @@ class PackageTree(
 
     private fun pluralizedMethods(n: Int) = if (n == 1) "method" else "methods"
 
-    private fun pluralizeFields(n: Int) = if (n == 1) "field" else "fields"
+    private fun pluralizedFields(n: Int) = if (n == 1) "field" else "fields"
 
     private fun descriptorToDot(ref: HasDeclaringClass): String {
         val descriptor = ref.declClassName
@@ -380,9 +430,43 @@ class PackageTree(
             // will not appear in the output in the current PackageTree
             // implementation if classes are not included.  To work around,
             // we make an artificial package named "<unnamed>".
-            "<unnamed>." + deobfuscated
+            "<unnamed>.$deobfuscated"
         } else {
             deobfuscated
         }
+    }
+
+    private fun classCount(type: Type): Int =
+        classTotal_.getOrPut(type) {
+            if (isClass_) {
+                1
+            } else {
+                children_.values.sumBy {
+                    when (type) {
+                        REFERENCED -> it.classCount
+                        DECLARED -> it.classCountDeclared
+                    }
+                }
+            }
+        }
+
+    private fun methodCount(type: Type): Int =
+        methodTotal_.getOrPut(type) { children_.values.sumBy(methods_[type]!!.size) {
+            when (type) {
+                REFERENCED -> it.methodCount
+                DECLARED -> it.methodCountDeclared
+            }
+        } }
+
+    private fun fieldCount(type: Type): Int =
+        fieldTotal_.getOrPut(type) { children_.values.sumBy(fields_[type]!!.size) {
+            when (type) {
+                REFERENCED -> it.fieldCount
+                DECLARED -> it.fieldCountDeclared
+            }
+        } }
+
+    private enum class Type {
+        DECLARED, REFERENCED
     }
 }

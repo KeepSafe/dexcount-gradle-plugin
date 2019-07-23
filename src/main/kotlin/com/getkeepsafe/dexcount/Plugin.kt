@@ -31,6 +31,9 @@ import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaLibraryPlugin
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
@@ -137,6 +140,14 @@ abstract class TaskProvider(
                 ext!!.libraryVariants
             }
 
+            project.plugins.hasPlugin(JavaPlugin::class.java) || project.plugins.hasPlugin(JavaLibraryPlugin::class.java) -> {
+                val jar = project.tasks.findByName("jar") as? Jar
+                    ?: throw IllegalArgumentException("Jar task is null for $project")
+
+                applyToJavaProject(jar)
+                return
+            }
+
             else -> throw IllegalArgumentException("Dexcount plugin requires the Android plugin to be configured")
         }
 
@@ -158,6 +169,14 @@ abstract class TaskProvider(
     abstract fun applyToApplicationVariant(variant: ApplicationVariant)
     abstract fun applyToTestVariant(variant: TestVariant)
     abstract fun applyToLibraryVariant(variant: LibraryVariant)
+
+    private fun applyToJavaProject(jarTask: Jar) {
+        createTaskForJavaProject(ModernMethodCountTask::class, jarTask) { t ->
+            checkPrintDeclarationsIsTrue()
+
+            t.inputFileProvider = { jarTask.archivePath }
+        }
+    }
 
     protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: DexMethodCountTaskBase) {
         // Dexcount tasks require that their parent task has been run...
@@ -209,6 +228,44 @@ abstract class TaskProvider(
             applyInputConfiguration(this)
         }
     }
+
+    protected fun <T : DexMethodCountTaskBase> createTaskForJavaProject(
+            taskClass: KClass<T>,
+            jarTask: Jar,
+            applyInputConfiguration: (T) -> Unit): org.gradle.api.tasks.TaskProvider<T>  {
+
+        return project.tasks.register("countDeclaredMethods", taskClass.java) { task ->
+            val outputDir = "${project.buildDir}/dexcount"
+
+            task.apply {
+                description = "Outputs declared method count."
+                group = "Reporting"
+                variantOutputName = ""
+                mappingFile = null
+                outputFile = File(outputDir, name + (ext.format as OutputFormat).extension)
+                summaryFile = File(outputDir, "$name.csv")
+                chartDir = File(outputDir, name + "Chart")
+                config = ext
+
+                applyInputConfiguration(this)
+            }
+
+            task.dependsOn(jarTask)
+            task.mustRunAfter(jarTask)
+
+            if (ext.runOnEachPackage) {
+                jarTask.finalizedBy(task)
+            }
+        }
+    }
+
+    protected fun checkPrintDeclarationsIsFalse() {
+        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+    }
+
+    protected fun checkPrintDeclarationsIsTrue() {
+        check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+    }
 }
 
 class LegacyProvider(project: Project) : TaskProvider(project) {
@@ -228,6 +285,8 @@ class LegacyProvider(project: Project) : TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
+        checkPrintDeclarationsIsFalse()
+
         getOutputsForVariant(variant).forEach { output ->
             val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
             addDexcountTaskToGraph(output.assemble, task)
@@ -253,6 +312,8 @@ class ThreeOhProvider(project: Project) : TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
+        checkPrintDeclarationsIsFalse()
+
         variant.outputs.all { output ->
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
@@ -292,6 +353,8 @@ class ThreeThreeProvider(project: Project): TaskProvider(project) {
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
+        checkPrintDeclarationsIsFalse()
+
         variant.outputs.all { output ->
             if (output !is ApkVariantOutput) {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")

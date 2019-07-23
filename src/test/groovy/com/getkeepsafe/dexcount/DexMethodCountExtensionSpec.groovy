@@ -17,6 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import org.gradle.api.Project
+import org.gradle.api.ProjectConfigurationException
 import org.gradle.api.tasks.TaskExecutionException
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
@@ -73,6 +74,35 @@ final class DexMethodCountExtensionSpec extends Specification {
 
         then:
         thrown(TaskExecutionException) // Should be GradleException?
+    }
+
+    def "printDeclarations not allowed for application projects"() {
+        given:
+        project.apply plugin: "com.android.application"
+        project.apply plugin: "com.getkeepsafe.dexcount"
+        project.android {
+            compileSdkVersion 28
+
+            defaultConfig {
+                applicationId 'com.example'
+            }
+        }
+        project.dexcount {
+            printDeclarations = true
+        }
+
+        when:
+        project.evaluate()
+
+        // Override APK file
+        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
+        task.variantOutputName = "extensionSpec"
+        task.inputFileProvider = {apkFile}
+        task.execute()
+
+        then:
+        def exception = thrown(ProjectConfigurationException)
+        exception.cause.message.contains("Cannot compute declarations for project root project 'test'")
     }
 
     def "maxMethodCount methods > tiles.apk methods, no exception thrown"() {
