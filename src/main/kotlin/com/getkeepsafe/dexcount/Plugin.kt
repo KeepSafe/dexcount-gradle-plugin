@@ -26,6 +26,7 @@ import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.build.gradle.api.LibraryVariant
 import com.android.build.gradle.api.TestVariant
+import com.android.build.gradle.tasks.PackageAndroidArtifact
 import com.android.repository.Revision
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
@@ -46,6 +47,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
         private const val AGP_VERSION_3: String = "3.0.0"
         private const val AGP_VERSION_3_3 = "3.3.0"
+        private const val AGP_VERSION_3_6 = "3.6.0"
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
     }
@@ -80,19 +82,20 @@ open class DexMethodCountPlugin : Plugin<Project> {
         sdkLocation = android?.javaClass?.getMethod(SDK_DIRECTORY_METHOD)?.invoke(android) as File?
 
         val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
-        val threeOhRevision = Revision.parseRevision(AGP_VERSION_3)
-        val threeThreeRevision = Revision.parseRevision(AGP_VERSION_3_3)
-
-        val isBuildTools3 = gradlePluginRevision.compareTo(threeOhRevision, Revision.PreviewComparison.IGNORE) >= 0
-        val isBuildTools33 = gradlePluginRevision.compareTo(threeThreeRevision, Revision.PreviewComparison.IGNORE) >= 0
 
         val provider = when {
-            isBuildTools33 -> ThreeThreeProvider(project)
-            isBuildTools3 -> ThreeOhProvider(project)
+            gradlePluginRevision isAtLeast AGP_VERSION_3_6 -> ThreeSixProvider(project)
+            gradlePluginRevision isAtLeast AGP_VERSION_3_3 -> ThreeThreeProvider(project)
+            gradlePluginRevision isAtLeast AGP_VERSION_3 -> ThreeOhProvider(project)
             else -> LegacyProvider(project)
         }
 
         provider.apply()
+    }
+
+    private infix fun Revision.isAtLeast(versionText: String): Boolean {
+        val other = Revision.parseRevision(versionText)
+        return compareTo(other, Revision.PreviewComparison.IGNORE) >= 0
     }
 }
 
@@ -328,7 +331,15 @@ class ThreeOhProvider(project: Project) : TaskProvider(project) {
     }
 }
 
-class ThreeThreeProvider(project: Project): TaskProvider(project) {
+open class ThreeThreeProvider(project: Project): TaskProvider(project) {
+    // As of AGP 3.6, this method changed its return type from File to DirectoryProperty.
+    // In versions 3.3->3.5, we need to reflectively access this.
+    private val method_getOutputDirectory: Method by lazy {
+        PackageAndroidArtifact::class.java.getDeclaredMethod("getOutputDirectory").apply {
+            isAccessible = true
+        }
+    }
+
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
         applyToApkVariant(variant)
     }
@@ -367,10 +378,22 @@ class ThreeThreeProvider(project: Project): TaskProvider(project) {
             }
 
             val dexcountTask = createTask(ModernMethodCountTask::class, variant, output) { t ->
-                t.inputFileProvider = { File(packageTask.outputDirectory, output.outputFileName) }
+                t.inputFileProvider = {
+                    File(getOutputDirectory(packageTask), output.outputFileName)
+                }
             }
 
             addDexcountTaskToGraph(packageTask, dexcountTask)
         }
+    }
+
+    protected open fun getOutputDirectory(task: PackageAndroidArtifact): File {
+        return method_getOutputDirectory(task) as File
+    }
+}
+
+class ThreeSixProvider(project: Project) : ThreeThreeProvider(project) {
+    override fun getOutputDirectory(task: PackageAndroidArtifact): File {
+        return task.outputDirectory.asFile.get()
     }
 }
