@@ -10,7 +10,7 @@ ext {
 ext.deps = [
     // Plugins
     "gradle"              : [
-        dependencies.create("com.android.tools.build:gradle:3.3.0") {
+        dependencies.create("com.android.tools.build:gradle:3.6.0-alpha09") {
             // Android build tools (as of 3.2.0-alpha18) bundle the deprecated
             // 'jre' stdlib modules, which cause warnings at build-time that
             // fail the build.

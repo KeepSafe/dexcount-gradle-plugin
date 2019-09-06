@@ -125,7 +125,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     abstract val rawInputRepresentation: String
 
     @TaskAction
-    open fun countMethods() {
+    open fun execute() {
         try {
             check(config.enabled) { "Tasks should not be executed if the plugin is disabled" }
 

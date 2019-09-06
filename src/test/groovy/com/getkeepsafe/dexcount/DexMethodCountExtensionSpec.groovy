@@ -16,9 +16,9 @@
 
 package com.getkeepsafe.dexcount
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.ProjectConfigurationException
-import org.gradle.api.tasks.TaskExecutionException
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -73,7 +73,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         task.execute()
 
         then:
-        thrown(TaskExecutionException) // Should be GradleException?
+        thrown(GradleException)
     }
 
     def "printDeclarations not allowed for application projects"() {
