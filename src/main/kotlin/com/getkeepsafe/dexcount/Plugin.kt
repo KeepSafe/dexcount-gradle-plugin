@@ -50,9 +50,16 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val AGP_VERSION_3_6 = "3.6.0"
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
+
+        private val MIN_GRADLE_VERSION = GradleVersion(major = 5, minor = 1)
     }
 
     override fun apply(project: Project) {
+        if (project.gradleVersion < MIN_GRADLE_VERSION) {
+            project.logger.error("dexcount requires Gradle $MIN_GRADLE_VERSION or above")
+            return
+        }
+
         if (!isAtLeastJavaEight) {
             project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
         }

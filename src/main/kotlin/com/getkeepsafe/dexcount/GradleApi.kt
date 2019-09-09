@@ -77,3 +77,50 @@ val isAtLeastJavaEight: Boolean
             false
         }
     }
+
+/**
+ * Represents a Gradle version number.
+ *
+ * Despite its obviousness and the seemingly-public package "org.gradle.util",
+ * the built-in [org.gradle.util.GradleVersion] is in fact an internal class, and
+ * I really can't be bothered trying to fix things whenever Gradle decides to break
+ * their customers yet again by repackaging an obviously-useful utility.
+ *
+ * Android tools define [com.android.ide.common.repository.GradleVersion], but I
+ * can't find anything about in what version that class was introduced or whether
+ * it's a stable API.
+ *
+ * So, here we are, reinventing the wheel yet again.
+ *
+ * No, I'm not still bitter about StyledTextOutput, why do you ask?
+ */
+data class GradleVersion(
+    val major: Int,
+    val minor: Int
+) : Comparable<GradleVersion> {
+    companion object {
+        private val versionExpr = Regex("(\\d+)\\.(\\d+).*$")
+
+        @JvmStatic fun parse(versionString: String): GradleVersion {
+            val matchResult = versionExpr.matchEntire(versionString)
+            check(matchResult != null) { "Invalid Gradle version: $versionString" }
+            val (major, minor) = matchResult.destructured
+            return GradleVersion(major.toInt(), minor.toInt())
+        }
+    }
+
+    override fun compareTo(other: GradleVersion): Int {
+        val majorCmp = major.compareTo(other.major)
+        if (majorCmp != 0) {
+            return majorCmp
+        }
+        return minor.compareTo(other.minor)
+    }
+
+    override fun toString(): String {
+        return "$major.$minor"
+    }
+}
+
+val Project.gradleVersion: GradleVersion
+    get() = GradleVersion.parse(gradle.gradleVersion)
