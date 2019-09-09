@@ -19,14 +19,13 @@ package com.getkeepsafe.dexcount
 import proguard.obfuscate.MappingProcessor
 import proguard.obfuscate.MappingReader
 import java.io.File
-import java.util.TreeMap
 
 /**
  * An object that can produce an unobfuscated class name from a Proguard
  * mapping file.
  */
 open class Deobfuscator(reader: MappingReader?) {
-    private val mapping = TreeMap<String, String>()
+    private val mapping = mutableMapOf<String, String>()
 
     init {
         reader?.pump(Processor())
@@ -42,7 +41,7 @@ open class Deobfuscator(reader: MappingReader?) {
      */
     inner class Processor : MappingProcessor {
         override fun processClassMapping(className: String, newClassName: String): Boolean {
-            mapping.put(newClassName, className)
+            mapping[newClassName] = className
             return false
         }
 
@@ -66,7 +65,7 @@ open class Deobfuscator(reader: MappingReader?) {
         /**
          * An always-empty deobfuscator that doesn't need to look things up.
          */
-        var empty: Deobfuscator = object : Deobfuscator(null) {
+        val empty: Deobfuscator = object : Deobfuscator(null) {
             override fun deobfuscate(name: String): String {
                 return name
             }

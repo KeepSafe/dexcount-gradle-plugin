@@ -6,5 +6,5 @@ dexcount {
 }
 
 dependencies {
-    testCompile deps.junit
+    testImplementation deps.junit
 }

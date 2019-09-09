@@ -4,8 +4,6 @@ apply plugin: "com.getkeepsafe.dexcount"
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    publishNonDefault true
-
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
@@ -31,7 +29,7 @@ dexcount {
 }
 
 dependencies {
-    compile deps.appcompatv7
+    implementation deps.appcompatv7
 
-    testCompile deps.junit
+    testImplementation deps.junit
 }

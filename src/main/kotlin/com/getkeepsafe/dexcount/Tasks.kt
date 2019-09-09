@@ -19,7 +19,9 @@ package com.getkeepsafe.dexcount
 import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.FileCollection
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
@@ -76,7 +78,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     lateinit var variantOutputName: String
 
     @Nullable
-    var mappingFile: File? = null
+    lateinit var mappingFileProvider: Provider<FileCollection>
 
     lateinit var outputFile: File
     lateinit var summaryFile: File
@@ -106,15 +108,18 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     }
 
     private val deobfuscator by lazy {
-        val file = mappingFile
-        if (file != null && !file.exists()) {
-            withStyledOutput(level = LogLevel.DEBUG) {
-                it.println("Mapping file specified at ${file.absolutePath} does not exist, assuming output is not obfuscated.")
+        val fileCollection = mappingFileProvider.get()
+        val file = if (fileCollection.isEmpty) null else fileCollection.singleFile
+        when {
+            file == null -> Deobfuscator.empty
+            !file.exists() -> {
+                withStyledOutput(level = LogLevel.DEBUG) {
+                    it.println("Mapping file specified at ${file.absolutePath} does not exist, assuming output is not obfuscated.")
+                }
+                Deobfuscator.empty
             }
-            mappingFile = null
+            else -> Deobfuscator.create(file)
         }
-
-        Deobfuscator.create(mappingFile)
     }
 
     private var isInstantRun = false

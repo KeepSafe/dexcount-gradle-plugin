@@ -24,6 +24,6 @@ android {
 
 dependencies {
     // Android Testing Support Library"s runner and rules and hamcrest matchers
-    compile deps.droidTest
-    compile deps.hamcrestCore
+    implementation deps.droidTest
+    implementation deps.hamcrestCore
 }
