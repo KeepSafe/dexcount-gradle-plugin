@@ -4,8 +4,6 @@ apply plugin: "com.getkeepsafe.dexcount"
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    publishNonDefault true
-
     defaultConfig {
         applicationId "com.getkeepsafe.dexcount.integration"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -32,7 +30,7 @@ dexcount {
 }
 
 dependencies {
-    compile deps.appcompatv7
+    implementation deps.appcompatv7
 
-    testCompile deps.junit
+    testImplementation deps.junit
 }
