@@ -32,8 +32,10 @@ import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.provider.Provider
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
@@ -226,14 +228,14 @@ abstract class TaskProvider(
         }
 
         return project.tasks.create("count${slug}DexMethods", taskClass.java).apply {
-            description       = "Outputs dex method count for ${variant.name}."
-            group             = "Reporting"
-            variantOutputName = outputName
-            mappingFile       = variant.mappingFile
-            outputFile        = project.file(path + (ext.format as OutputFormat).extension)
-            summaryFile       = project.file(path + ".csv")
-            chartDir          = project.file(path + "Chart")
-            config            = ext
+            description         = "Outputs dex method count for ${variant.name}."
+            group               = "Reporting"
+            variantOutputName   = outputName
+            mappingFileProvider = getMappingFile(variant)
+            outputFile          = project.file(path + (ext.format as OutputFormat).extension)
+            summaryFile         = project.file(path + ".csv")
+            chartDir            = project.file(path + "Chart")
+            config              = ext
 
             applyInputConfiguration(this)
         }
@@ -251,7 +253,7 @@ abstract class TaskProvider(
                 description = "Outputs declared method count."
                 group = "Reporting"
                 variantOutputName = ""
-                mappingFile = null
+                mappingFileProvider = project.provider { project.files() }
                 outputFile = File(outputDir, name + (ext.format as OutputFormat).extension)
                 summaryFile = File(outputDir, "$name.csv")
                 chartDir = File(outputDir, name + "Chart")
@@ -275,6 +277,11 @@ abstract class TaskProvider(
 
     protected fun checkPrintDeclarationsIsTrue() {
         check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+    }
+
+    protected open fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
+        @Suppress("UnstableApiUsage")
+        return project.provider { variant.mappingFile?.let { project.files(it) } ?: project.files() }
     }
 }
 
@@ -402,5 +409,9 @@ open class ThreeThreeProvider(project: Project): TaskProvider(project) {
 class ThreeSixProvider(project: Project) : ThreeThreeProvider(project) {
     override fun getOutputDirectory(task: PackageAndroidArtifact): File {
         return task.outputDirectory.asFile.get()
+    }
+
+    override fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
+        return variant.mappingFileProvider
     }
 }
