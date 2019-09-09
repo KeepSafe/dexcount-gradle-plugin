@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 KeepSafe Software
+ * Copyright (C) 2015-2019 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.getkeepsafe.dexcount
 
-import com.android.build.gradle.api.BaseVariantOutput
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
@@ -33,7 +32,8 @@ import javax.annotation.Nullable
  */
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 
-open class ModernMethodCountTask: DexMethodCountTaskBase() {
+open class DexCountTask: DefaultTask() {
+    lateinit var tree: PackageTree
 
     lateinit var inputFileProvider: () -> File
 
@@ -45,35 +45,8 @@ open class ModernMethodCountTask: DexMethodCountTaskBase() {
         return inputFileProvider()
     }
 
-    override val fileToCount: File?
-        get() = getInputFile()
-
-    override val rawInputRepresentation: String
+    private val rawInputRepresentation: String
         get() = "${getInputFile()}"
-}
-
-open class LegacyMethodCountTask: DexMethodCountTaskBase() {
-
-    /**
-     * The output of the 'assemble' task, on AGP < 3.0.  Its 'outputFile'
-     * property will point to either an AAR or an APK.
-     *
-     * We don't use [@Input][org.gradle.api.tasks.Input] here because
-     * [BaseVariantOutput] implementations aren't is [Serializable].  This
-     * makes Gradle's input cache routines crash, sometimes.
-     */
-
-    lateinit var variantOutput: BaseVariantOutput
-
-    override val fileToCount: File?
-        get() = variantOutput.outputFile
-
-    override val rawInputRepresentation: String
-        get() = "variantOutput={name = ${variantOutput.name}, outputFile = ${variantOutput.outputFile}}"
-}
-
-abstract class DexMethodCountTaskBase: DefaultTask() {
-    lateinit var tree: PackageTree
 
     lateinit var variantOutputName: String
 
@@ -84,7 +57,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     lateinit var summaryFile: File
     lateinit var chartDir: File
 
-    lateinit var config: DexMethodCountExtension
+    lateinit var config: DexCountExtension
 
     private var startTime   = 0L
     private var ioTime      = 0L
@@ -125,10 +98,6 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
     private var isInstantRun = false
     private var isAndroidProject = true
 
-    abstract val fileToCount: File?
-
-    abstract val rawInputRepresentation: String
-
     @TaskAction
     open fun execute() {
         try {
@@ -153,7 +122,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
         }
     }
 
-    private fun inputFileExists() = fileToCount?.exists() ?: false
+    private fun inputFileExists() = getInputFile().exists()
 
     private fun printPreamble() {
         if (config.printVersion) {
@@ -173,7 +142,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
      * counts of the current dex/apk file.
      */
     private fun generatePackageTree() {
-        val file = fileToCount ?: throw AssertionError("file is null: rawInput=$rawInputRepresentation")
+        val file = getInputFile()
 
         val isApk = file.extension == "apk"
         val isAar = file.extension == "aar"
@@ -217,7 +186,7 @@ abstract class DexMethodCountTaskBase: DefaultTask() {
      * @return
      */
     private fun printSummary() {
-        val filename = fileToCount?.name
+        val filename = getInputFile().name
 
         if (isInstantRun) {
             withStyledOutput(Color.RED) { out ->
