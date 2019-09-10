@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 KeepSafe Software
+ * Copyright (C) 2015-2019 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-final class DexMethodCountExtensionSpec extends Specification {
+final class DexCountExtensionSpec extends Specification {
     @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
     private Project project
     private File apkFile
@@ -67,7 +67,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
+        DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
         task.variantOutputName = "extensionSpec"
         task.inputFileProvider = {apkFile}
         task.execute()
@@ -95,7 +95,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
+        DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
         task.variantOutputName = "extensionSpec"
         task.inputFileProvider = {apkFile}
         task.execute()
@@ -124,7 +124,7 @@ final class DexMethodCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexMethodCountTaskBase task = project.tasks.getByName("countDebugDexMethods") as DexMethodCountTaskBase
+        DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
         task.variantOutputName = "extensionSpec"
         task.inputFileProvider = {apkFile}
         task.execute()
@@ -135,7 +135,7 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "format can be a String"() {
         given:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         when:
         ext.format = "tree"
@@ -146,7 +146,7 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "format can be an OutputFormat enum"() {
         given:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         when:
         ext.format = OutputFormat.TREE
@@ -157,7 +157,7 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "setFormat throws on invalid format class"() {
         given:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         when:
         ext.format = 12345
@@ -169,7 +169,7 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "setFormat throws on invalid format name"() {
         given:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         when:
         ext.format = "splay-tree"
@@ -181,12 +181,12 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "format defaults to LIST"() {
         expect:
-        new DexMethodCountExtension().format == OutputFormat.LIST
+        new DexCountExtension().format == OutputFormat.LIST
     }
 
     def "runOnEachPackage defaults to true"() {
         when:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         then:
         ext.runOnEachPackage
@@ -194,7 +194,7 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "runOnEachAssemble is a synonym for runOnEachPackage"() {
         given:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         when:
         ext.runOnEachAssemble = false
@@ -205,7 +205,7 @@ final class DexMethodCountExtensionSpec extends Specification {
 
     def "runOnEachPackage is a synonym for runOnEachAssemble"() {
         given:
-        def ext = new DexMethodCountExtension()
+        def ext = new DexCountExtension()
 
         when:
         ext.runOnEachPackage = false

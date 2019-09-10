@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 KeepSafe Software
+ * Copyright (C) 2015-2019 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
@@ -92,14 +93,14 @@ open class DexMethodCountPlugin : Plugin<Project> {
 
         val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
 
-        val provider = when {
-            gradlePluginRevision isAtLeast AGP_VERSION_3_6 -> ThreeSixProvider(project)
-            gradlePluginRevision isAtLeast AGP_VERSION_3_3 -> ThreeThreeProvider(project)
-            gradlePluginRevision isAtLeast AGP_VERSION_3 -> ThreeOhProvider(project)
-            else -> LegacyProvider(project)
+        val applicator = when {
+            gradlePluginRevision isAtLeast AGP_VERSION_3_6 -> ThreeSixApplicator(project)
+            gradlePluginRevision isAtLeast AGP_VERSION_3_3 -> ThreeThreeApplicator(project)
+            gradlePluginRevision isAtLeast AGP_VERSION_3 -> ThreeOhApplicator(project)
+            else -> JavaOnlyApplicator(project)
         }
 
-        provider.apply()
+        applicator.apply()
     }
 
     private infix fun Revision.isAtLeast(versionText: String): Boolean {
@@ -108,11 +109,11 @@ open class DexMethodCountPlugin : Plugin<Project> {
     }
 }
 
-abstract class TaskProvider(
+abstract class TaskApplicator(
         protected val project: Project
 ) {
-    private val ext: DexMethodCountExtension = project.extensions.create(
-            "dexcount", DexMethodCountExtension::class.java).apply {
+    private val ext: DexCountExtension = project.extensions.create(
+            "dexcount", DexCountExtension::class.java).apply {
         // If the user has passed '--stacktrace' or '--full-stacktrace', assume
         // that they are trying to report a dexcount bug.  Help them help us out
         // by printing the current plugin title and version.
@@ -139,17 +140,17 @@ abstract class TaskProvider(
         val variants: DomainObjectCollection<out BaseVariant> = when {
             project.plugins.hasPlugin("com.android.application") -> {
                 val ext = project.extensions.findByType(AppExtension::class.java)
-                ext!!.applicationVariants
+                ext!!.applicationVariants as DomainObjectCollection<ApplicationVariant>
             }
 
             project.plugins.hasPlugin("com.android.test") -> {
                 val ext = project.extensions.findByType(TestExtension::class.java)
-                ext!!.applicationVariants
+                ext!!.applicationVariants as DomainObjectCollection<ApplicationVariant>
             }
 
             project.plugins.hasPlugin("com.android.library") -> {
                 val ext = project.extensions.findByType(LibraryExtension::class.java)
-                ext!!.libraryVariants
+                ext!!.libraryVariants as DomainObjectCollection<LibraryVariant>
             }
 
             project.plugins.hasPlugin(JavaPlugin::class.java) || project.plugins.hasPlugin(JavaLibraryPlugin::class.java) -> {
@@ -183,14 +184,14 @@ abstract class TaskProvider(
     abstract fun applyToLibraryVariant(variant: LibraryVariant)
 
     private fun applyToJavaProject(jarTask: Jar) {
-        createTaskForJavaProject(ModernMethodCountTask::class, jarTask) { t ->
+        createTaskForJavaProject(DexCountTask::class, jarTask) { t ->
             checkPrintDeclarationsIsTrue()
 
             t.inputFileProvider = { jarTask.archivePath }
         }
     }
 
-    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: DexMethodCountTaskBase) {
+    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: DexCountTask) {
         // Dexcount tasks require that their parent task has been run...
         dexcountTask.dependsOn(parentTask)
         dexcountTask.mustRunAfter(parentTask)
@@ -201,50 +202,42 @@ abstract class TaskProvider(
         }
     }
 
-    /**
-     * Gets the outputs for the given [variant] as a basic [Collection].
-     *
-     * This is useful for AGP < 3.0, where the return type is _not_ a
-     * [DomainObjectCollection].
-     */
-    protected fun getOutputsForVariant(variant: BaseVariant): Collection<BaseVariantOutput> {
-        @Suppress("UNCHECKED_CAST")
-        return baseVariant_getOutputs(variant) as Collection<BaseVariantOutput>
-    }
-
-    protected fun <T : DexMethodCountTaskBase> createTask(
-            taskClass: KClass<T>,
+    protected fun createTask(
             variant: BaseVariant,
+            parentTask: Task,
             output: BaseVariantOutput?,
-            applyInputConfiguration: (T) -> Unit): DexMethodCountTaskBase  {
+            applyInputConfiguration: (DexCountTask) -> Unit): DexCountTask  {
         var slug = variant.name.capitalize()
         var path = "${project.buildDir}/outputs/dexcount/${variant.name}"
-        var outputName = variant.name
-        if (getOutputsForVariant(variant).size > 1) {
+        val outputName = if (variant.outputs.size > 1) {
             if (output == null) { throw AssertionError("Output should never be null here") }
             slug += output.name.capitalize()
             path += "/${output.name}"
-            outputName = output.name
+            output.name
+        } else {
+            variant.name
         }
 
-        return project.tasks.create("count${slug}DexMethods", taskClass.java).apply {
-            description         = "Outputs dex method count for ${variant.name}."
-            group               = "Reporting"
-            variantOutputName   = outputName
-            mappingFileProvider = getMappingFile(variant)
-            outputFile          = project.file(path + (ext.format as OutputFormat).extension)
-            summaryFile         = project.file(path + ".csv")
-            chartDir            = project.file(path + "Chart")
-            config              = ext
+        return project.tasks.create("count${slug}DexMethods", DexCountTask::class.java) { t ->
+            t.description         = "Outputs dex method count for ${variant.name}."
+            t.group               = "Reporting"
+            t.variantOutputName   = outputName
+            t.mappingFileProvider = getMappingFile(variant)
+            t.outputFile          = project.file(path + (ext.format as OutputFormat).extension)
+            t.summaryFile         = project.file(path + ".csv")
+            t.chartDir            = project.file(path + "Chart")
+            t.config              = ext
 
-            applyInputConfiguration(this)
+            applyInputConfiguration(t)
+
+            addDexcountTaskToGraph(parentTask, t)
         }
     }
 
-    protected fun <T : DexMethodCountTaskBase> createTaskForJavaProject(
+    private fun <T : DexCountTask> createTaskForJavaProject(
             taskClass: KClass<T>,
             jarTask: Jar,
-            applyInputConfiguration: (T) -> Unit): org.gradle.api.tasks.TaskProvider<T>  {
+            applyInputConfiguration: (T) -> Unit): TaskProvider<T> {
 
         return project.tasks.register("countDeclaredMethods", taskClass.java) { task ->
             val outputDir = "${project.buildDir}/dexcount"
@@ -262,12 +255,7 @@ abstract class TaskProvider(
                 applyInputConfiguration(this)
             }
 
-            task.dependsOn(jarTask)
-            task.mustRunAfter(jarTask)
-
-            if (ext.runOnEachPackage) {
-                jarTask.finalizedBy(task)
-            }
+            addDexcountTaskToGraph(parentTask = jarTask, dexcountTask = task)
         }
     }
 
@@ -285,33 +273,25 @@ abstract class TaskProvider(
     }
 }
 
-class LegacyProvider(project: Project) : TaskProvider(project) {
+/**
+ * Supports counting Java tasks only; used when no supported AGP version
+ * is detected.
+ */
+class JavaOnlyApplicator(project: Project) : TaskApplicator(project) {
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
-        applyToApkVariant(variant)
+        error("unreachable")
     }
 
     override fun applyToTestVariant(variant: TestVariant) {
-        applyToApkVariant(variant)
+        error("unreachable")
     }
 
     override fun applyToLibraryVariant(variant: LibraryVariant) {
-        getOutputsForVariant(variant).forEach { output ->
-            val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
-            addDexcountTaskToGraph(output.assemble, task)
-        }
-    }
-
-    private fun applyToApkVariant(variant: ApkVariant) {
-        checkPrintDeclarationsIsFalse()
-
-        getOutputsForVariant(variant).forEach { output ->
-            val task = createTask(LegacyMethodCountTask::class, variant, output) { t -> t.variantOutput = output }
-            addDexcountTaskToGraph(output.assemble, task)
-        }
+        error("unreachable")
     }
 }
 
-class ThreeOhProvider(project: Project) : TaskProvider(project) {
+class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
         applyToApkVariant(variant)
     }
@@ -322,10 +302,9 @@ class ThreeOhProvider(project: Project) : TaskProvider(project) {
 
     override fun applyToLibraryVariant(variant: LibraryVariant) {
         val packageTask = variant.packageLibrary
-        val dexcountTask = createTask(ModernMethodCountTask::class, variant, null) { t ->
+        createTask(variant, packageTask, null) { t ->
             t.inputFileProvider = { packageTask.archivePath }
         }
-        addDexcountTaskToGraph(packageTask, dexcountTask)
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
@@ -334,10 +313,9 @@ class ThreeOhProvider(project: Project) : TaskProvider(project) {
         variant.outputs.all { output ->
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
-                val task = createTask(ModernMethodCountTask::class, variant, output) { t ->
+                createTask(variant, output.packageApplication, output) { t ->
                     t.inputFileProvider = { output.outputFile }
                 }
-                addDexcountTaskToGraph(output.packageApplication, task)
             } else {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
             }
@@ -345,7 +323,7 @@ class ThreeOhProvider(project: Project) : TaskProvider(project) {
     }
 }
 
-open class ThreeThreeProvider(project: Project): TaskProvider(project) {
+open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
     // As of AGP 3.6, this method changed its return type from File to DirectoryProperty.
     // In versions 3.3->3.5, we need to reflectively access this.
     private val method_getOutputDirectory: Method by lazy {
@@ -370,11 +348,9 @@ open class ThreeThreeProvider(project: Project): TaskProvider(project) {
             return
         }
 
-        val dexcountTask = createTask(ModernMethodCountTask::class, variant, null) { t ->
+        createTask(variant, packageTask, null) { t ->
             t.inputFileProvider = { packageTask.archivePath }
         }
-
-        addDexcountTaskToGraph(packageTask, dexcountTask)
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
@@ -391,13 +367,11 @@ open class ThreeThreeProvider(project: Project): TaskProvider(project) {
                 return@all
             }
 
-            val dexcountTask = createTask(ModernMethodCountTask::class, variant, output) { t ->
+            createTask(variant, packageTask, output) { t ->
                 t.inputFileProvider = {
                     File(getOutputDirectory(packageTask), output.outputFileName)
                 }
             }
-
-            addDexcountTaskToGraph(packageTask, dexcountTask)
         }
     }
 
@@ -406,7 +380,7 @@ open class ThreeThreeProvider(project: Project): TaskProvider(project) {
     }
 }
 
-class ThreeSixProvider(project: Project) : ThreeThreeProvider(project) {
+class ThreeSixApplicator(project: Project) : ThreeThreeApplicator(project) {
     override fun getOutputDirectory(task: PackageAndroidArtifact): File {
         return task.outputDirectory.asFile.get()
     }

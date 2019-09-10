@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 KeepSafe Software
+ * Copyright (C) 2015-2019 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.getkeepsafe.dexcount
 import java.util.Locale
 
 /**
- * Configuration properties for [DexMethodCountTaskBase] instances.
+ * Configuration properties for [DexCountTask] instances.
  */
-open class DexMethodCountExtension {
+open class DexCountExtension {
     /**
      * When false, does not automatically count methods following the `package` task.
      */
