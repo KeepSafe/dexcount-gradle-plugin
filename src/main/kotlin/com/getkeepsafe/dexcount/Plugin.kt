@@ -206,7 +206,7 @@ abstract class TaskApplicator(
             variant: BaseVariant,
             parentTask: Task,
             output: BaseVariantOutput?,
-            applyInputConfiguration: (DexCountTask) -> Unit): TaskProvider<DexCountTask>  {
+            applyInputConfiguration: (DexCountTask) -> Unit): DexCountTask  {
         var slug = variant.name.capitalize()
         var path = "${project.buildDir}/outputs/dexcount/${variant.name}"
         val outputName = if (variant.outputs.size > 1) {
@@ -218,7 +218,7 @@ abstract class TaskApplicator(
             variant.name
         }
 
-        return project.tasks.register("count${slug}DexMethods", DexCountTask::class.java) { t ->
+        return project.tasks.create("count${slug}DexMethods", DexCountTask::class.java) { t ->
             t.description         = "Outputs dex method count for ${variant.name}."
             t.group               = "Reporting"
             t.variantOutputName   = outputName
