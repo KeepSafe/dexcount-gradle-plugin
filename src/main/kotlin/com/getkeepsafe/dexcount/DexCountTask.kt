@@ -27,6 +27,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -44,7 +45,7 @@ const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 open class DexCountTask @Inject constructor(
     objectFactory: ObjectFactory
 ): DefaultTask() {
-    lateinit var tree: PackageTree
+    private lateinit var tree: PackageTree
 
     /**
      * The output of the 'package' task; will be either an APK or an AAR.
@@ -75,6 +76,7 @@ open class DexCountTask @Inject constructor(
     @OutputDirectory
     val chartDir: DirectoryProperty = objectFactory.directoryProperty()
 
+    @Nested
     lateinit var config: DexCountExtension
 
     private var startTime   = 0L
