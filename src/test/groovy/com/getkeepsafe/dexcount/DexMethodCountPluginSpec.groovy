@@ -466,12 +466,12 @@ final class DexMethodCountPluginSpec extends Specification {
         // Override APK file
         DexCountTask task = project.tasks.getByName('countDebugDexMethods') as DexCountTask
         task.variantOutputName = 'pluginSpec'
-        task.inputFileProvider = {apkFile}
+        task.inputFileProperty.set(apkFile)
         task.execute()
 
         then:
         // debug.csv - CSV
-        def actualOutputFile = task.outputFile.absoluteFile.text.stripIndent().trim()
+        def actualOutputFile = task.outputFile.get().asFile.absoluteFile.text.stripIndent().trim()
         def expectedOutputFile = """
             methods  fields   package/class name
             6        0        android
@@ -481,14 +481,14 @@ final class DexMethodCountPluginSpec extends Specification {
             3        0        b.a""".stripIndent().trim()
 
         // debug.txt - TXT
-        def actualSummaryFile = task.summaryFile.absoluteFile.text.stripIndent().trim()
+        def actualSummaryFile = task.summaryFile.get().asFile.absoluteFile.text.stripIndent().trim()
         def expectedSummaryFile = """
             methods,fields,classes
             9,0,4
             """.stripIndent().trim()
 
         // debugChart/data.js - JSON
-        def actualChartDir = new File(task.chartDir, "data.js").text.stripIndent().trim()
+        def actualChartDir = new File(task.chartDir.get().asFile, "data.js").text.stripIndent().trim()
         def expectedChartDir = """
             var data = {
               "name": "",

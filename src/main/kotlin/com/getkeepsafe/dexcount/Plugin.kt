@@ -187,7 +187,7 @@ abstract class TaskApplicator(
         createTaskForJavaProject(DexCountTask::class, jarTask) { t ->
             checkPrintDeclarationsIsTrue()
 
-            t.inputFileProvider = { jarTask.archivePath }
+            t.inputFileProperty.set(jarTask.archivePath)
         }
     }
 
@@ -222,11 +222,12 @@ abstract class TaskApplicator(
             t.description         = "Outputs dex method count for ${variant.name}."
             t.group               = "Reporting"
             t.variantOutputName   = outputName
-            t.mappingFileProvider = getMappingFile(variant)
-            t.outputFile          = project.file(path + (ext.format as OutputFormat).extension)
-            t.summaryFile         = project.file(path + ".csv")
-            t.chartDir            = project.file(path + "Chart")
             t.config              = ext
+
+            t.mappingFileProvider.set(getMappingFile(variant))
+            t.outputFile.set(project.file(path + (ext.format as OutputFormat).extension))
+            t.summaryFile.set(project.file(path + ".csv"))
+            t.chartDir.set(project.file(path + "Chart"))
 
             applyInputConfiguration(t)
 
@@ -246,10 +247,10 @@ abstract class TaskApplicator(
                 description = "Outputs declared method count."
                 group = "Reporting"
                 variantOutputName = ""
-                mappingFileProvider = project.provider { project.files() }
-                outputFile = File(outputDir, name + (ext.format as OutputFormat).extension)
-                summaryFile = File(outputDir, "$name.csv")
-                chartDir = File(outputDir, name + "Chart")
+                mappingFileProvider.set(project.files())
+                outputFile.set(File(outputDir, name + (ext.format as OutputFormat).extension))
+                summaryFile.set(File(outputDir, "$name.csv"))
+                chartDir.set(File(outputDir, name + "Chart"))
                 config = ext
 
                 applyInputConfiguration(this)
@@ -303,7 +304,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
     override fun applyToLibraryVariant(variant: LibraryVariant) {
         val packageTask = variant.packageLibrary
         createTask(variant, packageTask, null) { t ->
-            t.inputFileProvider = { packageTask.archivePath }
+            t.inputFileProperty.set(packageTask.archivePath)
         }
     }
 
@@ -314,7 +315,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
                 createTask(variant, output.packageApplication, output) { t ->
-                    t.inputFileProvider = { output.outputFile }
+                    t.inputFileProperty.set(output.outputFile)
                 }
             } else {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
@@ -349,7 +350,7 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
         }
 
         createTask(variant, packageTask, null) { t ->
-            t.inputFileProvider = { packageTask.archivePath }
+            t.inputFileProperty.set(packageTask.archivePath)
         }
     }
 
@@ -368,9 +369,7 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
             }
 
             createTask(variant, packageTask, output) { t ->
-                t.inputFileProvider = {
-                    File(getOutputDirectory(packageTask), output.outputFileName)
-                }
+                t.inputFileProperty.set(File(getOutputDirectory(packageTask), output.outputFileName))
             }
         }
     }

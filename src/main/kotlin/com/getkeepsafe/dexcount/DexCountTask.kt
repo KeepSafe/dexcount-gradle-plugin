@@ -18,13 +18,21 @@ package com.getkeepsafe.dexcount
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.provider.Provider
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import javax.annotation.Nullable
+import javax.inject.Inject
 
 /**
  * The maximum number of method refs and field refs allowed in a single Dex
@@ -32,30 +40,40 @@ import javax.annotation.Nullable
  */
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 
-open class DexCountTask: DefaultTask() {
+@Suppress("UnstableApiUsage")
+open class DexCountTask @Inject constructor(
+    objectFactory: ObjectFactory
+): DefaultTask() {
     lateinit var tree: PackageTree
-
-    lateinit var inputFileProvider: () -> File
 
     /**
      * The output of the 'package' task; will be either an APK or an AAR.
      */
-    @InputFile
-    fun getInputFile(): File {
-        return inputFileProvider()
+    private fun getInputFile(): File {
+        return inputFileProperty.asFile.get()
     }
+
+    @InputFile
+    val inputFileProperty: RegularFileProperty = objectFactory.fileProperty()
 
     private val rawInputRepresentation: String
         get() = "${getInputFile()}"
 
+    @Input
     lateinit var variantOutputName: String
 
     @Nullable
-    lateinit var mappingFileProvider: Provider<FileCollection>
+    @InputFiles
+    val mappingFileProvider: Property<FileCollection> = objectFactory.property(FileCollection::class.java)
 
-    lateinit var outputFile: File
-    lateinit var summaryFile: File
-    lateinit var chartDir: File
+    @OutputFile
+    val outputFile: RegularFileProperty = objectFactory.fileProperty()
+
+    @OutputFile
+    val summaryFile: RegularFileProperty = objectFactory.fileProperty()
+
+    @OutputDirectory
+    val chartDir: DirectoryProperty = objectFactory.directoryProperty()
 
     lateinit var config: DexCountExtension
 
@@ -103,7 +121,7 @@ open class DexCountTask: DefaultTask() {
         try {
             check(config.enabled) { "Tasks should not be executed if the plugin is disabled" }
 
-            if (!inputFileExists()) {
+            if (!getInputFile().exists()) {
                 return
             }
 
@@ -122,8 +140,6 @@ open class DexCountTask: DefaultTask() {
         }
     }
 
-    private fun inputFileExists() = getInputFile().exists()
-
     private fun printPreamble() {
         if (config.printVersion) {
             val projectName = javaClass.`package`.implementationTitle
@@ -132,7 +148,7 @@ open class DexCountTask: DefaultTask() {
             withStyledOutput { out ->
                 out.println("Dexcount name:    $projectName")
                 out.println("Dexcount version: $projectVersion")
-                out.println(    "Dexcount input:   $rawInputRepresentation")
+                out.println("Dexcount input:   $rawInputRepresentation")
             }
         }
     }
@@ -224,13 +240,13 @@ open class DexCountTask: DefaultTask() {
             }
         }
 
-        summaryFile.parentFile.mkdirs()
-        summaryFile.createNewFile()
+        summaryFile.get().asFile.parentFile.mkdirs()
+        summaryFile.get().asFile.createNewFile()
 
         val headers = "methods,fields,classes"
         val counts = "${tree.methodCount},${tree.fieldCount},${tree.classCount}"
 
-        summaryFile.printWriter().use { writer ->
+        summaryFile.get().asFile.printWriter().use { writer ->
             writer.println(headers)
             writer.println(counts)
         }
@@ -259,7 +275,7 @@ open class DexCountTask: DefaultTask() {
      * Prints the package tree to the usual outputs/dexcount/variant.txt file.
      */
     private fun printFullTree() {
-        outputFile.printStream().use(this::printTreeToAppendable)
+        outputFile.get().asFile.printStream().use(this::printTreeToAppendable)
         outputTime = System.currentTimeMillis()
     }
 
@@ -269,14 +285,16 @@ open class DexCountTask: DefaultTask() {
     private fun printChart() {
         val printOptions = printOptions
         printOptions.includeClasses = true
-        File(chartDir, "data.js").printStream().use { out ->
+
+        val directory = chartDir.get().asFile
+        File(directory, "data.js").printStream().use { out ->
             out.print("var data = ")
             tree.printJson(out, printOptions)
         }
 
         listOf("chart-builder.js", "d3.v3.min.js", "index.html", "styles.css").forEach { resourceName ->
             val resource = javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/" + resourceName)
-            val targetFile = File(chartDir, resourceName)
+            val targetFile = File(directory, resourceName)
             resource.copyToFile(targetFile)
         }
     }
