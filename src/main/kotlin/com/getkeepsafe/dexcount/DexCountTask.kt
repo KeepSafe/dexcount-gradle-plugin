@@ -18,11 +18,10 @@ package com.getkeepsafe.dexcount
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -33,7 +32,6 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import javax.annotation.Nullable
-import javax.inject.Inject
 
 /**
  * The maximum number of method refs and field refs allowed in a single Dex
@@ -42,9 +40,7 @@ import javax.inject.Inject
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 
 @Suppress("UnstableApiUsage")
-open class DexCountTask @Inject constructor(
-    objectFactory: ObjectFactory
-): DefaultTask() {
+open class DexCountTask: DefaultTask() {
     private lateinit var tree: PackageTree
 
     /**
@@ -55,26 +51,26 @@ open class DexCountTask @Inject constructor(
     }
 
     @InputFile
-    val inputFileProperty: RegularFileProperty = objectFactory.fileProperty()
+    val inputFileProperty: RegularFileProperty = project.objects.fileProperty()
 
     private val rawInputRepresentation: String
         get() = "${getInputFile()}"
 
     @Input
-    lateinit var variantOutputName: String
+    val variantOutputName: Property<String> = project.objects.property(String::class.java)
 
     @Nullable
     @InputFiles
-    val mappingFileProvider: Property<FileCollection> = objectFactory.property(FileCollection::class.java)
+    val mappingFileProvider: ConfigurableFileCollection = project.objects.fileCollection()
 
     @OutputFile
-    val outputFile: RegularFileProperty = objectFactory.fileProperty()
+    val outputFile: RegularFileProperty = project.objects.fileProperty()
 
     @OutputFile
-    val summaryFile: RegularFileProperty = objectFactory.fileProperty()
+    val summaryFile: RegularFileProperty = project.objects.fileProperty()
 
     @OutputDirectory
-    val chartDir: DirectoryProperty = objectFactory.directoryProperty()
+    val chartDir: DirectoryProperty = project.objects.directoryProperty()
 
     @Nested
     lateinit var config: DexCountExtension
@@ -101,7 +97,7 @@ open class DexCountTask @Inject constructor(
     }
 
     private val deobfuscator by lazy {
-        val fileCollection = mappingFileProvider.get()
+        val fileCollection = mappingFileProvider
         val file = if (fileCollection.isEmpty) null else fileCollection.singleFile
         when {
             file == null -> Deobfuscator.empty
@@ -256,7 +252,7 @@ open class DexCountTask @Inject constructor(
         if (printOptions.teamCityIntegration || config.teamCitySlug != null) {
             withStyledOutput { out ->
                 val slug = "Dexcount" + (config.teamCitySlug?.let { "_" + it.replace(' ', '_') } ?: "")
-                val prefix = "${slug}_$variantOutputName"
+                val prefix = "${slug}_${variantOutputName.get()}"
 
                 /**
                  * Reports to Team City statistic value
