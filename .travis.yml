@@ -1,6 +1,6 @@
 language: android
 
-jdk: openjdk11
+jdk: openjdk10
 
 before_install:
   # Download SDK
