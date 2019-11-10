@@ -1,5 +1,12 @@
-unreleased
+1.0.0
 ---------
+* **BREAKING** Drop support for AGP 2.x
+* **BREAKING** Require Gradle 5.1 or later
+* **BREAKING** Renamed DexMethodCountTask to DexCountTask
+* **BREAKING** Changed task input types to Gradle Properties
+* Added support for counting regular java modules (#271) (thanks, @vRallev)
+* Added support for AGP 3.6 (#275)
+* Fix: support magic dex version v039
 
 0.8.6 (released 5 February 2018)
 ---------
