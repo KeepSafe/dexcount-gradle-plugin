@@ -8,7 +8,7 @@
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Dexcount%20Gradle%20Plugin-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1940)
 [![Join the chat at https://gitter.im/keepsafe/dexcount-gradle-plugin](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/keepsafe/dexcount-gradle-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A Gradle plugin to report the number of method references in your APK or AAR on every build.
+A Gradle plugin to report the number of method references in your APK, AAR, or java module on every build.
 
 This helps you keep tabs on the growth of your app, with an eye to staying under the 65,536 method-reference limit, and avoiding the headache of eliminating methods or enabling multidex.
 
@@ -50,7 +50,7 @@ buildscript {
 
     dependencies {
         classpath("com.android.tools.build:gradle:3.2.0")
-        classpath("com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.6")
+        classpath("com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.0")
     }
 }
 ```
