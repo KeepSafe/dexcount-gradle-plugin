@@ -69,7 +69,7 @@ final class DexCountExtensionSpec extends Specification {
         // Override APK file
         DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
         task.variantOutputName = "extensionSpec"
-        task.inputFileProvider = {apkFile}
+        task.inputFileProperty.set(apkFile)
         task.execute()
 
         then:
@@ -97,7 +97,7 @@ final class DexCountExtensionSpec extends Specification {
         // Override APK file
         DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
         task.variantOutputName = "extensionSpec"
-        task.inputFileProvider = {apkFile}
+        task.inputFileProperty.set(apkFile)
         task.execute()
 
         then:
@@ -126,7 +126,7 @@ final class DexCountExtensionSpec extends Specification {
         // Override APK file
         DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
         task.variantOutputName = "extensionSpec"
-        task.inputFileProvider = {apkFile}
+        task.inputFileProperty.set(apkFile)
         task.execute()
 
         then:
