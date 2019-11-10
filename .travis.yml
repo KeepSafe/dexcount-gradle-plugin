@@ -1,6 +1,6 @@
 language: android
 
-jdk: oraclejdk8
+jdk: openjdk8
 
 before_install:
   # Download SDK
@@ -25,6 +25,9 @@ sudo: false
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  $HOME/.gradle/caches/6.0/javaCompile/javaCompile.lock
+  - rm -f  $HOME/.gradle/caches/6.0/fileHashes/fileHashes.lock
+  - rm -f  $HOME/.gradle/caches/6.0/executionHistory/executionHistory.lock
 cache:
   directories:
     - $HOME/.gradle/caches/
