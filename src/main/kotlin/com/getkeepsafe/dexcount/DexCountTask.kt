@@ -252,7 +252,7 @@ open class DexCountTask: DefaultTask() {
         if (printOptions.teamCityIntegration || config.teamCitySlug != null) {
             withStyledOutput { out ->
                 val slug = "Dexcount" + (config.teamCitySlug?.let { "_" + it.replace(' ', '_') } ?: "")
-                val prefix = "${slug}_$variantOutputName"
+                val prefix = "${slug}_${variantOutputName.get()}"
 
                 /**
                  * Reports to Team City statistic value
