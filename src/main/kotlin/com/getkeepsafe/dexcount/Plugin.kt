@@ -221,10 +221,10 @@ abstract class TaskApplicator(
         return project.tasks.create("count${slug}DexMethods", DexCountTask::class.java) { t ->
             t.description         = "Outputs dex method count for ${variant.name}."
             t.group               = "Reporting"
-            t.variantOutputName   = outputName
             t.config              = ext
 
-            t.mappingFileProvider.set(getMappingFile(variant))
+            t.variantOutputName.set(outputName)
+            t.mappingFileProvider.from(getMappingFile(variant))
             t.outputFile.set(project.file(path + (ext.format as OutputFormat).extension))
             t.summaryFile.set(project.file(path + ".csv"))
             t.chartDir.set(project.file(path + "Chart"))
@@ -246,8 +246,8 @@ abstract class TaskApplicator(
             task.apply {
                 description = "Outputs declared method count."
                 group = "Reporting"
-                variantOutputName = ""
-                mappingFileProvider.set(project.files())
+                variantOutputName.set("")
+                mappingFileProvider.from(project.files())
                 outputFile.set(File(outputDir, name + (ext.format as OutputFormat).extension))
                 summaryFile.set(File(outputDir, "$name.csv"))
                 chartDir.set(File(outputDir, name + "Chart"))

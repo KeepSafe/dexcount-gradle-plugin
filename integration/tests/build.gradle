@@ -20,6 +20,12 @@ android {
     lintOptions {
         abortOnError false
     }
+
+    buildTypes {
+        debug {
+            minifyEnabled true
+        }
+    }
 }
 
 dependencies {
