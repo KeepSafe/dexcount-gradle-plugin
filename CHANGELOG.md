@@ -1,3 +1,7 @@
+1.0.1
+---------
+* Fix counting of renamed APKs (#292)
+
 1.0.0
 ---------
 * **BREAKING** Drop support for AGP 2.x
