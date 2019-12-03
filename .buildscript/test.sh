@@ -23,12 +23,12 @@ function die() {
   exit 1
 }
 
-grep -F 'Total methods in app-debug.apk: 7369 (11.24% used)' app.log || die "Incorrect method count in app-debug.apk"
-grep -F 'Total fields in app-debug.apk:  3780 (5.77% used)' app.log || die "Incorrect field count in app-debug.apk"
-grep -F 'Total classes in app-debug.apk:  926 (1.41% used)' app.log || die "Incorrect field count in app-debug.apk"
-grep -F 'Methods remaining in app-debug.apk: 58166' app.log || die "Incorrect remaining-method value in app-debug.apk"
-grep -F 'Fields remaining in app-debug.apk:  61755' app.log || die "Incorrect remaining-field value in app-debug.apk"
-grep -F 'Classes remaining in app-debug.apk:  64609' app.log || die "Incorrect remaining-field value in app-debug.apk"
+grep -F 'Total methods in app-debug-it.apk: 7369 (11.24% used)' app.log || die "Incorrect method count in app-debug-it.apk"
+grep -F 'Total fields in app-debug-it.apk:  3780 (5.77% used)' app.log || die "Incorrect field count in app-debug-it.apk"
+grep -F 'Total classes in app-debug-it.apk:  926 (1.41% used)' app.log || die "Incorrect field count in app-debug-it.apk"
+grep -F 'Methods remaining in app-debug-it.apk: 58166' app.log || die "Incorrect remaining-method value in app-debug-it.apk"
+grep -F 'Fields remaining in app-debug-it.apk:  61755' app.log || die "Incorrect remaining-field value in app-debug-it.apk"
+grep -F 'Classes remaining in app-debug-it.apk:  64609' app.log || die "Incorrect remaining-field value in app-debug-it.apk"
 
 grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_ClassCount' value='926']" app.log || die "Missing or incorrect Teamcity method count value"
 grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_MethodCount' value='7369']" app.log || die "Missing or incorrect Teamcity method count value"
