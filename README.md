@@ -50,7 +50,7 @@ buildscript {
 
     dependencies {
         classpath("com.android.tools.build:gradle:3.2.0")
-        classpath("com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.0")
+        classpath("com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.1")
     }
 }
 ```
