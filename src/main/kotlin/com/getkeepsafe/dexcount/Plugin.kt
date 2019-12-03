@@ -315,7 +315,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
                 createTask(variant, output.packageApplication, output) { t ->
-                    t.inputFileProperty.set(output.outputFile)
+                    t.inputFileProperty.fileProvider(project.provider { output.outputFile })
                 }
             } else {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
@@ -369,7 +369,8 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
             }
 
             createTask(variant, packageTask, output) { t ->
-                t.inputFileProperty.set(File(getOutputDirectory(packageTask), output.outputFileName))
+                val fileProvider = project.provider { File(getOutputDirectory(packageTask), output.outputFileName) }
+                t.inputFileProperty.fileProvider(fileProvider)
             }
         }
     }
