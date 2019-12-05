@@ -370,7 +370,8 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
 
             createTask(variant, packageTask, output) { t ->
                 val fileProvider = project.provider { File(getOutputDirectory(packageTask), output.outputFileName) }
-                t.inputFileProperty.fileProvider(fileProvider)
+                val regularFileProvider = project.layout.file(fileProvider)
+                t.inputFileProperty.set(regularFileProvider)
             }
         }
     }
