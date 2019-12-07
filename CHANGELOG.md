@@ -1,3 +1,7 @@
+1.0.2
+---------
+* Fix: don't use Gradle APIs introduced after 5.1 (#293)
+
 1.0.1
 ---------
 * Fix counting of renamed APKs (#292)
