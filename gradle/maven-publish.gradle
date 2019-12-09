@@ -37,7 +37,6 @@ def getRepositoryUrl() {
 
 def hasDeploymentTask(Project project) {
     def deploymentTasks = [
-        "uploadArchives",
         "publishPlugins",
         "publish"
     ]

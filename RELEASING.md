@@ -63,7 +63,7 @@ plugins.gradle.org.
    ```
 1. Upload binaries to Sonatype:
    ```bash
-   ./gradlew uploadArchives
+   ./gradlew publish
    ```
 1. Go to oss.sonatype.org, log in with your credentials
 1. Click "Staging Repositories"
