@@ -50,7 +50,7 @@ task sourceJar(type: Jar) {
 
 task javadocJar(type: Jar, dependsOn: dokka) {
     archiveClassifier.set("javadoc")
-    from "${project.buildDir}/dokka"
+    from dokka.outputDirectory
 }
 
 publishing {
