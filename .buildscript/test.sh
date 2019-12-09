@@ -6,7 +6,7 @@ set -e
 DIR=`pwd`
 trap "cd ${DIR}" SIGINT SIGTERM EXIT
 
-./gradlew clean build install --stacktrace --daemon
+./gradlew clean build publishToMavenLocal --stacktrace --daemon
 
 VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 
