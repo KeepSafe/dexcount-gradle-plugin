@@ -22,6 +22,7 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
@@ -32,6 +33,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import javax.annotation.Nullable
+import javax.inject.Inject
 
 /**
  * The maximum number of method refs and field refs allowed in a single Dex
@@ -40,7 +42,9 @@ import javax.annotation.Nullable
 const val MAX_DEX_REFS: Int = 0xFFFF // 65535
 
 @Suppress("UnstableApiUsage")
-open class DexCountTask: DefaultTask() {
+open class DexCountTask @Inject constructor(
+    objects: ObjectFactory
+): DefaultTask() {
     private lateinit var tree: PackageTree
 
     /**
@@ -51,26 +55,26 @@ open class DexCountTask: DefaultTask() {
     }
 
     @InputFile
-    val inputFileProperty: RegularFileProperty = project.objects.fileProperty()
+    val inputFileProperty: RegularFileProperty = objects.fileProperty()
 
     private val rawInputRepresentation: String
         get() = "${getInputFile()}"
 
     @Input
-    val variantOutputName: Property<String> = project.objects.property(String::class.java)
+    val variantOutputName: Property<String> = objects.property(String::class.java)
 
     @Nullable
     @InputFiles
-    val mappingFileProvider: ConfigurableFileCollection = project.objects.fileCollection()
+    val mappingFileProvider: ConfigurableFileCollection = objects.fileCollection()
 
     @OutputFile
-    val outputFile: RegularFileProperty = project.objects.fileProperty()
+    val outputFile: RegularFileProperty = objects.fileProperty()
 
     @OutputFile
-    val summaryFile: RegularFileProperty = project.objects.fileProperty()
+    val summaryFile: RegularFileProperty = objects.fileProperty()
 
     @OutputDirectory
-    val chartDir: DirectoryProperty = project.objects.directoryProperty()
+    val chartDir: DirectoryProperty = objects.directoryProperty()
 
     @Nested
     lateinit var config: DexCountExtension
