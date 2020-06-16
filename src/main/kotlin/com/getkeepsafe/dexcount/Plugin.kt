@@ -188,7 +188,7 @@ abstract class TaskApplicator(
         createTaskForJavaProject(DexCountTask::class, jarTask) { t ->
             checkPrintDeclarationsIsTrue()
 
-            t.inputFileProperty.set(jarTask.archivePath)
+            t.inputFileProperty.set(jarTask.archiveFile)
         }
     }
 
@@ -305,7 +305,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
     override fun applyToLibraryVariant(variant: LibraryVariant) {
         val packageTask = variant.packageLibrary
         createTask(variant, packageTask, null) { t ->
-            t.inputFileProperty.set(packageTask.archivePath)
+            t.inputFileProperty.set(packageTask.archiveFile)
         }
     }
 
@@ -351,7 +351,7 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
         }
 
         createTask(variant, packageTask, null) { t ->
-            t.inputFileProperty.set(packageTask.archivePath)
+            t.inputFileProperty.set(packageTask.archiveFile)
         }
     }
 
