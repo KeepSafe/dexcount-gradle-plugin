@@ -32,6 +32,7 @@ import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -187,7 +188,7 @@ abstract class TaskApplicator(
         createTaskForJavaProject(DexCountTask::class, jarTask) { t ->
             checkPrintDeclarationsIsTrue()
 
-            t.inputFileProperty.set(jarTask.archivePath)
+            t.inputFileProperty.set(jarTask.archiveFile)
         }
     }
 
@@ -304,7 +305,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
     override fun applyToLibraryVariant(variant: LibraryVariant) {
         val packageTask = variant.packageLibrary
         createTask(variant, packageTask, null) { t ->
-            t.inputFileProperty.set(packageTask.archivePath)
+            t.inputFileProperty.set(packageTask.archiveFile)
         }
     }
 
@@ -350,7 +351,7 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
         }
 
         createTask(variant, packageTask, null) { t ->
-            t.inputFileProperty.set(packageTask.archivePath)
+            t.inputFileProperty.set(packageTask.archiveFile)
         }
     }
 
@@ -369,21 +370,23 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
             }
 
             createTask(variant, packageTask, output) { t ->
-                val fileProvider = project.provider { File(getOutputDirectory(packageTask), output.outputFileName) }
-                val regularFileProvider = project.layout.file(fileProvider)
-                t.inputFileProperty.set(regularFileProvider)
+                val fileProvider = getOutputDirectory(packageTask).map { it.file(output.outputFileName) }
+                t.inputFileProperty.value(fileProvider)
             }
         }
     }
 
-    protected open fun getOutputDirectory(task: PackageAndroidArtifact): File {
-        return method_getOutputDirectory(task) as File
+    @Suppress("UnstableApiUsage")
+    protected open fun getOutputDirectory(task: PackageAndroidArtifact): DirectoryProperty {
+        return project.objects.directoryProperty().apply {
+            set(method_getOutputDirectory(task) as File)
+        }
     }
 }
 
 class ThreeSixApplicator(project: Project) : ThreeThreeApplicator(project) {
-    override fun getOutputDirectory(task: PackageAndroidArtifact): File {
-        return task.outputDirectory.asFile.get()
+    override fun getOutputDirectory(task: PackageAndroidArtifact): DirectoryProperty {
+        return task.outputDirectory
     }
 
     override fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
