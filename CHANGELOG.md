@@ -1,3 +1,8 @@
+1.0.3
+---------
+* Fix: AGP 4.1 bugfixes (#300)
+* Fix: Don't use getProject() in DexCountTask (#297)
+
 1.0.2
 ---------
 * Fix: don't use Gradle APIs introduced after 5.1 (#293)
