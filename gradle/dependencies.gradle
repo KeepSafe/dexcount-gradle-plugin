@@ -60,5 +60,6 @@ ext.deps = [
             }
     ],
     "hamcrestCore"        : "org.hamcrest:hamcrest-core:1.3",
-    "javassist"           : "org.javassist:javassist:3.25.0-GA"
+    "javassist"           : "org.javassist:javassist:3.25.0-GA",
+    "gradlePublishPlugin" : "com.vanniktech:gradle-maven-publish-plugin:0.11.1"
 ]

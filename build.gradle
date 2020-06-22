@@ -26,11 +26,12 @@ buildscript {
         classpath deps.gradleVersionsPlugin
         classpath deps.kotlinGradlePlugin
         classpath deps.dokkaGradlePlugin
+        classpath deps.gradlePublishPlugin
     }
 }
 
 plugins {
-    id "com.gradle.plugin-publish" version "0.10.0"
+    id "com.gradle.plugin-publish" version "0.12.0"
 }
 
 allprojects {
@@ -46,6 +47,7 @@ apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "org.jetbrains.dokka"
 apply plugin: "groovy"
 apply plugin: "java-gradle-plugin"
+apply plugin: "com.vanniktech.maven.publish"
 
 sourceCompatibility = rootProject.ext.javaVersion
 
@@ -103,7 +105,6 @@ dependencies {
     testImplementation deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
 }
 
-apply from: "gradle/maven-publish.gradle"
 apply from: "gradle/compile.gradle"
 apply from: "gradle/gradle-plugin-portal.gradle"
 
