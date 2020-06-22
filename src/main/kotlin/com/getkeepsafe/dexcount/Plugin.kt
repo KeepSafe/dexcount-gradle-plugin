@@ -52,6 +52,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val AGP_VERSION_3: String = "3.0.0"
         private const val AGP_VERSION_3_3 = "3.3.0"
         private const val AGP_VERSION_3_6 = "3.6.0"
+        private const val AGP_VERSION_4_1 = "4.1.0"
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
 
@@ -89,12 +90,21 @@ open class DexMethodCountPlugin : Plugin<Project> {
             throw IllegalStateException("dexcount requires the Android plugin to be configured")
         }
 
-        val android = project.extensions.findByName(ANDROID_EXTENSION_NAME)
-        sdkLocation = android?.javaClass?.getMethod(SDK_DIRECTORY_METHOD)?.invoke(android) as File?
+        // It's important not to invoke the private 'getSdkDirectory()' method until
+        // *after* the project is evaluated; if we access it too early (as of 4.1.0-beta01)
+        // we get a rather obscure exception about 'compileSdkVersion' not being set because
+        // the extension is not yet initialized.
+        project.afterEvaluate {
+            val android = it.extensions.findByName(ANDROID_EXTENSION_NAME)
+            val extClass = android?.javaClass
+            val getSdkDirectory = extClass?.getMethod(SDK_DIRECTORY_METHOD)
+            sdkLocation = getSdkDirectory?.invoke(android) as File?
+        }
 
         val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
 
         val applicator = when {
+            gradlePluginRevision isAtLeast AGP_VERSION_4_1 -> FourOneApplicator(project)
             gradlePluginRevision isAtLeast AGP_VERSION_3_6 -> ThreeSixApplicator(project)
             gradlePluginRevision isAtLeast AGP_VERSION_3_3 -> ThreeThreeApplicator(project)
             gradlePluginRevision isAtLeast AGP_VERSION_3 -> ThreeOhApplicator(project)
@@ -225,7 +235,7 @@ abstract class TaskApplicator(
             t.config              = ext
 
             t.variantOutputName.set(outputName)
-            t.mappingFileProvider.from(getMappingFile(variant))
+            t.mappingFileProvider.set(getMappingFile(variant))
             t.outputFile.set(project.file(path + (ext.format as OutputFormat).extension))
             t.summaryFile.set(project.file(path + ".csv"))
             t.chartDir.set(project.file(path + "Chart"))
@@ -248,7 +258,7 @@ abstract class TaskApplicator(
                 description = "Outputs declared method count."
                 group = "Reporting"
                 variantOutputName.set("")
-                mappingFileProvider.from(project.files())
+                mappingFileProvider.set(project.files())
                 outputFile.set(File(outputDir, name + (ext.format as OutputFormat).extension))
                 summaryFile.set(File(outputDir, "$name.csv"))
                 chartDir.set(File(outputDir, name + "Chart"))
@@ -384,12 +394,21 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
     }
 }
 
-class ThreeSixApplicator(project: Project) : ThreeThreeApplicator(project) {
+open class ThreeSixApplicator(project: Project) : ThreeThreeApplicator(project) {
     override fun getOutputDirectory(task: PackageAndroidArtifact): DirectoryProperty {
         return task.outputDirectory
     }
 
     override fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
         return variant.mappingFileProvider
+    }
+}
+
+open class FourOneApplicator(project: Project) : ThreeSixApplicator(project) {
+    override fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
+        return project.provider {
+            project.logger.quiet("NOTE: Deobfuscation is not supported in AGP 4.1.0 (see issue https://issuetracker.google.com/u/1/issues/158379522)")
+            project.files()
+        }
     }
 }
