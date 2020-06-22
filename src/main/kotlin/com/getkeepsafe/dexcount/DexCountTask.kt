@@ -18,8 +18,8 @@ package com.getkeepsafe.dexcount
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
@@ -65,7 +65,7 @@ open class DexCountTask @Inject constructor(
 
     @Nullable
     @InputFiles
-    val mappingFileProvider: ConfigurableFileCollection = objects.fileCollection()
+    val mappingFileProvider: Property<FileCollection> = objects.property(FileCollection::class.java)
 
     @OutputFile
     val outputFile: RegularFileProperty = objects.fileProperty()
@@ -101,17 +101,15 @@ open class DexCountTask @Inject constructor(
     }
 
     private val deobfuscator by lazy {
-        val fileCollection = mappingFileProvider
-        val file = if (fileCollection.isEmpty) null else fileCollection.singleFile
-        when {
-            file == null -> Deobfuscator.empty
-            !file.exists() -> {
-                withStyledOutput(level = LogLevel.DEBUG) {
-                    it.println("Mapping file specified at ${file.absolutePath} does not exist, assuming output is not obfuscated.")
-                }
-                Deobfuscator.empty
+        val fileCollection = mappingFileProvider.orNull ?: return@lazy Deobfuscator.empty
+        val file = fileCollection.singleOrNull() ?: return@lazy Deobfuscator.empty
+        if (file.exists()) {
+            Deobfuscator.create(file)
+        } else {
+            withStyledOutput(level = LogLevel.DEBUG) {
+                it.println("Mapping file specified at ${file.absolutePath} does not exist, assuming output is not obfuscated.")
             }
-            else -> Deobfuscator.create(file)
+            Deobfuscator.empty
         }
     }
 

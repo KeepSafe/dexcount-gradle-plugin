@@ -98,7 +98,7 @@ final class DexMethodCountPluginSpec extends Specification {
           compileSdkVersion 28
 
           defaultConfig {
-            if ("${projectPlugin}" == 'com.android.application') { 
+            if ("${projectPlugin}" == 'com.android.application') {
               applicationId 'com.example'
             }
           }
@@ -203,7 +203,7 @@ final class DexMethodCountPluginSpec extends Specification {
             classpath files($classpathString)
           }
         }
-        
+
         // TODO(???) - Repositories from test
         repositories {
           google()
@@ -225,7 +225,7 @@ final class DexMethodCountPluginSpec extends Specification {
         when:
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments("${taskName}")
+            .withArguments("${taskName}", "--full-stacktrace")
             .build()
 
         then:
@@ -249,7 +249,7 @@ final class DexMethodCountPluginSpec extends Specification {
             classpath files($classpathString)
           }
         }
-        
+
         // TODO(???) - Repositories from test
         repositories {
           google()
@@ -265,7 +265,7 @@ final class DexMethodCountPluginSpec extends Specification {
           defaultConfig {
             applicationId 'com.example'
           }
-          
+
           buildTypes {
            debug {}
            release {}
@@ -300,7 +300,7 @@ final class DexMethodCountPluginSpec extends Specification {
             classpath files($classpathString)
           }
         }
-        
+
         // TODO(???) - Repositories from test
         repositories {
           google()
@@ -316,14 +316,14 @@ final class DexMethodCountPluginSpec extends Specification {
           defaultConfig {
             applicationId 'com.example'
           }
-          
+
           buildTypes {
             debug {}
             release {}
           }
-    
+
           flavorDimensions 'a', 'b'
-    
+
           productFlavors {
             flavor1 { dimension 'a' }
             flavor2 { dimension 'a' }
@@ -367,7 +367,7 @@ final class DexMethodCountPluginSpec extends Specification {
             classpath files($classpathString)
           }
         }
-        
+
         // TODO(???) - Repositories from test
         repositories {
           google()
@@ -424,7 +424,7 @@ final class DexMethodCountPluginSpec extends Specification {
             applicationId 'com.example'
           }
         }
-        
+
         dexcount {
           enabled = false
         }
