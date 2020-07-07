@@ -16,6 +16,9 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.api.variant.BuiltArtifact
+import com.android.build.api.variant.BuiltArtifacts
+import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.ProjectConfigurationException
@@ -28,6 +31,10 @@ final class DexCountExtensionSpec extends Specification {
     @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
     private Project project
     private File apkFile
+
+    private BuiltArtifact apkArtifact
+    private BuiltArtifacts builtArtifacts
+    private BuiltArtifactsLoader loader
 
     def "setup"() {
         project = ProjectBuilder.builder().build()
@@ -46,6 +53,14 @@ final class DexCountExtensionSpec extends Specification {
         apkResource.withStream { input ->
             apkFile.append(input)
         }
+
+        apkArtifact = Mock()
+        builtArtifacts = Mock()
+        loader = Mock()
+
+        apkArtifact.outputFile >> apkFile.canonicalPath
+        builtArtifacts.elements >> [apkArtifact]
+        loader.load(_) >> builtArtifacts
     }
 
     def "maxMethodCount methods < tiles.apk methods, throw exception"() {
@@ -67,9 +82,10 @@ final class DexCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
-        task.variantOutputName.set("extensionSpec")
-        task.inputFileProperty.set(apkFile)
+        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        task.variantNameProperty.set("extensionSpec")
+        task.apkDirectoryProperty.set(apkFile.parentFile)
+        task.loaderProperty.set(loader)
         task.execute()
 
         then:
@@ -95,9 +111,10 @@ final class DexCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
-        task.variantOutputName.set("extensionSpec")
-        task.inputFileProperty.set(apkFile)
+        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        task.variantNameProperty.set("extensionSpec")
+        task.apkDirectoryProperty.set(apkFile.parentFile)
+        task.loaderProperty.set(loader)
         task.execute()
 
         then:
@@ -124,9 +141,10 @@ final class DexCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexCountTask task = project.tasks.getByName("countDebugDexMethods") as DexCountTask
-        task.variantOutputName.set("extensionSpec")
-        task.inputFileProperty.set(apkFile)
+        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        task.variantNameProperty.set("extensionSpec")
+        task.apkDirectoryProperty.set(apkFile.parentFile)
+        task.loaderProperty.set(loader)
         task.execute()
 
         then:

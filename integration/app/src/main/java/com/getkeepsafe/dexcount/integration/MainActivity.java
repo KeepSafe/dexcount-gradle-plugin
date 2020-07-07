@@ -5,6 +5,12 @@ import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
+    static {
+        System.loadLibrary("dummy");
+    }
+
+    static native String stringFromJNI();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -41,6 +41,18 @@ private enum class Style {
     Error
 }
 
+interface Styleable {
+    fun withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: (PrintWriter) -> Unit)
+}
+
+class StyleableTaskAdapter(
+    private val task: DefaultTask
+) : Styleable {
+    override fun withStyledOutput(color: Color, level: LogLevel?, fn: (PrintWriter) -> Unit) {
+        task.withStyledOutput(color, level, fn)
+    }
+}
+
 fun DefaultTask.withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: (PrintWriter) -> Unit) {
     val style = color.toStyle()
     val factory = this.createStyledOutputFactory()

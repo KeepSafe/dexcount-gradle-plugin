@@ -26,6 +26,7 @@ android {
 dexcount {
     verbose = true
     teamCitySlug = project.name
+    printDeclarations = true
 }
 
 dependencies {
