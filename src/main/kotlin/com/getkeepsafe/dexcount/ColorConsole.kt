@@ -41,10 +41,16 @@ private enum class Style {
     Error
 }
 
+/**
+ * A thing that can print output, styled based on a given [Color] and [LogLevel].
+ */
 interface Styleable {
     fun withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: (PrintWriter) -> Unit)
 }
 
+/**
+ * Provides an implementation of [Styleable] backed by a [DefaultTask].
+ */
 class StyleableTaskAdapter(
     private val task: DefaultTask
 ) : Styleable {
