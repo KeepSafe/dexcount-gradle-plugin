@@ -34,6 +34,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
@@ -128,7 +129,7 @@ abstract class TaskApplicator(
         // If the user has passed '--stacktrace' or '--full-stacktrace', assume
         // that they are trying to report a dexcount bug.  Help them help us out
         // by printing the current plugin title and version.
-        if (project.gradle.startParameter.isShowStacktrace) {
+        if (project.gradle.startParameter.showStacktrace != ShowStacktrace.INTERNAL_EXCEPTIONS) {
             printVersion = true
         }
     }

@@ -16,23 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
-import org.gradle.StartParameter
 import org.gradle.api.Project
-
-/**
- * Return `true` if Gradle was launched with `--stacktrace`,
- * otherwise `false`.
- *
- * Gradle broke compatibility between 2.13 and 2.14 by repackaging
- * the `ShowStacktrace` enum; consequently we need to refer to
- * it by string name only.
- */
-val StartParameter.isShowStacktrace: Boolean
-    get() {
-        val getShowStackTrace = StartParameter::class.java.getMethod("getShowStacktrace").also { it.isAccessible = true }
-        val stacktrace = getShowStackTrace(this) as Enum<*>
-        return "INTERNAL_EXCEPTIONS" != stacktrace.name
-    }
 
 /**
  * `true` if this project is compiled with Instant Run support, otherwise `false`.
