@@ -1,5 +1,3 @@
-#include <string>
-
 #include <jni.h>
 
 JNIEXPORT jstring JNICALL

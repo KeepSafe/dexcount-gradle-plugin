@@ -5,11 +5,23 @@ import org.gradle.api.logging.LogLevel
 import java.io.File
 import kotlin.math.max
 
+/**
+ * An object that can produce formatted output from a [PackageTree] instance.
+ *
+ * @property packageTree the tree containing the method, field, and class counts to be reported.
+ * @property variantName the name of the variant being counted.
+ * @property outputDir the directory in which to generate reports.
+ * @param styleable a [Styleable] instance with which to print "interactive" reports.
+ * @property config the current dexcount configuration
+ * @property inputRepresentation a string describing the input from which [packageTree] was generated.
+ * @property isAndroidProject true if the input is an APK, AAR, or other Android-related artifact.
+ * @property isInstantRun true if the legacy "Instant Run" feature was used to build the input.
+ */
 class CountReporter(
-    val variantName: String,
     val packageTree: PackageTree,
-    styleable: Styleable,
+    val variantName: String,
     val outputDir: File,
+    styleable: Styleable,
     val config: DexCountExtension,
     val inputRepresentation: String,
     val isAndroidProject: Boolean = true,
@@ -116,7 +128,10 @@ class CountReporter(
 
         if (options.teamCityIntegration || config.teamCitySlug != null) {
             withStyledOutput { out ->
-                val slug = "Dexcount" + (config.teamCitySlug?.let { "_" + it.replace(' ', '_') } ?: "")
+                val slug = "Dexcount" + when (val ts = config.teamCitySlug) {
+                    null -> ""
+                    else -> "_" + ts.replace(' ', '_')
+                }
                 val prefix = "${slug}_${variantName}"
 
                 /**

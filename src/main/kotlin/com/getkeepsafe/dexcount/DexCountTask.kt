@@ -78,9 +78,9 @@ abstract class ModernDexCountTask(
 
         val reporter = CountReporter(
             packageTree = tree,
-            styleable = StyleableTaskAdapter(this),
+            variantName = variantNameProperty.get(),
             outputDir = outputDirectoryProperty.get().asFile,
-            variantName = variantNameProperty.get(), // builtApks.variantName, <-- this is buggy
+            styleable = StyleableTaskAdapter(this), // builtApks.variantName, <-- this is buggy
             config = configProperty.get(),
             inputRepresentation = inputRepresentation,
             isAndroidProject = true,
@@ -178,7 +178,7 @@ abstract class JarDexCountTask @Inject constructor (
     val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
 
     @Nested
-    val configProperty: Property<DexCountExtension> = objects.property(DexCountExtension::class.java)
+    val configProperty: Property<DexCountExtension> = objects.property()
 
     @TaskAction
     open fun execute() {
@@ -191,9 +191,9 @@ abstract class JarDexCountTask @Inject constructor (
 
         val reporter = CountReporter(
             packageTree = tree,
-            styleable = StyleableTaskAdapter(this),
-            outputDir = outputDirectoryProperty.get().asFile,
             variantName = "",
+            outputDir = outputDirectoryProperty.get().asFile,
+            styleable = StyleableTaskAdapter(this),
             config = configProperty.get(),
             inputRepresentation = jarFile.name,
             isAndroidProject = false,
@@ -215,11 +215,11 @@ abstract class LegacyDexCountTask @Inject constructor(
     val inputFileProperty: RegularFileProperty = objects.fileProperty()
 
     @Input
-    val variantOutputName: Property<String> = objects.property(String::class.java)
+    val variantOutputName: Property<String> = objects.property()
 
     @Nullable
     @InputFiles
-    val mappingFileProvider: Property<FileCollection> = objects.property(FileCollection::class.java)
+    val mappingFileProvider: Property<FileCollection> = objects.property()
 
     @OutputDirectory
     val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
@@ -265,10 +265,10 @@ abstract class LegacyDexCountTask @Inject constructor(
         }
 
         val reporter = CountReporter(
-            variantName = variantOutputName.get(),
             packageTree = tree,
-            styleable = StyleableTaskAdapter(this),
+            variantName = variantOutputName.get(),
             outputDir = outputDirectoryProperty.get().asFile,
+            styleable = StyleableTaskAdapter(this),
             config = config,
             inputRepresentation = file.name,
             isAndroidProject = isAndroidProject,
