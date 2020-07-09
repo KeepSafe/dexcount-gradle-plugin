@@ -29,40 +29,6 @@ val Project.isInstantRun: Boolean
     }
 
 /**
- * `true` if the current JVM version is 1.8 or above, otherwise `false`.
- */
-val isAtLeastJavaEight: Boolean
-    get() {
-        var version = System.getProperty("java.version")
-        if (version == null) {
-            // All JVMs provide this property... what's going on?
-            return false
-        }
-
-        // Java version strings are something like 1.8.0_65; we don't
-        // care about the third component, if it exists.  Skip it.
-        val indexOfDecimal = version.indexOf('.').let {
-            if (it != -1) {
-                version.indexOf('.', it + 1)
-            } else {
-                it
-            }
-        }
-
-        if (indexOfDecimal != -1) {
-            version = version.substring(0, indexOfDecimal)
-        }
-
-        return try {
-            val numericVersion = java.lang.Double.parseDouble(version)
-            numericVersion >= 1.8
-        } catch (ignored: NumberFormatException) {
-            // Invalid Java version number; who knows.
-            false
-        }
-    }
-
-/**
  * Represents a Gradle version number.
  *
  * Despite its obviousness and the seemingly-public package "org.gradle.util",

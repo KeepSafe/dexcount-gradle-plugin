@@ -66,10 +66,6 @@ open class DexMethodCountPlugin : Plugin<Project> {
             return
         }
 
-        if (!isAtLeastJavaEight) {
-            project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
-        }
-
         var gradlePluginVersion: String? = null
         var exception: Exception? = null
 
