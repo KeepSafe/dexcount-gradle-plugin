@@ -1,5 +1,8 @@
 package com.getkeepsafe.dexcount
 
+import com.android.build.api.variant.BuiltArtifact
+import com.android.build.api.variant.BuiltArtifacts
+import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
@@ -41,41 +44,6 @@ final class DexMethodCountPluginSpec extends Specification {
         manifestFile.write(MANIFEST_FILE_TEXT)
     }
 
-    def 'unsupported project project'() {
-        given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
-        buildFile <<
-            """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
-        }
-
-        apply plugin: 'com.getkeepsafe.dexcount'
-
-        android {
-          compileSdkVersion 28
-
-          defaultConfig {
-            applicationId 'com.example'
-          }
-        }
-      """.stripIndent().trim()
-
-        when:
-        def result = GradleRunner.create()
-            .withProjectDir(testProjectDir.root)
-            .buildAndFail()
-
-        then:
-        result.output.contains('Dexcount plugin requires the Android plugin to be configured')
-    }
-
     @Unroll def '#projectPlugin project'() {
         given:
         def classpathString = pluginClasspath
@@ -91,8 +59,8 @@ final class DexMethodCountPluginSpec extends Specification {
           }
         }
 
-        apply plugin: "${projectPlugin}"
         apply plugin: 'com.getkeepsafe.dexcount'
+        apply plugin: "${projectPlugin}"
 
         android {
           compileSdkVersion 28
@@ -143,7 +111,7 @@ final class DexMethodCountPluginSpec extends Specification {
         when:
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
-            .withArguments("countDeclaredMethods")
+            .withArguments("countDeclaredMethods", "--stacktrace")
             .build()
 
         then:
@@ -450,6 +418,14 @@ final class DexMethodCountPluginSpec extends Specification {
             apkFile.append(input)
         }
 
+        def apkArtifact = Mock(BuiltArtifact)
+        def builtArtifacts = Mock(BuiltArtifacts)
+        def loader = Mock(BuiltArtifactsLoader)
+
+        apkArtifact.outputFile >> apkFile.canonicalPath
+        builtArtifacts.elements >> [apkArtifact]
+        loader.load(_) >> builtArtifacts
+
         project.apply plugin: 'com.android.application'
         project.apply plugin: 'com.getkeepsafe.dexcount'
         project.android {
@@ -464,14 +440,15 @@ final class DexMethodCountPluginSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        DexCountTask task = project.tasks.getByName('countDebugDexMethods') as DexCountTask
-        task.variantOutputName.set('pluginSpec')
-        task.inputFileProperty.set(apkFile)
+        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        task.variantNameProperty.set("pluginSpec")
+        task.apkDirectoryProperty.set(apkFile.parentFile)
+        task.loaderProperty.set(loader)
         task.execute()
 
         then:
         // debug.csv - CSV
-        def actualOutputFile = task.outputFile.get().asFile.absoluteFile.text.stripIndent().trim()
+        def actualOutputFile = task.outputDirectoryProperty.file("pluginSpec.txt").get().asFile.absoluteFile.text.stripIndent().trim()
         def expectedOutputFile = """
             methods  fields   package/class name
             6        0        android
@@ -481,14 +458,14 @@ final class DexMethodCountPluginSpec extends Specification {
             3        0        b.a""".stripIndent().trim()
 
         // debug.txt - TXT
-        def actualSummaryFile = task.summaryFile.get().asFile.absoluteFile.text.stripIndent().trim()
+        def actualSummaryFile = task.outputDirectoryProperty.file("summary.csv").get().asFile.absoluteFile.text.stripIndent().trim()
         def expectedSummaryFile = """
             methods,fields,classes
             9,0,4
             """.stripIndent().trim()
 
         // debugChart/data.js - JSON
-        def actualChartDir = new File(task.chartDir.get().asFile, "data.js").text.stripIndent().trim()
+        def actualChartDir = task.outputDirectoryProperty.file("chart/data.js").get().asFile.text.stripIndent().trim()
         def expectedChartDir = """
             var data = {
               "name": "",

@@ -16,9 +16,17 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.api.artifact.ArtifactType
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.variant.LibraryVariantProperties
+import com.android.build.api.variant.VariantProperties
 import com.android.build.gradle.AppExtension
+import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.LibraryExtension
+import com.android.build.gradle.LibraryPlugin
 import com.android.build.gradle.TestExtension
+import com.android.build.gradle.TestPlugin
 import com.android.build.gradle.api.ApkVariant
 import com.android.build.gradle.api.ApkVariantOutput
 import com.android.build.gradle.api.ApplicationVariant
@@ -26,6 +34,7 @@ import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.build.gradle.api.LibraryVariant
 import com.android.build.gradle.api.TestVariant
+import com.android.build.gradle.tasks.BundleAar
 import com.android.build.gradle.tasks.PackageAndroidArtifact
 import com.android.repository.Revision
 import org.gradle.api.DomainObjectCollection
@@ -37,6 +46,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
 import java.io.File
@@ -49,10 +59,6 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val VERSION_3_ZERO_FIELD: String = "com.android.builder.Version" // <= 3.0
         private const val VERSION_3_ONE_FIELD: String = "com.android.builder.model.Version" // > 3.1
         private const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
-        private const val AGP_VERSION_3: String = "3.0.0"
-        private const val AGP_VERSION_3_3 = "3.3.0"
-        private const val AGP_VERSION_3_6 = "3.6.0"
-        private const val AGP_VERSION_4_1 = "4.1.0"
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
 
@@ -101,45 +107,15 @@ open class DexMethodCountPlugin : Plugin<Project> {
             sdkLocation = getSdkDirectory?.invoke(android) as File?
         }
 
-        val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
-
-        val applicator = when {
-            gradlePluginRevision isAtLeast AGP_VERSION_4_1 -> FourOneApplicator(project)
-            gradlePluginRevision isAtLeast AGP_VERSION_3_6 -> ThreeSixApplicator(project)
-            gradlePluginRevision isAtLeast AGP_VERSION_3_3 -> ThreeThreeApplicator(project)
-            gradlePluginRevision isAtLeast AGP_VERSION_3 -> ThreeOhApplicator(project)
-            else -> JavaOnlyApplicator(project)
+        val ext = project.extensions.create("dexcount", DexCountExtension::class.java).apply {
+            // If the user has passed '--stacktrace' or '--full-stacktrace', assume
+            // that they are trying to report a dexcount bug.  Help them help us out
+            // by printing the current plugin title and version.
+            if (project.gradle.startParameter.isShowStacktrace) {
+                printVersion = true
+            }
         }
 
-        applicator.apply()
-    }
-
-    private infix fun Revision.isAtLeast(versionText: String): Boolean {
-        val other = Revision.parseRevision(versionText)
-        return compareTo(other, Revision.PreviewComparison.IGNORE) >= 0
-    }
-}
-
-abstract class TaskApplicator(
-        protected val project: Project
-) {
-    private val ext: DexCountExtension = project.extensions.create(
-            "dexcount", DexCountExtension::class.java).apply {
-        // If the user has passed '--stacktrace' or '--full-stacktrace', assume
-        // that they are trying to report a dexcount bug.  Help them help us out
-        // by printing the current plugin title and version.
-        if (project.gradle.startParameter.isShowStacktrace) {
-            printVersion = true
-        }
-    }
-
-    private val baseVariant_getOutputs: Method by lazy {
-        BaseVariant::class.java.getDeclaredMethod("getOutputs").apply {
-            isAccessible = true
-        }
-    }
-
-    fun apply() {
         // We need to do this check *after* we create the 'dexcount' Gradle extension.
         // If we bail on instant run builds any earlier, then the build will break
         // for anyone configuring dexcount due to the extension not being registered.
@@ -148,6 +124,50 @@ abstract class TaskApplicator(
             return
         }
 
+        val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
+
+        val factories = listOf(
+            FourOneApplicator.Factory(),
+            ThreeSixApplicator.Factory(),
+            ThreeThreeApplicator.Factory(),
+            ThreeOhApplicator.Factory(),
+            JavaOnlyApplicator.Factory()
+        )
+
+        factories
+            .first { gradlePluginRevision isAtLeast it.minimumRevision }
+            .create(ext, project)
+            .apply()
+    }
+
+    private infix fun Revision.isAtLeast(other: Revision): Boolean {
+        return compareTo(other, Revision.PreviewComparison.IGNORE) >= 0
+    }
+}
+
+interface TaskApplicator {
+    fun apply()
+
+    interface Factory {
+        val minimumRevision: Revision
+        fun create(ext: DexCountExtension, project: Project): TaskApplicator
+    }
+}
+
+abstract class AbstractTaskApplicator(
+    protected val ext: DexCountExtension,
+    protected val project: Project
+) : TaskApplicator
+
+abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : AbstractTaskApplicator(ext, project) {
+    private val baseVariant_getOutputs: Method by lazy {
+        BaseVariant::class.java.getDeclaredMethod("getOutputs").apply {
+            isAccessible = true
+        }
+    }
+
+    @Suppress("USELESS_CAST")
+    override fun apply() {
         val variants: DomainObjectCollection<out BaseVariant> = when {
             project.plugins.hasPlugin("com.android.application") -> {
                 val ext = project.extensions.findByType(AppExtension::class.java)
@@ -195,14 +215,18 @@ abstract class TaskApplicator(
     abstract fun applyToLibraryVariant(variant: LibraryVariant)
 
     private fun applyToJavaProject(jarTask: Jar) {
-        createTaskForJavaProject(DexCountTask::class, jarTask) { t ->
-            checkPrintDeclarationsIsTrue()
+        project.tasks.register("countDeclaredMethods", JarDexCountTask::class.java) { t ->
+            t.jarFileProperty.set(jarTask.archiveFile)
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+            t.configProperty.set(ext)
 
-            t.inputFileProperty.set(jarTask.archiveFile)
+            if (ext.runOnEachPackage) {
+                jarTask.finalizedBy(t)
+            }
         }
     }
 
-    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: DexCountTask) {
+    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: LegacyDexCountTask) {
         // Dexcount tasks require that their parent task has been run...
         dexcountTask.dependsOn(parentTask)
         dexcountTask.mustRunAfter(parentTask)
@@ -217,7 +241,7 @@ abstract class TaskApplicator(
             variant: BaseVariant,
             parentTask: Task,
             output: BaseVariantOutput?,
-            applyInputConfiguration: (DexCountTask) -> Unit): DexCountTask  {
+            applyInputConfiguration: (LegacyDexCountTask) -> Unit): LegacyDexCountTask  {
         var slug = variant.name.capitalize()
         var path = "${project.buildDir}/outputs/dexcount/${variant.name}"
         val outputName = if (variant.outputs.size > 1) {
@@ -229,45 +253,18 @@ abstract class TaskApplicator(
             variant.name
         }
 
-        return project.tasks.create("count${slug}DexMethods", DexCountTask::class.java) { t ->
+        return project.tasks.create("count${slug}DexMethods", LegacyDexCountTask::class.java) { t ->
             t.description         = "Outputs dex method count for ${variant.name}."
             t.group               = "Reporting"
-            t.config              = ext
 
+            t.configProperty.set(ext)
             t.variantOutputName.set(outputName)
             t.mappingFileProvider.set(getMappingFile(variant))
-            t.outputFile.set(project.file(path + (ext.format as OutputFormat).extension))
-            t.summaryFile.set(project.file(path + ".csv"))
-            t.chartDir.set(project.file(path + "Chart"))
+            t.outputDirectoryProperty.set(project.file(path))
 
             applyInputConfiguration(t)
 
             addDexcountTaskToGraph(parentTask, t)
-        }
-    }
-
-    private fun <T : DexCountTask> createTaskForJavaProject(
-            taskClass: KClass<T>,
-            jarTask: Jar,
-            applyInputConfiguration: (T) -> Unit): TaskProvider<T> {
-
-        return project.tasks.register("countDeclaredMethods", taskClass.java) { task ->
-            val outputDir = "${project.buildDir}/dexcount"
-
-            task.apply {
-                description = "Outputs declared method count."
-                group = "Reporting"
-                variantOutputName.set("")
-                mappingFileProvider.set(project.files())
-                outputFile.set(File(outputDir, name + (ext.format as OutputFormat).extension))
-                summaryFile.set(File(outputDir, "$name.csv"))
-                chartDir.set(File(outputDir, name + "Chart"))
-                config = ext
-
-                applyInputConfiguration(this)
-            }
-
-            addDexcountTaskToGraph(parentTask = jarTask, dexcountTask = task)
         }
     }
 
@@ -280,7 +277,7 @@ abstract class TaskApplicator(
     }
 
     protected open fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
-        @Suppress("UnstableApiUsage")
+        @Suppress("UnstableApiUsage", "DEPRECATION")
         return project.provider { variant.mappingFile?.let { project.files(it) } ?: project.files() }
     }
 }
@@ -289,7 +286,15 @@ abstract class TaskApplicator(
  * Supports counting Java tasks only; used when no supported AGP version
  * is detected.
  */
-class JavaOnlyApplicator(project: Project) : TaskApplicator(project) {
+class JavaOnlyApplicator(ext: DexCountExtension, project: Project) : LegacyTaskApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("0.0.0")
+
+        override fun create(ext: DexCountExtension, project: Project): TaskApplicator {
+            return JavaOnlyApplicator(ext, project)
+        }
+    }
+
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
         error("unreachable")
     }
@@ -303,7 +308,12 @@ class JavaOnlyApplicator(project: Project) : TaskApplicator(project) {
     }
 }
 
-class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
+class ThreeOhApplicator(ext: DexCountExtension, project: Project) : LegacyTaskApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("3.0.0")
+        override fun create(ext: DexCountExtension, project: Project) = ThreeOhApplicator(ext, project)
+    }
+
     override fun applyToApplicationVariant(variant: ApplicationVariant) {
         applyToApkVariant(variant)
     }
@@ -313,6 +323,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
     }
 
     override fun applyToLibraryVariant(variant: LibraryVariant) {
+        @Suppress("DEPRECATION")
         val packageTask = variant.packageLibrary
         createTask(variant, packageTask, null) { t ->
             t.inputFileProperty.set(packageTask.archiveFile)
@@ -325,6 +336,7 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
         variant.outputs.all { output ->
             if (output is ApkVariantOutput) {
                 // why wouldn't it be?
+                @Suppress("DEPRECATION")
                 createTask(variant, output.packageApplication, output) { t ->
                     t.inputFileProperty.fileProvider(project.provider { output.outputFile })
                 }
@@ -335,7 +347,12 @@ class ThreeOhApplicator(project: Project) : TaskApplicator(project) {
     }
 }
 
-open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
+open class ThreeThreeApplicator(ext: DexCountExtension, project: Project): LegacyTaskApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("4.1.0")
+        override fun create(ext: DexCountExtension, project: Project) = ThreeThreeApplicator(ext, project)
+    }
+
     // As of AGP 3.6, this method changed its return type from File to DirectoryProperty.
     // In versions 3.3->3.5, we need to reflectively access this.
     private val method_getOutputDirectory: Method by lazy {
@@ -394,7 +411,12 @@ open class ThreeThreeApplicator(project: Project): TaskApplicator(project) {
     }
 }
 
-open class ThreeSixApplicator(project: Project) : ThreeThreeApplicator(project) {
+open class ThreeSixApplicator(ext: DexCountExtension, project: Project) : ThreeThreeApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("3.6.0")
+        override fun create(ext: DexCountExtension, project: Project) = ThreeSixApplicator(ext, project)
+    }
+
     override fun getOutputDirectory(task: PackageAndroidArtifact): DirectoryProperty {
         return task.outputDirectory
     }
@@ -404,11 +426,116 @@ open class ThreeSixApplicator(project: Project) : ThreeThreeApplicator(project) 
     }
 }
 
-open class FourOneApplicator(project: Project) : ThreeSixApplicator(project) {
-    override fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
-        return project.provider {
-            project.logger.quiet("NOTE: Deobfuscation is not supported in AGP 4.1.0 (see issue https://issuetracker.google.com/u/1/issues/158379522)")
-            project.files()
+@Suppress("UnstableApiUsage")
+open class FourOneApplicator(ext: DexCountExtension, project: Project) : AbstractTaskApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("4.1.0")
+        override fun create(ext: DexCountExtension, project: Project) = FourOneApplicator(ext, project)
+    }
+
+    override fun apply() {
+        if (!ext.enabled) {
+            return
+        }
+
+        project.plugins.withType(AppPlugin::class.java) {
+            val android = project.extensions.getByType(ApplicationExtension::class.java)
+            android.onVariantProperties {
+                registerApkTask()
+            }
+        }
+
+        project.plugins.withType(LibraryPlugin::class.java) {
+            val android = project.extensions.getByType(LibraryExtension::class.java)
+            android.onVariantProperties {
+                registerAarTask()
+            }
+        }
+
+        project.plugins.withType(TestPlugin::class.java) {
+            val android = project.extensions.getByType(TestExtension::class.java)
+            android.onVariantProperties {
+                registerApkTask()
+            }
+        }
+
+        project.afterEvaluate {
+            if (project.extensions.findByType(CommonExtension::class.java) == null) {
+                // No Android plugins were registered; this may be a jar-count usage.
+                registerJarTask()
+            }
+        }
+    }
+
+    protected open fun VariantProperties.registerApkTask() {
+        if (!ext.enabled) {
+            return
+        }
+
+        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+
+        val taskName = "count${name.capitalize()}DexMethods"
+
+        project.tasks.register<ApkDexCountTask>(taskName) { t ->
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(name)
+            t.apkDirectoryProperty.set(artifacts.get(ArtifactType.APK))
+            t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+            t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
+        }
+    }
+
+    protected open fun LibraryVariantProperties.registerAarTask() {
+        if (!ext.enabled) {
+            return
+        }
+
+        val taskName = "count${name.capitalize()}DexMethods"
+
+        // NOTE: This is for AGP 4.1.0 _only_.  ArtifactType.AAR didn't quite make it into
+        //       the final API for 4.1.0, but will be available in 4.2.0 at which point we
+        //       will need to cordon off this gross hack.
+        project.afterEvaluate {
+            val bundleTaskProvider = project.tasks.named("bundle${name.capitalize()}Aar", BundleAar::class.java)
+
+            project.tasks.register<FourOneLibraryDexCountTask>(taskName) { t ->
+                t.configProperty.set(ext)
+                t.variantNameProperty.set(name)
+                t.aarBundleFileCollection.from(bundleTaskProvider)
+                t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+                t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+                t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
+            }
+        }
+    }
+
+    protected open fun registerJarTask() {
+        if (!ext.enabled) {
+            return
+        }
+
+        if (!project.plugins.hasPlugin(JavaPlugin::class.java) && !project.plugins.hasPlugin(JavaLibraryPlugin::class.java)) {
+            return
+        }
+
+        check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+
+        val jarTaskProvider = project.tasks.named("jar", Jar::class.java)
+        val outputDir = project.layout.buildDirectory.dir("outputs/dexcount")
+        project.tasks.register<JarDexCountTask>("countDeclaredMethods") { t ->
+            t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
+            t.outputDirectoryProperty.set(outputDir)
+            t.configProperty.set(ext)
+        }
+    }
+
+    private inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
+        return register(name, T::class.java) { t ->
+            t.description         = "Outputs dex method counts."
+            t.group               = "Reporting"
+
+            fn(t)
         }
     }
 }
