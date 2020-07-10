@@ -186,7 +186,7 @@ internal class DexFile(
         fun extractDexFromZip(file: File): List<DexFile> {
             return file.unzip { entries ->
                 entries
-                    .filter { it.name.matches(Regex("classes.*\\.dex")) }
+                    .filter { it.name.matches(Regex("(.*/)*classes.*\\.dex")) }
                     .map { entry ->
                         val temp = makeTempFile("dexcount.dex")
                         entry.writeTo(temp)

@@ -97,18 +97,29 @@ open class ApkDexCountTask @Inject constructor(
 ) : ModernDexCountTask(objects) {
 
     @InputDirectory
+    @Optional
     val apkDirectoryProperty: DirectoryProperty = objects.directoryProperty()
+
+    @InputFile
+    @Optional
+    val bundleFileProperty: RegularFileProperty = objects.fileProperty()
 
     override var inputRepresentation: String = ""
 
     override fun buildPackageTree(loader: BuiltArtifactsLoader, deobfuscator: Deobfuscator): PackageTree {
-        val apkDirectory = apkDirectoryProperty.get()
-        val builtApks = checkNotNull(loader.load(apkDirectory))
-        val apkFile = File(builtApks.elements.first().outputFile)
+        val file = when {
+            bundleFileProperty.isPresent -> bundleFileProperty.asFile.get()
+            apkDirectoryProperty.isPresent -> {
+                val apkDirectory = apkDirectoryProperty.get()
+                val builtApks = checkNotNull(loader.load(apkDirectory))
+                File(builtApks.elements.first().outputFile)
+            }
+            else -> error("Must provide either an APK or an AAB as input")
+        }
 
-        inputRepresentation = apkFile.name
+        inputRepresentation = file.name
 
-        val dataList = DexFile.extractDexData(apkFile, configProperty.get().dxTimeoutSec)
+        val dataList = DexFile.extractDexData(file, configProperty.get().dxTimeoutSec)
         try {
             val tree = PackageTree(deobfuscator)
             for (dexFile in dataList) {

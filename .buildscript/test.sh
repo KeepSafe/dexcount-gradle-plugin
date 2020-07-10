@@ -12,9 +12,10 @@ VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 
 echo "Building integration test project..."
 cd integration
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:assembleDebug :app:countDebugDexMethods 2>&1 --stacktrace | tee app.log
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :lib:assembleDebug :lib:countDebugDexMethods 2>&1 --stacktrace | tee lib.log
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :tests:assembleDebug :tests:countDebugDexMethods 2>&1 --stacktrace | tee tests.log
+../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:countDebugDexMethods 2>&1 --stacktrace | tee app.log
+../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :lib:countDebugDexMethods 2>&1 --stacktrace | tee lib.log
+../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :tests:countDebugDexMethods 2>&1 --stacktrace | tee tests.log
+../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:countDebugBundleDexMethods 2>&1 --stacktrace | tee bundle.log
 
 echo "Integration build done!  Running tests..."
 
@@ -47,6 +48,10 @@ grep -F 'Total classes in lib-debug.aar:  6 (0.01% used)' lib.log || die "Incorr
 grep -F 'Methods remaining in lib-debug.aar: 65528' lib.log || die "Incorrect remaining-method count in lib-debug.aar"
 grep -F 'Fields remaining in lib-debug.aar:  65532' lib.log || die "Incorrect remaining-field count in lib-debug.aar"
 grep -F 'Classes remaining in lib-debug.aar:  65529' lib.log || die "Incorrect remaining-class count in lib-debug.aar"
+
+grep -F 'Total methods in app-debug.aab: 6725 (10.26% used)' bundle.log || die "Incorrect method count in app-debug.aab"
+grep -F 'Total fields in app-debug.aab:  1916 (2.92% used)' bundle.log || die "Incorrect field count in app-debug.aab"
+grep -F 'Total classes in app-debug.aab:  837 (1.28% used)' bundle.log || die "Incorrect field count in app-debug.aab"
 
 # Note the '&&' here - grep exits with an error if no lines match,
 # which is the condition we want here.  If any lines match, that

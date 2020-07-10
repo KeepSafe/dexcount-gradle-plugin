@@ -439,6 +439,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             val android = project.extensions.getByType(ApplicationExtension::class.java)
             android.onVariantProperties {
                 registerApkTask()
+                registerAabTask()
             }
         }
 
@@ -477,6 +478,25 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.configProperty.set(ext)
             t.variantNameProperty.set(name)
             t.apkDirectoryProperty.set(artifacts.get(ArtifactType.APK))
+            t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+            t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
+        }
+    }
+
+    protected open fun VariantProperties.registerAabTask() {
+        if (!ext.enabled) {
+            return
+        }
+
+        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+
+        val taskName = "count${name.capitalize()}BundleDexMethods"
+
+        project.tasks.register<ApkDexCountTask>(taskName) { t ->
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(name)
+            t.bundleFileProperty.set(artifacts.get(ArtifactType.BUNDLE))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
