@@ -5,3 +5,5 @@ build/
 *.log
 local.properties
 out/
+.cxx/
+*.hprof

@@ -16,158 +16,230 @@
 
 package com.getkeepsafe.dexcount
 
+import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import javax.annotation.Nullable
 import javax.inject.Inject
 
-/**
- * The maximum number of method refs and field refs allowed in a single Dex
- * file.
- */
-const val MAX_DEX_REFS: Int = 0xFFFF // 65535
+private inline fun <reified T> ObjectFactory.property(): Property<T> {
+    return property(T::class.java)
+}
 
 @Suppress("UnstableApiUsage")
-open class DexCountTask @Inject constructor(
+abstract class ModernDexCountTask(
     objects: ObjectFactory
-): DefaultTask() {
-    private lateinit var tree: PackageTree
-
-    /**
-     * The output of the 'package' task; will be either an APK or an AAR.
-     */
-    private fun getInputFile(): File {
-        return inputFileProperty.asFile.get()
-    }
+) : DefaultTask() {
+    @Input
+    val variantNameProperty: Property<String> = objects.property()
 
     @InputFile
-    val inputFileProperty: RegularFileProperty = objects.fileProperty()
+    @Optional
+    val mappingFileProperty: RegularFileProperty = objects.fileProperty()
 
-    private val rawInputRepresentation: String
-        get() = "${getInputFile()}"
-
-    @Input
-    val variantOutputName: Property<String> = objects.property(String::class.java)
-
-    @Nullable
-    @InputFiles
-    val mappingFileProvider: Property<FileCollection> = objects.property(FileCollection::class.java)
-
-    @OutputFile
-    val outputFile: RegularFileProperty = objects.fileProperty()
-
-    @OutputFile
-    val summaryFile: RegularFileProperty = objects.fileProperty()
-
-    @OutputDirectory
-    val chartDir: DirectoryProperty = objects.directoryProperty()
+    @Internal
+    val loaderProperty: Property<BuiltArtifactsLoader> = objects.property()
 
     @Nested
-    lateinit var config: DexCountExtension
+    val configProperty: Property<DexCountExtension> = objects.property()
 
-    private var startTime   = 0L
-    private var ioTime      = 0L
-    private var treegenTime = 0L
-    private var outputTime  = 0L
+    @OutputDirectory
+    val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
 
-    private val printOptions by lazy { // needs to be lazy because config is lateinit
-        PrintOptions(
-            includeClassCount = config.includeClassCount,
-            includeMethodCount = true,
-            includeFieldCount = config.includeFieldCount,
-            includeTotalMethodCount = config.includeTotalMethodCount,
-            teamCityIntegration = config.teamCityIntegration,
-            orderByMethodCount = config.orderByMethodCount,
-            includeClasses = config.includeClasses,
-            printHeader = true,
-            maxTreeDepth = config.maxTreeDepth,
-            printDeclarations = config.printDeclarations,
-            isAndroidProject = isAndroidProject
-        )
-    }
+    @get:Internal
+    protected abstract val inputRepresentation: String
 
-    private val deobfuscator by lazy {
-        val fileCollection = mappingFileProvider.orNull ?: return@lazy Deobfuscator.empty
-        val file = fileCollection.singleOrNull() ?: return@lazy Deobfuscator.empty
-        if (file.exists()) {
-            Deobfuscator.create(file)
-        } else {
-            withStyledOutput(level = LogLevel.DEBUG) {
-                it.println("Mapping file specified at ${file.absolutePath} does not exist, assuming output is not obfuscated.")
-            }
-            Deobfuscator.empty
-        }
-    }
-
-    private var isInstantRun = false
-    private var isAndroidProject = true
+    protected abstract fun buildPackageTree(loader: BuiltArtifactsLoader, deobfuscator: Deobfuscator): PackageTree
 
     @TaskAction
     open fun execute() {
+        val loader = loaderProperty.get()
+        val deobfuscator = when {
+            mappingFileProperty.isPresent -> Deobfuscator.create(mappingFileProperty.get().asFile)
+            else -> Deobfuscator.empty
+        }
+        val tree = buildPackageTree(loader, deobfuscator)
+
+        val reporter = CountReporter(
+            packageTree = tree,
+            variantName = variantNameProperty.get(),
+            outputDir = outputDirectoryProperty.get().asFile,
+            styleable = StyleableTaskAdapter(this), // builtApks.variantName, <-- this is buggy
+            config = configProperty.get(),
+            inputRepresentation = inputRepresentation,
+            isAndroidProject = true,
+            isInstantRun = false
+        )
+
+        reporter.report()
+    }
+}
+
+@Suppress("UnstableApiUsage")
+open class ApkDexCountTask @Inject constructor(
+    objects: ObjectFactory
+) : ModernDexCountTask(objects) {
+
+    @InputDirectory
+    val apkDirectoryProperty: DirectoryProperty = objects.directoryProperty()
+
+    override var inputRepresentation: String = ""
+
+    override fun buildPackageTree(loader: BuiltArtifactsLoader, deobfuscator: Deobfuscator): PackageTree {
+        val apkDirectory = apkDirectoryProperty.get()
+        val builtApks = checkNotNull(loader.load(apkDirectory))
+        val apkFile = File(builtApks.elements.first().outputFile)
+
+        inputRepresentation = apkFile.name
+
+        val dataList = DexFile.extractDexData(apkFile, configProperty.get().dxTimeoutSec)
         try {
-            check(config.enabled) { "Tasks should not be executed if the plugin is disabled" }
-
-            if (!getInputFile().exists()) {
-                return
+            val tree = PackageTree(deobfuscator)
+            for (dexFile in dataList) {
+                for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
+                for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
             }
-
-            printPreamble()
-            generatePackageTree()
-            printSummary()
-            printFullTree()
-            printChart()
-            printTaskDiagnosticData()
-            failBuildMaxMethods()
-        } catch (e: DexCountException) {
-            withStyledOutput(Color.RED, LogLevel.ERROR) { out ->
-                out.println("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues")
-                e.printStackTrace(out)
-            }
+            return tree
+        } finally {
+            dataList.forEach { it.close() }
         }
     }
+}
 
-    private fun printPreamble() {
-        if (config.printVersion) {
-            val projectName = javaClass.`package`.implementationTitle
-            val projectVersion = javaClass.`package`.implementationVersion
+// This class is so-named because there is no `ArtifactType.AAR` in AGP 4.1,
+// so we have to resort to looking up the bundle task by name, eschewing the
+// new API for the time being.  In 4.2 we'll probably be able to consolidate
+// this and the APK task above.
+@Suppress("UnstableApiUsage")
+open class FourOneLibraryDexCountTask @Inject constructor(
+    objects: ObjectFactory
+) : ModernDexCountTask(objects) {
 
-            withStyledOutput { out ->
-                out.println("Dexcount name:    $projectName")
-                out.println("Dexcount version: $projectVersion")
-                out.println("Dexcount input:   $rawInputRepresentation")
+    @InputFiles
+    val aarBundleFileCollection: ConfigurableFileCollection = objects.fileCollection()
+
+    override var inputRepresentation: String = ""
+
+    override fun buildPackageTree(loader: BuiltArtifactsLoader, deobfuscator: Deobfuscator): PackageTree {
+        if (aarBundleFileCollection.isEmpty) {
+            throw GradleException("Expected")
+        }
+
+        val aar = aarBundleFileCollection.first { it.name.endsWith("aar") }
+        inputRepresentation = aar.name
+
+        val tree = PackageTree(deobfuscator)
+
+        val dataList = DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec)
+        try {
+            for (dexFile in dataList) {
+                for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
+                for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
+            }
+        } finally {
+            dataList.forEach { it.close() }
+        }
+
+        if (configProperty.get().printDeclarations) {
+            JarFile.extractJarFromAar(aar).use { jar ->
+                for (ref in jar.methodRefs) tree.addDeclaredMethodRef(ref)
+                for (ref in jar.fieldRefs) tree.addDeclaredFieldRef(ref)
             }
         }
-    }
 
+        return tree
+    }
+}
+
+@Suppress("UnstableApiUsage")
+abstract class JarDexCountTask @Inject constructor (
+    objects: ObjectFactory
+) : DefaultTask() {
+    @InputFile
+    val jarFileProperty: RegularFileProperty = objects.fileProperty()
+
+    @OutputDirectory
+    val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
+
+    @Nested
+    val configProperty: Property<DexCountExtension> = objects.property()
+
+    @TaskAction
+    open fun execute() {
+        val tree = PackageTree(Deobfuscator.empty)
+        val jarFile = jarFileProperty.get().asFile
+        JarFile.extractJarFromJar(jarFile).use { jar ->
+            for (ref in jar.methodRefs) tree.addDeclaredMethodRef(ref)
+            for (ref in jar.fieldRefs) tree.addDeclaredFieldRef(ref)
+        }
+
+        val reporter = CountReporter(
+            packageTree = tree,
+            variantName = "",
+            outputDir = outputDirectoryProperty.get().asFile,
+            styleable = StyleableTaskAdapter(this),
+            config = configProperty.get(),
+            inputRepresentation = jarFile.name,
+            isAndroidProject = false,
+            isInstantRun = false
+        )
+
+        reporter.report()
+    }
+}
+
+@Suppress("UnstableApiUsage")
+abstract class LegacyDexCountTask @Inject constructor(
+    objects: ObjectFactory
+): DefaultTask() {
     /**
-     * Creates a new PackageTree and populates it with the method and field
-     * counts of the current dex/apk file.
+     * The output of the 'package' task; will be either an APK or an AAR.
      */
-    private fun generatePackageTree() {
-        val file = getInputFile()
+    @InputFile
+    val inputFileProperty: RegularFileProperty = objects.fileProperty()
+
+    @Input
+    val variantOutputName: Property<String> = objects.property()
+
+    @Nullable
+    @InputFiles
+    val mappingFileProvider: Property<FileCollection> = objects.property()
+
+    @OutputDirectory
+    val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
+
+    @Nested
+    val configProperty: Property<DexCountExtension> = objects.property()
+
+    @TaskAction
+    open fun execute() {
+        val config = configProperty.get()
+        val deobfuscator = Deobfuscator.create(mappingFileProvider.orNull?.singleOrNull())
+
+        val file = inputFileProperty.get().asFile
 
         val isApk = file.extension == "apk"
         val isAar = file.extension == "aar"
         val isJar = file.extension == "jar"
-        isAndroidProject = isAar || isApk
+        val isAndroidProject = isAar || isApk
 
         check(isApk || isAar || isJar) { "File extension is unclear: $file" }
-
-        startTime = System.currentTimeMillis()
 
         val dataList = if (isAndroidProject) DexFile.extractDexData(file, config.dxTimeoutSec) else emptyList()
         val jarFile = when {
@@ -176,7 +248,7 @@ open class DexCountTask @Inject constructor(
             else -> null
         }
 
-        ioTime = System.currentTimeMillis()
+        val tree: PackageTree
         try {
             tree = PackageTree(deobfuscator)
 
@@ -192,148 +264,17 @@ open class DexCountTask @Inject constructor(
             jarFile?.close()
         }
 
-        treegenTime = System.currentTimeMillis()
+        val reporter = CountReporter(
+            packageTree = tree,
+            variantName = variantOutputName.get(),
+            outputDir = outputDirectoryProperty.get().asFile,
+            styleable = StyleableTaskAdapter(this),
+            config = config,
+            inputRepresentation = file.name,
+            isAndroidProject = isAndroidProject,
+            isInstantRun = dataList.any { it.isInstantRun }
+        )
 
-        isInstantRun = dataList.any { it.isInstantRun }
-    }
-
-    /**
-     * Prints a summary of method and field counts
-     * @return
-     */
-    private fun printSummary() {
-        val filename = getInputFile().name
-
-        if (isInstantRun) {
-            withStyledOutput(Color.RED) { out ->
-                out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.")
-            }
-        }
-
-        val color = if (tree.methodCount < 50000) Color.GREEN else Color.YELLOW
-
-        withStyledOutput(color) { out ->
-            fun percentUsed(count: Int): String {
-                val used = (count.toDouble() / MAX_DEX_REFS) * 100.0
-                return String.format("%.2f", used)
-            }
-
-            val percentMethodsUsed = percentUsed(tree.methodCount)
-            val percentFieldsUsed = percentUsed(tree.fieldCount)
-            val percentClassesUsed = percentUsed(tree.classCount)
-
-            val methodsRemaining = Math.max(MAX_DEX_REFS - tree.methodCount, 0)
-            val fieldsRemaining = Math.max(MAX_DEX_REFS - tree.fieldCount, 0)
-            val classesRemaining = Math.max(MAX_DEX_REFS - tree.classCount, 0)
-
-            if (isAndroidProject) {
-                out.println("Total methods in $filename: ${tree.methodCount} ($percentMethodsUsed% used)")
-                out.println("Total fields in $filename:  ${tree.fieldCount} ($percentFieldsUsed% used)")
-                out.println("Total classes in $filename:  ${tree.classCount} ($percentClassesUsed% used)")
-                out.println("Methods remaining in $filename: $methodsRemaining")
-                out.println("Fields remaining in $filename:  $fieldsRemaining")
-                out.println("Classes remaining in $filename:  $classesRemaining")
-            } else {
-                out.println("Total methods in $filename: ${tree.methodCountDeclared} ($percentMethodsUsed% used)")
-                out.println("Total fields in $filename:  ${tree.fieldCountDeclared} ($percentFieldsUsed% used)")
-                out.println("Total classes in $filename:  ${tree.classCountDeclared} ($percentClassesUsed% used)")
-            }
-        }
-
-        summaryFile.get().asFile.parentFile.mkdirs()
-        summaryFile.get().asFile.createNewFile()
-
-        val headers = "methods,fields,classes"
-        val counts = "${tree.methodCount},${tree.fieldCount},${tree.classCount}"
-
-        summaryFile.get().asFile.printWriter().use { writer ->
-            writer.println(headers)
-            writer.println(counts)
-        }
-
-        if (printOptions.teamCityIntegration || config.teamCitySlug != null) {
-            withStyledOutput { out ->
-                val slug = "Dexcount" + (config.teamCitySlug?.let { "_" + it.replace(' ', '_') } ?: "")
-                val prefix = "${slug}_${variantOutputName.get()}"
-
-                /**
-                 * Reports to Team City statistic value
-                 * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
-                 */
-                fun printTeamCityStatisticValue(key: String, value: Int) {
-                    out.println("##teamcity[buildStatisticValue key='${prefix}_${key}' value='$value']")
-                }
-
-                printTeamCityStatisticValue("ClassCount", tree.classCount)
-                printTeamCityStatisticValue("MethodCount", tree.methodCount)
-                printTeamCityStatisticValue("FieldCount", tree.fieldCount)
-            }
-        }
-    }
-
-    /**
-     * Prints the package tree to the usual outputs/dexcount/variant.txt file.
-     */
-    private fun printFullTree() {
-        outputFile.get().asFile.printStream().use(this::printTreeToAppendable)
-        outputTime = System.currentTimeMillis()
-    }
-
-    /**
-     * Prints the package tree as chart to the outputs/dexcount/${variant}Chart directory.
-     */
-    private fun printChart() {
-        val printOptions = printOptions
-        printOptions.includeClasses = true
-
-        val directory = chartDir.get().asFile
-        File(directory, "data.js").printStream().use { out ->
-            out.print("var data = ")
-            tree.printJson(out, printOptions)
-        }
-
-        listOf("chart-builder.js", "d3.v3.min.js", "index.html", "styles.css").forEach { resourceName ->
-            val resource = javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/" + resourceName)
-            val targetFile = File(directory, resourceName)
-            resource.copyToFile(targetFile)
-        }
-    }
-
-    /**
-     * Logs the package tree to stdout at {@code LogLevel.DEBUG}, or at the
-     * default level if verbose-mode is configured.
-     */
-    private fun printTaskDiagnosticData() {
-        // Log the entire package list/tree at LogLevel.DEBUG, unless
-        // verbose is enabled (in which case use the default log level).
-        val level = if (config.verbose) LogLevel.LIFECYCLE else LogLevel.DEBUG
-
-        withStyledOutput(Color.YELLOW, level) { out ->
-            val strBuilder = StringBuilder()
-            printTreeToAppendable(strBuilder)
-
-            out.format(strBuilder.toString())
-            out.format("\n\nTask runtimes:")
-            out.format("--------------")
-            out.format("parsing:    ${ioTime - startTime} ms")
-            out.format("counting:   ${treegenTime - ioTime} ms")
-            out.format("printing:   ${outputTime - treegenTime} ms")
-            out.format("total:      ${outputTime - startTime} ms")
-            out.format("")
-            out.format("input:      {}", rawInputRepresentation)
-        }
-    }
-
-    /**
-     * Fails the build when a user specifies a "max method count" for their current build.
-     */
-    private fun failBuildMaxMethods() {
-        if (config.maxMethodCount > 0 && tree.methodCount > config.maxMethodCount) {
-            throw GradleException("The current APK has ${tree.methodCount} methods, the current max is: ${config.maxMethodCount}.")
-        }
-    }
-
-    private fun printTreeToAppendable(out: Appendable) {
-        tree.print(out, config.format as OutputFormat, printOptions)
+        reporter.report()
     }
 }
