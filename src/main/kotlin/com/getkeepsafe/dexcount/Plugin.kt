@@ -108,7 +108,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
             // If the user has passed '--stacktrace' or '--full-stacktrace', assume
             // that they are trying to report a dexcount bug.  Help them help us out
             // by printing the current plugin title and version.
-            if (project.gradle.startParameter.isShowStacktrace) {
+            if (project.gradle.startParameter.showStacktrace != ShowStacktrace.INTERNAL_EXCEPTIONS) {
                 printVersion = true
             }
         }
