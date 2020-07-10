@@ -43,6 +43,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
@@ -69,10 +70,6 @@ open class DexMethodCountPlugin : Plugin<Project> {
         if (project.gradleVersion < MIN_GRADLE_VERSION) {
             project.logger.error("dexcount requires Gradle $MIN_GRADLE_VERSION or above")
             return
-        }
-
-        if (!isAtLeastJavaEight) {
-            project.logger.error("Java 8 or above is *STRONGLY* recommended - dexcount may not work properly on Java 7 or below!")
         }
 
         var gradlePluginVersion: String? = null
@@ -111,7 +108,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
             // If the user has passed '--stacktrace' or '--full-stacktrace', assume
             // that they are trying to report a dexcount bug.  Help them help us out
             // by printing the current plugin title and version.
-            if (project.gradle.startParameter.isShowStacktrace) {
+            if (project.gradle.startParameter.showStacktrace != ShowStacktrace.INTERNAL_EXCEPTIONS) {
                 printVersion = true
             }
         }
