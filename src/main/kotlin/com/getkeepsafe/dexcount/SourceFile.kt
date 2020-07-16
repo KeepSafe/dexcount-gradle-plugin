@@ -111,11 +111,27 @@ internal class DexFile(
         @JvmStatic
         private fun extractDexFromAar(file: File, dxTimeoutSecs: Int): List<DexFile> {
             // unzip classes.jar from the AAR
+            var minSdk = 13 // the default minSdkVersion of dx
             val tempClasses = file.unzip { entries ->
-                val jarFile = entries.find { it.name.matches(Regex("classes\\.jar")) }
-                makeTempFile("classes.jar").also {
-                    jarFile!!.writeTo(it)
+                var tempFile: File? = null
+
+                for (entry in entries) {
+                    if (entry.name == "AndroidManifest.xml") {
+                        val manifestText = entry.inputStream().bufferedReader().use { it.readText() }
+                        val match = Regex("""android:minSdkVersion="(\d+)"""").find(manifestText)
+                        if (match != null) {
+                            minSdk = match.groupValues[1].toInt()
+                        }
+                    }
+
+                    if (entry.name.matches(Regex("classes\\.jar"))) {
+                        tempFile = makeTempFile("classes.jar").also {
+                            entry.writeTo(it)
+                        }
+                    }
                 }
+
+                checkNotNull(tempFile) { "No classes.jar file found in ${file.canonicalPath}" }
             }
 
             // convert it to DEX format by using the Android dx tool
@@ -146,6 +162,7 @@ internal class DexFile(
                     dxExe.absolutePath,
                     "--dex",
                     "--output=${tempDex.absolutePath}",
+                    "--min-sdk-version=$minSdk",
                     tempClasses.absolutePath)
                 .start()
 
