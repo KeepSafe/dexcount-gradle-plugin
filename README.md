@@ -22,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.3'
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.4'
     }
 }
 

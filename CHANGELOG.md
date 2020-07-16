@@ -1,3 +1,7 @@
+1.0.4
+---------
+* Fix: Pass --min-sdk-version to dx when needed to enable Java 8 language features (#311)
+
 1.0.3
 ---------
 * Fix: AGP 4.1 bugfixes (#300)
