@@ -153,37 +153,34 @@ internal class DexFile(
                 throw Exception ("dx tool not found at " + dxExe.absolutePath)
             }
 
+            // Figure out if this version of dx has the --min-sdk-version flag
+            val dexHelp = runProcess(dxExe, listOf("--help"), timeoutMillis = 5000L)
+            if (dexHelp.timedOut || dexHelp.exitCode != 1) { // dx --help seems to always exit with code 1
+                throw DexCountException("Unable to run dx --help (file: $dxExe)")
+            }
+
+            val hasMinSdkFlag = dexHelp.stdout.contains("--min-sdk-version") || dexHelp.stderr.contains("--min-sdk-version")
+
             // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
             val tempDex = makeTempFile("classes.dex")
 
-            val sout = StringBuilder()
-            val serr = StringBuilder()
-            val proc = ProcessBuilder().command(
-                    dxExe.absolutePath,
-                    "--dex",
-                    "--output=${tempDex.absolutePath}",
-                    "--min-sdk-version=$minSdk",
-                    tempClasses.absolutePath)
-                .start()
+            val dexArgs = mutableListOf("--dex", "--output=${tempDex.absolutePath}")
+            if (hasMinSdkFlag) {
+                dexArgs += "--min-sdk-version=$minSdk"
+            }
+            dexArgs += tempClasses.absolutePath
 
-            val didFinish = proc.waitForProcessOutput(
-                stdout = sout,
-                stderr = serr,
-                timeoutMillis = TimeUnit.SECONDS.toMillis(dxTimeoutSecs.toLong()))
-
-            val exitCode = if (didFinish) proc.exitValue() else -1
-            proc.dispose()
-
-            if (!didFinish) {
+            val dexRun = runProcess(dxExe, dexArgs, TimeUnit.SECONDS.toMillis(dxTimeoutSecs.toLong()))
+            if (dexRun.timedOut) {
                 throw DexCountException("dx timed out after $dxTimeoutSecs seconds")
             }
 
-            if (exitCode != 0) {
-                throw DexCountException("dx exited with exit code $exitCode\nstderr=$serr")
+            if (dexRun.exitCode != 0) {
+                throw DexCountException("dx exited with exit code ${dexRun.exitCode}\nstderr=${dexRun.stderr}")
             }
 
             if (!tempDex.exists()) {
-                throw DexCountException("Error converting classes.jar into classes.dex: $serr")
+                throw DexCountException("Error converting classes.jar into classes.dex: ${dexRun.stderr}")
             }
 
             return listOf(DexFile(tempDex, true))
@@ -359,6 +356,30 @@ private class StreamableZipEntry(
     fun writeTo(file: File) {
         inputStream().use { file.writeFromStream(it) }
     }
+}
+
+private data class Execution(
+    val timedOut: Boolean,
+    val exitCode: Int,
+    val stdout: StringBuilder,
+    val stderr: StringBuilder
+)
+
+private fun runProcess(exe: File, args: List<String>, timeoutMillis: Long): Execution {
+    val stdout = StringBuilder()
+    val stderr = StringBuilder()
+
+    val proc = ProcessBuilder(
+        exe.absolutePath,
+        *args.toTypedArray()
+    ).start()
+
+    val didFinish = proc.waitForProcessOutput(stdout, stderr, timeoutMillis)
+    val exitCode = if (didFinish) proc.exitValue() else -1
+
+    proc.dispose()
+
+    return Execution(!didFinish, exitCode, stdout, stderr)
 }
 
 private fun Process.waitForProcessOutput(stdout: Appendable, stderr: Appendable, timeoutMillis: Long): Boolean {
