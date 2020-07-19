@@ -3,6 +3,7 @@ package com.getkeepsafe.dexcount
 import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
 import java.io.File
+import java.io.PrintStream
 import kotlin.math.max
 
 /**
@@ -164,9 +165,14 @@ class CountReporter(
         }
 
         listOf("chart-builder.js", "d3.v3.min.js", "index.html", "styles.css").forEach { resourceName ->
-            val resource = javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/" + resourceName)
-            val targetFile = File(chartDirectory, resourceName)
-            resource.copyToFile(targetFile)
+            javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/$resourceName").use { resource ->
+                val targetFile = File(chartDirectory, resourceName)
+                targetFile.outputStream().use { output ->
+                    resource.copyTo(output)
+                    output.flush()
+                }
+                resource.close()
+            }
         }
     }
 
@@ -187,6 +193,12 @@ class CountReporter(
         if (config.maxMethodCount > 0 && packageTree.methodCount > config.maxMethodCount) {
             throw GradleException("The current APK has ${packageTree.methodCount} methods, the current max is: ${config.maxMethodCount}.")
         }
+    }
+
+    private fun File.printStream(): PrintStream {
+        parentFile.mkdirs()
+        createNewFile()
+        return PrintStream(outputStream())
     }
 
     companion object {
