@@ -354,7 +354,12 @@ private class StreamableZipEntry(
     }
 
     fun writeTo(file: File) {
-        inputStream().use { file.writeFromStream(it) }
+        inputStream().use { input ->
+            file.outputStream().use { output ->
+                input.copyTo(output)
+                output.flush()
+            }
+        }
     }
 }
 
