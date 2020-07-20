@@ -22,11 +22,15 @@ import com.android.dexdeps.MethodRef
 import com.android.dexdeps.Output
 import com.getkeepsafe.dexcount.PackageTree.Type.DECLARED
 import com.getkeepsafe.dexcount.PackageTree.Type.REFERENCED
+import com.getkeepsafe.dexcount.thrift.FieldRef as ThriftFieldRef
+import com.getkeepsafe.dexcount.thrift.MethodRef as ThriftMethodRef
+import com.getkeepsafe.dexcount.thrift.PackageTree as ThriftPackageTree
 import com.google.gson.stream.JsonWriter
 import java.io.Writer
 import java.nio.CharBuffer
 import java.util.*
 import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashMap
 
 class PackageTree(
         private val name_: String,
@@ -40,6 +44,83 @@ class PackageTree(
 
         private inline fun <T> Iterable<T>.sumBy(initialCount: Int, selector: (T) -> Int): Int {
             return initialCount + sumBy(selector)
+        }
+
+        private fun methodRefToThrift(ref: MethodRef): ThriftMethodRef {
+            return ThriftMethodRef(
+                declaringClass = ref.declClassName,
+                returnType = ref.returnTypeName,
+                methodName = ref.name,
+                argumentTypes = ref.argumentTypeNames.toList()
+            )
+        }
+
+        private fun methodRefFromThrift(thrift: ThriftMethodRef): MethodRef {
+            return MethodRef(thrift.declaringClass, thrift.argumentTypes?.toTypedArray(), thrift.returnType, thrift.methodName)
+        }
+
+        private fun fieldRefToThrift(ref: FieldRef): ThriftFieldRef {
+            return ThriftFieldRef(
+                declaringClass = ref.declClassName,
+                fieldType = ref.typeName,
+                fieldName = ref.name
+            )
+        }
+
+        private fun fieldRefFromThrift(thrift: ThriftFieldRef): FieldRef {
+            return FieldRef(thrift.declaringClass, thrift.fieldType, thrift.fieldName)
+        }
+
+        @JvmStatic fun toThrift(tree: PackageTree): ThriftPackageTree {
+            val children = LinkedHashMap<String, ThriftPackageTree>()
+            for ((name, child) in tree.children_) {
+                children[name] = toThrift(child)
+            }
+
+            return ThriftPackageTree(
+                name = tree.name_,
+                isClass = tree.isClass_,
+                children = children,
+                declaredMethods = tree.methods_[DECLARED]?.map(::methodRefToThrift)?.toSet(),
+                referencedMethods = tree.methods_[REFERENCED]?.map(::methodRefToThrift)?.toSet(),
+                declaredFields = tree.fields_[DECLARED]?.map(::fieldRefToThrift)?.toSet(),
+                referencedFields = tree.fields_[REFERENCED]?.map(::fieldRefToThrift)?.toSet()
+            )
+        }
+
+        @JvmStatic fun fromThrift(thrift: ThriftPackageTree): PackageTree {
+            val tree = PackageTree(thrift.name ?: "", thrift.isClass ?: false, Deobfuscator.empty)
+            if (thrift.children != null) {
+                for ((name, node) in thrift.children) {
+                    tree.children_[name] = fromThrift(node)
+                }
+            }
+
+            if (thrift.declaredFields != null) {
+                for (field in thrift.declaredFields) {
+                    tree.fields_[DECLARED]!! += fieldRefFromThrift(field)
+                }
+            }
+
+            if (thrift.referencedFields != null) {
+                for (field in thrift.referencedFields) {
+                    tree.fields_[REFERENCED]!! += fieldRefFromThrift(field)
+                }
+            }
+
+            if (thrift.declaredMethods != null) {
+                for (method in thrift.declaredMethods) {
+                    tree.methods_[DECLARED]!! += methodRefFromThrift(method)
+                }
+            }
+
+            if (thrift.referencedMethods != null) {
+                for (method in thrift.referencedMethods) {
+                    tree.methods_[REFERENCED]!! += methodRefFromThrift(method)
+                }
+            }
+
+            return tree
         }
     }
 
@@ -60,13 +141,13 @@ class PackageTree(
 
     // The set of methods declared on this node.  Will be empty for package
     // nodes and possibly non-empty for class nodes.
-    private val methods_ = mutableMapOf<Type, HashSet<HasDeclaringClass>>()
-        .apply { Type.values().forEach { put(it, HashSet<HasDeclaringClass>()) } }
+    private val methods_ = mutableMapOf<Type, HashSet<MethodRef>>()
+        .apply { Type.values().forEach { put(it, HashSet()) } }
 
     // The set of fields declared on this node.  Will be empty for package
     // nodes and possibly non-empty for class nodes.
-    private val fields_ = mutableMapOf<Type, HashSet<HasDeclaringClass>>()
-        .apply { Type.values().forEach { put(it, HashSet<HasDeclaringClass>()) } }
+    private val fields_ = mutableMapOf<Type, HashSet<FieldRef>>()
+        .apply { Type.values().forEach { put(it, HashSet()) } }
 
     val classCount: Int get() = classCount(REFERENCED)
     val methodCount: Int get() = methodCount(REFERENCED)
@@ -468,5 +549,27 @@ class PackageTree(
 
     private enum class Type {
         DECLARED, REFERENCED
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is PackageTree) return false
+
+        if (this.name_ != other.name_) return false
+        if (this.isClass_ != other.isClass_) return false
+        if (this.methods_ != other.methods_) return false
+        if (this.fields_ != other.fields_) return false
+        if (this.children_ != other.children_) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var hashcode = 7
+        hashcode = 31 * hashcode + name_.hashCode()
+        hashcode = 31 * hashcode + (if (isClass_) 1 else 0)
+        hashcode = 31 * hashcode + methods_.hashCode()
+        hashcode = 31 * hashcode + fields_.hashCode()
+        hashcode = 31 * hashcode + children_.hashCode()
+        return hashcode
     }
 }
