@@ -27,6 +27,7 @@ buildscript {
         classpath deps.kotlinGradlePlugin
         classpath deps.dokkaGradlePlugin
         classpath deps.gradlePublishPlugin
+        classpath deps.thriftyGradlePlugin
     }
 }
 
@@ -46,6 +47,7 @@ apply plugin: "com.github.ben-manes.versions"
 apply plugin: "org.jetbrains.kotlin.jvm"
 apply plugin: "org.jetbrains.dokka"
 apply plugin: "groovy"
+apply plugin: "com.microsoft.thrifty"
 apply plugin: "java-gradle-plugin"
 apply plugin: "com.vanniktech.maven.publish"
 
@@ -94,6 +96,7 @@ dependencies {
     implementation deps.kotlinStdlib
     implementation deps.gson
     implementation deps.javassist
+    implementation deps.thrifty
 
     compileOnly deps.gradle
 
@@ -103,6 +106,12 @@ dependencies {
     testImplementation deps.gradle
     testImplementation deps.junit
     testImplementation deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
+}
+
+thrifty {
+    kotlin {
+        builderlessDataClasses true
+    }
 }
 
 apply from: "gradle/compile.gradle"

@@ -1264,4 +1264,43 @@ final class PackageTreeSpec extends Specification {
 
         trimmed == expected
     }
+
+    def "it roundtrips to and from Thrift"() {
+        given:
+        def tree = new PackageTree();
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addDeclaredFieldRef(fieldRef("Lx/y/z/XYZ;"))
+
+        when:
+        def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree))
+
+        then:
+        tree == roundtripped
+    }
+
+    def "printed output from roundtripped tree is identical to that from the original"() {
+        given:
+        def tree = new PackageTree();
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;"))
+        tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
+        tree.addDeclaredFieldRef(fieldRef("Lx/y/z/XYZ;"))
+        def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree))
+
+        def opts = new PrintOptions()
+        opts.includeTotalMethodCount = true
+        opts.includeClassCount = true
+        opts.includeMethodCount = true
+        opts.printDeclarations = true
+
+        def originalOutput = new StringBuilder()
+        def roundtrippedOutput = new StringBuilder()
+
+        when:
+        tree.printPackageList(originalOutput, opts)
+        roundtripped.printPackageList(roundtrippedOutput, opts)
+
+        then:
+        originalOutput.toString() == roundtrippedOutput.toString()
+    }
 }
