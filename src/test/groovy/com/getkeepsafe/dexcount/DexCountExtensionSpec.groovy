@@ -82,11 +82,14 @@ final class DexCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
         task.variantNameProperty.set("extensionSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)
         task.execute()
+
+        DexCountOutputTask outputTask = project.tasks.getByName("countDebugDexMethods") as DexCountOutputTask
+        outputTask.run()
 
         then:
         thrown(GradleException)
@@ -111,7 +114,7 @@ final class DexCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
         task.variantNameProperty.set("extensionSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)
@@ -141,7 +144,7 @@ final class DexCountExtensionSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
         task.variantNameProperty.set("extensionSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)
