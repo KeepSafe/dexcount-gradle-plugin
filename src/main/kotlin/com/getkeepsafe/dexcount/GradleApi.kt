@@ -17,6 +17,8 @@
 package com.getkeepsafe.dexcount
 
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 
 /**
  * `true` if this project is compiled with Instant Run support, otherwise `false`.
@@ -74,3 +76,7 @@ data class GradleVersion(
 
 val Project.gradleVersion: GradleVersion
     get() = GradleVersion.parse(gradle.gradleVersion)
+
+inline fun <reified T> ObjectFactory.property(): Property<T> {
+    return property(T::class.java)
+}

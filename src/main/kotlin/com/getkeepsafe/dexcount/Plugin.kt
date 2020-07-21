@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package com.getkeepsafe.dexcount
 
 import com.android.build.api.artifact.ArtifactType
@@ -52,7 +54,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
-import kotlin.reflect.KClass
 
 open class DexMethodCountPlugin : Plugin<Project> {
     companion object {
@@ -212,10 +213,25 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
     abstract fun applyToLibraryVariant(variant: LibraryVariant)
 
     private fun applyToJavaProject(jarTask: Jar) {
-        project.tasks.register("countDeclaredMethods", JarDexCountTask::class.java) { t ->
-            t.jarFileProperty.set(jarTask.archiveFile)
-            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+        val gen = project.tasks.register("generatePackageTree", JarPackageTreeTask::class.java) { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
+            t.variantNameProperty.set("")
+            t.jarFileProperty.set(jarTask.archiveFile)
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.dat"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+        }
+
+        project.tasks.register("countDeclaredMethods", DexCountOutputTask::class.java) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set("")
+            t.androidProject.set(false)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
 
             if (ext.runOnEachPackage) {
                 jarTask.finalizedBy(t)
@@ -223,7 +239,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
         }
     }
 
-    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: LegacyDexCountTask) {
+    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: Task) {
         // Dexcount tasks require that their parent task has been run...
         dexcountTask.dependsOn(parentTask)
         dexcountTask.mustRunAfter(parentTask)
@@ -238,7 +254,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             variant: BaseVariant,
             parentTask: Task,
             output: BaseVariantOutput?,
-            applyInputConfiguration: (LegacyDexCountTask) -> Unit): LegacyDexCountTask  {
+            applyInputConfiguration: (LegacyGeneratePackageTreeTask) -> Unit)  {
         var slug = variant.name.capitalize()
         var path = "${project.buildDir}/outputs/dexcount/${variant.name}"
         val outputName = if (variant.outputs.size > 1) {
@@ -250,18 +266,36 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             variant.name
         }
 
-        return project.tasks.create("count${slug}DexMethods", LegacyDexCountTask::class.java) { t ->
+        val treePath = path.replace("outputs", "intermediates") + "/tree.dat"
+
+        val gen = project.tasks.register("generate${slug}PackageTree", LegacyGeneratePackageTreeTask::class.java) { t ->
+            t.description         = "Generates dex method count for ${variant.name}."
+            t.group               = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(outputName)
+            t.mappingFileProvider.set(getMappingFile(variant))
+            t.outputDirectoryProperty.set(project.file(path))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file(treePath))
+
+            applyInputConfiguration(t)
+
+            t.mustRunAfter(parentTask)
+            t.dependsOn(parentTask)
+        }
+
+        project.tasks.register("count${slug}DexMethods", DexCountOutputTask::class.java) { t ->
             t.description         = "Outputs dex method count for ${variant.name}."
             t.group               = "Reporting"
 
             t.configProperty.set(ext)
-            t.variantOutputName.set(outputName)
-            t.mappingFileProvider.set(getMappingFile(variant))
-            t.outputDirectoryProperty.set(project.file(path))
+            t.variantNameProperty.set(outputName)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
 
-            applyInputConfiguration(t)
-
-            addDexcountTaskToGraph(parentTask, t)
+            if (ext.runOnEachPackage) {
+                parentTask.finalizedBy(t)
+            }
         }
     }
 
@@ -472,15 +506,30 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
         check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
 
+        val genTaskName = "generate${name.capitalize()}PackageTree"
         val taskName = "count${name.capitalize()}DexMethods"
 
-        project.tasks.register<ApkDexCountTask>(taskName) { t ->
+        val gen = project.tasks.register<ApkPackageTreeTask>(genTaskName) { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set(name)
             t.apkDirectoryProperty.set(artifacts.get(ArtifactType.APK))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$name/tree.dat"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
+        }
+
+        project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(name)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
         }
     }
 
@@ -493,13 +542,27 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
         val taskName = "count${name.capitalize()}BundleDexMethods"
 
-        project.tasks.register<ApkDexCountTask>(taskName) { t ->
+        val gen = project.tasks.register<BundlePackageTreeTask>("generate${name.capitalize()}BundlePackageTree") { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set(name)
             t.bundleFileProperty.set(artifacts.get(ArtifactType.BUNDLE))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$name/tree.dat"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
+        }
+
+        project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(name)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
         }
     }
 
@@ -516,13 +579,27 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         project.afterEvaluate {
             val bundleTaskProvider = project.tasks.named("bundle${name.capitalize()}Aar", BundleAar::class.java)
 
-            project.tasks.register<FourOneLibraryDexCountTask>(taskName) { t ->
+            val gen = project.tasks.register<Agp41LibraryPackageTreeTask>("generate${name.capitalize()}PackageTree") { t ->
+                t.description = "Generate dex method counts"
+                t.group       = "Reporting"
+
                 t.configProperty.set(ext)
                 t.variantNameProperty.set(name)
                 t.aarBundleFileCollection.from(bundleTaskProvider)
                 t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
                 t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+                t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$name/tree.dat"))
                 t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$name"))
+            }
+
+            project.tasks.register<DexCountOutputTask>(taskName) { t ->
+                t.description = "Output dex method counts"
+                t.group       = "Reporting"
+
+                t.configProperty.set(ext)
+                t.variantNameProperty.set(name)
+                t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+                t.androidProject.set(true)
             }
         }
     }
@@ -539,19 +616,31 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
 
         val jarTaskProvider = project.tasks.named("jar", Jar::class.java)
-        val outputDir = project.layout.buildDirectory.dir("outputs/dexcount")
-        project.tasks.register<JarDexCountTask>("countDeclaredMethods") { t ->
-            t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
-            t.outputDirectoryProperty.set(outputDir)
+
+        val gen = project.tasks.register<JarPackageTreeTask>("generatePackageTree") { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
+            t.variantNameProperty.set("")
+            t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.dat"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+        }
+
+        project.tasks.register<DexCountOutputTask>("countDeclaredMethods") { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set("")
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(false)
         }
     }
 
     private inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
         return register(name, T::class.java) { t ->
-            t.description         = "Outputs dex method counts."
-            t.group               = "Reporting"
-
             fn(t)
         }
     }

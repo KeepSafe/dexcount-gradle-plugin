@@ -12,10 +12,10 @@ VERSION=`grep '^VERSION_NAME=' gradle.properties | cut -d '=' -f 2`
 
 echo "Building integration test project..."
 cd integration
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:countDebugDexMethods 2>&1 --stacktrace | tee app.log
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :lib:countDebugDexMethods 2>&1 --stacktrace | tee lib.log
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :tests:countDebugDexMethods 2>&1 --stacktrace | tee tests.log
-../gradlew --daemon clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:countDebugBundleDexMethods 2>&1 --stacktrace | tee bundle.log
+../gradlew --daemon --build-cache clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:countDebugDexMethods 2>&1 --stacktrace | tee app.log
+../gradlew --daemon --build-cache clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :lib:countDebugDexMethods 2>&1 --stacktrace | tee lib.log
+../gradlew --daemon --build-cache clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :tests:countDebugDexMethods 2>&1 --stacktrace | tee tests.log
+../gradlew --daemon --build-cache clean -PdexcountVersion="$VERSION" -Pandroid.debug.obsoleteApi=true :app:countDebugBundleDexMethods 2>&1 --stacktrace | tee bundle.log
 
 echo "Integration build done!  Running tests..."
 
