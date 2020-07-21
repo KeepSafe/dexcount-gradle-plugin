@@ -214,6 +214,9 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
 
     private fun applyToJavaProject(jarTask: Jar) {
         val gen = project.tasks.register("generatePackageTree", JarPackageTreeTask::class.java) { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set("")
             t.jarFileProperty.set(jarTask.archiveFile)
@@ -222,6 +225,9 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
         }
 
         project.tasks.register("countDeclaredMethods", DexCountOutputTask::class.java) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set("")
             t.androidProject.set(false)
@@ -517,6 +523,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set(name)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
@@ -547,6 +556,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set(name)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
@@ -568,6 +580,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             val bundleTaskProvider = project.tasks.named("bundle${name.capitalize()}Aar", BundleAar::class.java)
 
             val gen = project.tasks.register<Agp41LibraryPackageTreeTask>("generate${name.capitalize()}PackageTree") { t ->
+                t.description = "Generate dex method counts"
+                t.group       = "Reporting"
+
                 t.configProperty.set(ext)
                 t.variantNameProperty.set(name)
                 t.aarBundleFileCollection.from(bundleTaskProvider)
@@ -578,6 +593,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             }
 
             project.tasks.register<DexCountOutputTask>(taskName) { t ->
+                t.description = "Output dex method counts"
+                t.group       = "Reporting"
+
                 t.configProperty.set(ext)
                 t.variantNameProperty.set(name)
                 t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
@@ -600,6 +618,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         val jarTaskProvider = project.tasks.named("jar", Jar::class.java)
 
         val gen = project.tasks.register<JarPackageTreeTask>("generatePackageTree") { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set("")
             t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
@@ -608,6 +629,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
 
         project.tasks.register<DexCountOutputTask>("countDeclaredMethods") { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
             t.configProperty.set(ext)
             t.variantNameProperty.set("")
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
@@ -617,9 +641,6 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
     private inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
         return register(name, T::class.java) { t ->
-            t.description         = "Outputs dex method counts."
-            t.group               = "Reporting"
-
             fn(t)
         }
     }
