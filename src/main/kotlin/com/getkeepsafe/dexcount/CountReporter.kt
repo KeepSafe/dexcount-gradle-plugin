@@ -2,8 +2,6 @@ package com.getkeepsafe.dexcount
 
 import org.gradle.api.GradleException
 import org.gradle.api.logging.LogLevel
-import java.io.File
-import java.io.PrintStream
 import kotlin.math.max
 
 /**
@@ -11,7 +9,6 @@ import kotlin.math.max
  *
  * @property packageTree the tree containing the method, field, and class counts to be reported.
  * @property variantName the name of the variant being counted.
- * @property outputDir the directory in which to generate reports.
  * @param styleable a [Styleable] instance with which to print "interactive" reports.
  * @property config the current dexcount configuration
  * @property inputRepresentation a string describing the input from which [packageTree] was generated.
@@ -21,7 +18,6 @@ import kotlin.math.max
 class CountReporter(
     val packageTree: PackageTree,
     val variantName: String,
-    val outputDir: File,
     styleable: Styleable,
     val config: DexCountExtension,
     val inputRepresentation: String,
@@ -42,18 +38,12 @@ class CountReporter(
         isAndroidProject = isAndroidProject
     )
 
-    private val summaryFile = File(outputDir, "summary.csv")
-    private val fullCountFile = File(outputDir, variantName + (config.format as OutputFormat).extension)
-    private val chartDirectory = File(outputDir, "chart")
-
     fun report() {
         try {
             check(config.enabled) { "Tasks should not be executed if the plugin is disabled" }
 
             printPreamble()
             printSummary()
-            printFullTree()
-            printChart()
             printTaskDiagnosticData()
             failBuildMaxMethods()
         } catch (e: DexCountException) {
@@ -116,17 +106,6 @@ class CountReporter(
             }
         }
 
-        summaryFile.parentFile.mkdirs()
-        summaryFile.createNewFile()
-
-        val headers = "methods,fields,classes"
-        val counts = "${packageTree.methodCount},${packageTree.fieldCount},${packageTree.classCount}"
-
-        summaryFile.printWriter().use { writer ->
-            writer.println(headers)
-            writer.println(counts)
-        }
-
         if (options.teamCityIntegration || config.teamCitySlug != null) {
             withStyledOutput { out ->
                 val slug = "Dexcount" + when (val ts = config.teamCitySlug) {
@@ -150,32 +129,6 @@ class CountReporter(
         }
     }
 
-    private fun printFullTree() {
-        fullCountFile.printStream().use {
-            packageTree.print(it, config.format as OutputFormat, options)
-        }
-    }
-
-    private fun printChart() {
-        options.includeClasses = true
-
-        File(chartDirectory, "data.js").printStream().use { out ->
-            out.print("var data = ")
-            packageTree.printJson(out, options)
-        }
-
-        listOf("chart-builder.js", "d3.v3.min.js", "index.html", "styles.css").forEach { resourceName ->
-            javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/$resourceName").use { resource ->
-                val targetFile = File(chartDirectory, resourceName)
-                targetFile.outputStream().use { output ->
-                    resource.copyTo(output)
-                    output.flush()
-                }
-                resource.close()
-            }
-        }
-    }
-
     private fun printTaskDiagnosticData() {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
@@ -193,12 +146,6 @@ class CountReporter(
         if (config.maxMethodCount > 0 && packageTree.methodCount > config.maxMethodCount) {
             throw GradleException("The current APK has ${packageTree.methodCount} methods, the current max is: ${config.maxMethodCount}.")
         }
-    }
-
-    private fun File.printStream(): PrintStream {
-        parentFile.mkdirs()
-        createNewFile()
-        return PrintStream(outputStream())
     }
 
     companion object {

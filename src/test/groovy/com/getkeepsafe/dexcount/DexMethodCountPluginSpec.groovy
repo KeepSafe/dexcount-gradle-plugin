@@ -440,7 +440,7 @@ final class DexMethodCountPluginSpec extends Specification {
         project.evaluate()
 
         // Override APK file
-        ApkDexCountTask task = project.tasks.getByName("countDebugDexMethods") as ApkDexCountTask
+        ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
         task.variantNameProperty.set("pluginSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)

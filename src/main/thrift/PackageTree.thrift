@@ -22,3 +22,8 @@ struct PackageTree {
     6: set<FieldRef> declaredFields;
     7: set<FieldRef> referencedFields;
 }
+
+struct TreeGenOutput {
+    1: PackageTree tree;
+    2: string inputRepresentation;
+}
