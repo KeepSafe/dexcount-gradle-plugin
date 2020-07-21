@@ -19,7 +19,7 @@
 package com.getkeepsafe.dexcount
 
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput
-import com.microsoft.thrifty.protocol.BinaryProtocol
+import com.microsoft.thrifty.protocol.CompactProtocol
 import com.microsoft.thrifty.transport.BufferTransport
 import okio.Buffer
 import org.gradle.api.DefaultTask
@@ -57,7 +57,7 @@ abstract class DexCountOutputTask @Inject constructor (
             buffer.readFrom(it)
 
             val transport = BufferTransport(buffer)
-            val protocol = BinaryProtocol(transport)
+            val protocol = CompactProtocol(transport)
             val thrift = TreeGenOutput.ADAPTER.read(protocol)
 
             tree = PackageTree.fromThrift(thrift.tree!!)
