@@ -1272,8 +1272,11 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addDeclaredFieldRef(fieldRef("Lx/y/z/XYZ;"))
 
+        def pool = PackageTree.buildStringPool(tree)
+        def reversePool = pool.collectEntries { e -> [(e.value): e.key] }
+
         when:
-        def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree))
+        def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree, pool), reversePool)
 
         then:
         tree == roundtripped
@@ -1285,7 +1288,10 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;"))
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addDeclaredFieldRef(fieldRef("Lx/y/z/XYZ;"))
-        def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree))
+
+        def pool = PackageTree.buildStringPool(tree)
+        def reversePool = pool.collectEntries { e -> [(e.value): e.key] }
+        def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree, pool), reversePool)
 
         def opts = new PrintOptions()
         opts.includeTotalMethodCount = true

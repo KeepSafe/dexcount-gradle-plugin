@@ -28,7 +28,9 @@ import com.getkeepsafe.dexcount.thrift.PackageTree as ThriftPackageTree
 import com.google.gson.stream.JsonWriter
 import java.io.Writer
 import java.nio.CharBuffer
-import java.util.*
+import java.util.SortedMap
+import java.util.TreeMap
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.HashSet
 import kotlin.collections.LinkedHashMap
 
@@ -46,77 +48,133 @@ class PackageTree(
             return initialCount + sumBy(selector)
         }
 
-        private fun methodRefToThrift(ref: MethodRef): ThriftMethodRef {
+        @JvmStatic
+        private fun methodRefToThrift(ref: MethodRef, pool: Map<String, Long>): ThriftMethodRef {
             return ThriftMethodRef(
-                declaringClass = ref.declClassName,
-                returnType = ref.returnTypeName,
-                methodName = ref.name,
-                argumentTypes = ref.argumentTypeNames.toList()
+                declaringClass = pool[ref.declClassName],
+                returnType = pool[ref.returnTypeName],
+                methodName = pool[ref.name],
+                argumentTypes = ref.argumentTypeNames.map { pool[it]!! }.toList()
             )
         }
 
-        private fun methodRefFromThrift(thrift: ThriftMethodRef): MethodRef {
-            return MethodRef(thrift.declaringClass, thrift.argumentTypes?.toTypedArray(), thrift.returnType, thrift.methodName)
+        @JvmStatic
+        private fun methodRefFromThrift(thrift: ThriftMethodRef, pool: Map<Long, String>): MethodRef {
+            return MethodRef(
+                pool[thrift.declaringClass],
+                thrift.argumentTypes?.map { pool[it] }?.toTypedArray(),
+                pool[thrift.returnType],
+                pool[thrift.methodName]
+            )
         }
 
-        private fun fieldRefToThrift(ref: FieldRef): ThriftFieldRef {
+        @JvmStatic
+        private fun fieldRefToThrift(ref: FieldRef, pool: Map<String, Long>): ThriftFieldRef {
             return ThriftFieldRef(
-                declaringClass = ref.declClassName,
-                fieldType = ref.typeName,
-                fieldName = ref.name
+                declaringClass = pool[ref.declClassName],
+                fieldType = pool[ref.typeName],
+                fieldName = pool[ref.name]
             )
         }
 
-        private fun fieldRefFromThrift(thrift: ThriftFieldRef): FieldRef {
-            return FieldRef(thrift.declaringClass, thrift.fieldType, thrift.fieldName)
+        @JvmStatic
+        private fun fieldRefFromThrift(thrift: ThriftFieldRef, pool: Map<Long, String>): FieldRef {
+            return FieldRef(pool[thrift.declaringClass], pool[thrift.fieldType], pool[thrift.fieldName])
         }
 
-        @JvmStatic fun toThrift(tree: PackageTree): ThriftPackageTree {
-            val children = LinkedHashMap<String, ThriftPackageTree>()
+        @JvmStatic
+        fun buildStringPool(tree: PackageTree): Map<String, Long> {
+            val frequencies = LinkedHashMap<String, Long>()
+            fun incr(str: String) {
+                frequencies[str] = frequencies.getOrDefault(str, 0) + 1
+            }
+
+            val q = java.util.ArrayDeque<PackageTree>()
+            q.push(tree)
+
+            while (q.isNotEmpty()) {
+                val t = q.pop()
+                for (child in t.children_.values) {
+                    q.push(child)
+                }
+
+                incr(t.name_)
+                for (ref in t.methods_.flatMap { it.value }) {
+                    incr(ref.name)
+                    incr(ref.returnTypeName)
+                    incr(ref.declClassName)
+                    for (argType in ref.argumentTypeNames) {
+                        incr(argType)
+                    }
+                }
+
+                for (ref in t.fields_.flatMap { it.value }) {
+                    incr(ref.name)
+                    incr(ref.typeName)
+                    incr(ref.declClassName)
+                }
+            }
+
+            // We now have a map of tokens and their frequency.
+            // We'll build another map, but this time the most frequently-occurring
+            // tokens will have the lowest IDs, so that they take the minimum space
+            // possible.
+            val counter = AtomicLong(0)
+            return frequencies
+                .map { (str, freq) -> freq to str }
+                .sortedBy { (freq, _) -> freq }
+                .map { (_, str) ->
+                    str to counter.getAndIncrement()
+                }
+                .toMap()
+        }
+
+        @JvmStatic fun toThrift(tree: PackageTree, pool: Map<String, Long>): ThriftPackageTree {
+            val children = LinkedHashMap<Long, ThriftPackageTree>()
             for ((name, child) in tree.children_) {
-                children[name] = toThrift(child)
+                children[pool[name]!!] = toThrift(child, pool)
             }
 
             return ThriftPackageTree(
-                name = tree.name_,
+                name = pool[tree.name_],
                 isClass = tree.isClass_,
                 children = children,
-                declaredMethods = tree.methods_[DECLARED]?.map(::methodRefToThrift)?.toSet(),
-                referencedMethods = tree.methods_[REFERENCED]?.map(::methodRefToThrift)?.toSet(),
-                declaredFields = tree.fields_[DECLARED]?.map(::fieldRefToThrift)?.toSet(),
-                referencedFields = tree.fields_[REFERENCED]?.map(::fieldRefToThrift)?.toSet()
+                declaredMethods = tree.methods_[DECLARED]?.map { methodRefToThrift(it, pool) }?.toSet(),
+                referencedMethods = tree.methods_[REFERENCED]?.map { methodRefToThrift(it, pool) }?.toSet(),
+                declaredFields = tree.fields_[DECLARED]?.map { fieldRefToThrift(it, pool) }?.toSet(),
+                referencedFields = tree.fields_[REFERENCED]?.map { fieldRefToThrift(it, pool) }?.toSet()
             )
         }
 
-        @JvmStatic fun fromThrift(thrift: ThriftPackageTree): PackageTree {
-            val tree = PackageTree(thrift.name ?: "", thrift.isClass ?: false, Deobfuscator.empty)
+        @JvmStatic fun fromThrift(thrift: ThriftPackageTree, pool: Map<Long, String>): PackageTree {
+            val tree = PackageTree(pool[thrift.name] ?: "", thrift.isClass ?: false, Deobfuscator.empty)
             if (thrift.children != null) {
                 for ((name, node) in thrift.children) {
-                    tree.children_[name] = fromThrift(node)
+                    tree.children_[pool[name]] = fromThrift(node, pool)
                 }
             }
 
             if (thrift.declaredFields != null) {
                 for (field in thrift.declaredFields) {
-                    tree.fields_[DECLARED]!! += fieldRefFromThrift(field)
+                    tree.fields_[DECLARED]!! += fieldRefFromThrift(field, pool)
                 }
             }
 
             if (thrift.referencedFields != null) {
                 for (field in thrift.referencedFields) {
-                    tree.fields_[REFERENCED]!! += fieldRefFromThrift(field)
+                    tree.fields_[REFERENCED]!! += fieldRefFromThrift(field, pool)
                 }
             }
 
             if (thrift.declaredMethods != null) {
                 for (method in thrift.declaredMethods) {
-                    tree.methods_[DECLARED]!! += methodRefFromThrift(method)
+                    tree.methods_[DECLARED]!! += methodRefFromThrift(method, pool)
                 }
             }
 
             if (thrift.referencedMethods != null) {
                 for (method in thrift.referencedMethods) {
-                    tree.methods_[REFERENCED]!! += methodRefFromThrift(method)
+                    tree.methods_[REFERENCED]!! += methodRefFromThrift(method, pool)
                 }
             }
 

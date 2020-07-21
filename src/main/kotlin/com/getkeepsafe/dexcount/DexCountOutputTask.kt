@@ -60,7 +60,7 @@ abstract class DexCountOutputTask @Inject constructor (
             val protocol = CompactProtocol(transport)
             val thrift = TreeGenOutput.ADAPTER.read(protocol)
 
-            tree = PackageTree.fromThrift(thrift.tree!!)
+            tree = PackageTree.fromThrift(thrift.tree!!, thrift.stringPool!!)
             inputRepresentation = thrift.inputRepresentation ?: ""
         }
 

@@ -100,9 +100,11 @@ abstract class BaseGeneratePackageTreeTask constructor(
     }
 
     private fun writeIntermediateThriftFile(tree: PackageTree) {
+        val stringPool = PackageTree.buildStringPool(tree)
         val thrift = TreeGenOutput(
-            tree = PackageTree.toThrift(tree),
-            inputRepresentation = inputRepresentation
+            tree = PackageTree.toThrift(tree, stringPool),
+            inputRepresentation = inputRepresentation,
+            stringPool = stringPool.map { (k, v) -> v to k }.toMap()
         )
         val buffer = Buffer()
         val transport = BufferTransport(buffer)
