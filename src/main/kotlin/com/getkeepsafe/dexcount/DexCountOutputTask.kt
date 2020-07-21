@@ -22,6 +22,8 @@ import com.getkeepsafe.dexcount.thrift.TreeGenOutput
 import com.microsoft.thrifty.protocol.CompactProtocol
 import com.microsoft.thrifty.transport.BufferTransport
 import okio.Buffer
+import okio.gzip
+import okio.source
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
@@ -52,9 +54,9 @@ abstract class DexCountOutputTask @Inject constructor (
     open fun run() {
         lateinit var tree: PackageTree
         lateinit var inputRepresentation: String
-        packageTreeFileProperty.asFile.get().inputStream().use {
+        packageTreeFileProperty.asFile.get().source().gzip().use {
             val buffer = Buffer()
-            buffer.readFrom(it)
+            buffer.writeAll(it)
 
             val transport = BufferTransport(buffer)
             val protocol = CompactProtocol(transport)
