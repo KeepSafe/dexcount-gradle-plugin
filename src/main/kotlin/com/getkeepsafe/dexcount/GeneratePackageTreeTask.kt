@@ -23,6 +23,8 @@ import com.getkeepsafe.dexcount.thrift.TreeGenOutput
 import com.microsoft.thrifty.protocol.CompactProtocol
 import com.microsoft.thrifty.transport.BufferTransport
 import okio.Buffer
+import okio.gzip
+import okio.sink
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
@@ -115,9 +117,9 @@ abstract class BaseGeneratePackageTreeTask constructor(
         treeFile.parentFile.mkdirs()
         treeFile.delete()
 
-        treeFile.outputStream().use { output ->
-            buffer.writeTo(output)
-            output.flush()
+        treeFile.sink().gzip().use { out ->
+            buffer.readAll(out)
+            out.flush()
         }
     }
 
