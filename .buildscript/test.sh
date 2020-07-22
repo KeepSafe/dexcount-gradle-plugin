@@ -24,16 +24,16 @@ function die() {
   exit 1
 }
 
-grep -F 'Total methods in app-debug-it.apk: 6725 (10.26% used)' app.log || die "Incorrect method count in app-debug-it.apk"
-grep -F 'Total fields in app-debug-it.apk:  1916 (2.92% used)' app.log || die "Incorrect field count in app-debug-it.apk"
-grep -F 'Total classes in app-debug-it.apk:  837 (1.28% used)' app.log || die "Incorrect field count in app-debug-it.apk"
-grep -F 'Methods remaining in app-debug-it.apk: 58810' app.log || die "Incorrect remaining-method value in app-debug-it.apk"
-grep -F 'Fields remaining in app-debug-it.apk:  63619' app.log || die "Incorrect remaining-field value in app-debug-it.apk"
-grep -F 'Classes remaining in app-debug-it.apk:  64698' app.log || die "Incorrect remaining-field value in app-debug-it.apk"
+grep -F 'Total methods in app-debug-it.apk: 7356 (11.22% used)' app.log || die "Incorrect method count in app-debug-it.apk"
+grep -F 'Total fields in app-debug-it.apk:  2597 (3.96% used)' app.log || die "Incorrect field count in app-debug-it.apk"
+grep -F 'Total classes in app-debug-it.apk:  926 (1.41% used)' app.log || die "Incorrect field count in app-debug-it.apk"
+grep -F 'Methods remaining in app-debug-it.apk: 58179' app.log || die "Incorrect remaining-method value in app-debug-it.apk"
+grep -F 'Fields remaining in app-debug-it.apk:  62938' app.log || die "Incorrect remaining-field value in app-debug-it.apk"
+grep -F 'Classes remaining in app-debug-it.apk:  64609' app.log || die "Incorrect remaining-field value in app-debug-it.apk"
 
-grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_ClassCount' value='837']" app.log || die "Missing or incorrect Teamcity method count value"
-grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_MethodCount' value='6725']" app.log || die "Missing or incorrect Teamcity method count value"
-grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_FieldCount' value='1916']" app.log || die "Missing or incorrect Teamcity field count value"
+grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_ClassCount' value='926']" app.log || die "Missing or incorrect Teamcity method count value"
+grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_MethodCount' value='7356']" app.log || die "Missing or incorrect Teamcity method count value"
+grep -F "##teamcity[buildStatisticValue key='Dexcount_app_debug_FieldCount' value='2597']" app.log || die "Missing or incorrect Teamcity field count value"
 
 grep -F 'Total methods in tests-debug.apk: 4266 (6.51% used)' tests.log || die "Incorrect method count in tests-debug.apk"
 grep -F 'Total fields in tests-debug.apk:  1268 (1.93% used)' tests.log || die "Incorrect field count in tests-debug.apk"
@@ -49,9 +49,9 @@ grep -F 'Methods remaining in lib-debug.aar: 65528' lib.log || die "Incorrect re
 grep -F 'Fields remaining in lib-debug.aar:  65532' lib.log || die "Incorrect remaining-field count in lib-debug.aar"
 grep -F 'Classes remaining in lib-debug.aar:  65529' lib.log || die "Incorrect remaining-class count in lib-debug.aar"
 
-grep -F 'Total methods in app-debug.aab: 6725 (10.26% used)' bundle.log || die "Incorrect method count in app-debug.aab"
-grep -F 'Total fields in app-debug.aab:  1916 (2.92% used)' bundle.log || die "Incorrect field count in app-debug.aab"
-grep -F 'Total classes in app-debug.aab:  837 (1.28% used)' bundle.log || die "Incorrect field count in app-debug.aab"
+grep -F 'Total methods in app-debug.aab: 7356 (11.22% used)' bundle.log || die "Incorrect method count in app-debug.aab"
+grep -F 'Total fields in app-debug.aab:  2597 (3.96% used)' bundle.log || die "Incorrect field count in app-debug.aab"
+grep -F 'Total classes in app-debug.aab:  926 (1.41% used)' bundle.log || die "Incorrect field count in app-debug.aab"
 
 # Note the '&&' here - grep exits with an error if no lines match,
 # which is the condition we want here.  If any lines match, that
