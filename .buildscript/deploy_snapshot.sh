@@ -6,19 +6,20 @@
 # http://benlimmer.com/2013/12/26/automatically-publish-javadoc-to-gh-pages-with-travis-ci/
 
 SLUG="KeepSafe/dexcount-gradle-plugin"
-JDK="openjdk8"
-BRANCH="master"
+EVENT="push"
+BRANCH="refs/heads/master"
 
 set -e
 
-if [ "$TRAVIS_REPO_SLUG" != "$SLUG" ]; then
+if [ "$GITHUB_REPOSITORY" != "$SLUG" ]; then
   echo "Skipping snapshot deployment: wrong repository. Expected '$SLUG' but was '$TRAVIS_REPO_SLUG'."
-elif [ "$TRAVIS_JDK_VERSION" != "$JDK" ]; then
-  echo "Skipping snapshot deployment: wrong JDK. Expected '$JDK' but was '$TRAVIS_JDK_VERSION'."
-elif [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+  exit 1
+elif [ "$GITHUB_EVENT_NAME" != "$EVENT" ]; then
   echo "Skipping snapshot deployment: was pull request."
-elif [ "$TRAVIS_BRANCH" != "$BRANCH" ]; then
+  exit 1
+elif [ "$GITHUB_REF" != "$BRANCH" ]; then
   echo "Skipping snapshot deployment: wrong branch. Expected '$BRANCH' but was '$TRAVIS_BRANCH'."
+  exit 1
 else
   echo "Deploying snapshot..."
   ./gradlew clean publish
