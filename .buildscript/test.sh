@@ -2,7 +2,7 @@
 
 set -e
 
-# Not sure how well Travis deals with cwd; restore it on script exit.
+# Not sure how well CI deals with cwd; restore it on script exit.
 DIR=`pwd`
 trap "cd ${DIR}" SIGINT SIGTERM EXIT
 
