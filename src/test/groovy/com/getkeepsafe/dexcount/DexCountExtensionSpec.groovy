@@ -83,7 +83,7 @@ final class DexCountExtensionSpec extends Specification {
 
         // Override APK file
         ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
-        task.variantNameProperty.set("extensionSpec")
+        task.outputFileNameProperty.set("extensionSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)
         task.execute()
@@ -115,7 +115,7 @@ final class DexCountExtensionSpec extends Specification {
 
         // Override APK file
         ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
-        task.variantNameProperty.set("extensionSpec")
+        task.outputFileNameProperty.set("extensionSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)
         task.execute()
@@ -145,7 +145,7 @@ final class DexCountExtensionSpec extends Specification {
 
         // Override APK file
         ApkPackageTreeTask task = project.tasks.getByName("generateDebugPackageTree") as ApkPackageTreeTask
-        task.variantNameProperty.set("extensionSpec")
+        task.outputFileNameProperty.set("extensionSpec")
         task.apkDirectoryProperty.set(apkFile.parentFile)
         task.loaderProperty.set(loader)
         task.execute()

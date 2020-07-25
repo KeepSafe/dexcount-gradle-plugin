@@ -24,19 +24,7 @@ class CountReporter(
     val isAndroidProject: Boolean = true,
     val isInstantRun: Boolean = false
 ) : Styleable by styleable {
-    private val options = PrintOptions(
-        includeClassCount = config.includeClassCount,
-        includeMethodCount = true,
-        includeFieldCount = config.includeFieldCount,
-        includeTotalMethodCount = config.includeTotalMethodCount,
-        teamCityIntegration = config.teamCityIntegration,
-        orderByMethodCount = config.orderByMethodCount,
-        includeClasses = config.includeClasses,
-        printHeader = true,
-        maxTreeDepth = config.maxTreeDepth,
-        printDeclarations = config.printDeclarations,
-        isAndroidProject = isAndroidProject
-    )
+    private val options = config.toPrintOptions(isAndroidProject)
 
     fun report() {
         try {
