@@ -33,6 +33,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
@@ -70,15 +71,31 @@ fun DexCountExtension.toPrintOptions(isAndroidProject: Boolean = true): PrintOpt
 abstract class BaseGeneratePackageTreeTask constructor(
     objects: ObjectFactory
 ) : DefaultTask() {
+    /**
+     * The plugin configuration, as provided by the 'dexcount' block.
+     */
     @Nested
     val configProperty: Property<DexCountExtension> = objects.property()
 
+    /**
+     * The name of the the method-count report file, without a file extension.
+     */
     @Input
-    val variantNameProperty: Property<String> = objects.property()
+    val outputFileNameProperty: Property<String> = objects.property()
 
+    /**
+     * The full path to the serialized [PackageTree] produced by this task.
+     *
+     * This file is an intermediate representation, not intended for public
+     * consumption.  Its format is likely to change without notice.
+     */
     @OutputFile
     val packageTreeFileProperty: RegularFileProperty = objects.fileProperty()
 
+    /**
+     * The directory in which plugin outputs (the report file, summary file,
+     * and charts) will be written.
+     */
     @OutputDirectory
     val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
 
@@ -94,6 +111,10 @@ abstract class BaseGeneratePackageTreeTask constructor(
     @TaskAction
     open fun execute() {
         val packageTree = generatePackageTree()
+
+        val outputDir = outputDirectoryProperty.get().asFile
+        outputDir.deleteRecursively()
+        outputDir.mkdirs()
 
         writeIntermediateThriftFile(packageTree)
         writeSummaryFile(packageTree)
@@ -125,7 +146,6 @@ abstract class BaseGeneratePackageTreeTask constructor(
 
     private fun writeSummaryFile(tree: PackageTree) {
         val summaryFile = outputDirectoryProperty.file("summary.csv").get().asFile
-        summaryFile.parentFile.mkdirs()
         summaryFile.createNewFile()
 
         val headers = "methods,fields,classes"
@@ -165,10 +185,10 @@ abstract class BaseGeneratePackageTreeTask constructor(
     }
 
     private fun writeFullTree(tree: PackageTree) {
-        val outputDir = outputDirectoryProperty.get().asFile
         val outputFormat = configProperty.get().format as OutputFormat
-        val fullCountFile = File(outputDir, variantNameProperty.get() + outputFormat.extension)
-        fullCountFile.parentFile.mkdir()
+        val fullCountFileName = outputFileNameProperty.get() + outputFormat.extension
+        val fullCountFile = outputDirectoryProperty.file(fullCountFileName).get().asFile
+
         fullCountFile.printStream().use {
             tree.print(it, outputFormat, configProperty.get().toPrintOptions(isAndroidProject))
             it.flush()
@@ -253,13 +273,10 @@ abstract class ModernGeneratePackageTreeTask constructor(
     @Internal
     val loaderProperty: Property<BuiltArtifactsLoader> = objects.property()
 
-    @get:Internal
-    protected val deobfuscator: Deobfuscator by lazy {
-        when {
-            mappingFileProperty.isPresent -> Deobfuscator.create(mappingFileProperty.asFile.get())
-            else -> Deobfuscator.empty
-        }
-    }
+    @Internal
+    protected val deobfuscatorProvider: Provider<Deobfuscator> = mappingFileProperty
+        .map { Deobfuscator.create(it.asFile) }
+        .orElse(Deobfuscator.empty)
 }
 
 abstract class ApkishPackageTreeTask constructor(
@@ -278,7 +295,7 @@ abstract class ApkishPackageTreeTask constructor(
 
         val dataList = DexFile.extractDexData(file, configProperty.get().dxTimeoutSec)
         try {
-            val tree = PackageTree(deobfuscator)
+            val tree = PackageTree(deobfuscatorProvider.get())
             for (dexFile in dataList) {
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
@@ -341,7 +358,7 @@ abstract class Agp41LibraryPackageTreeTask @Inject constructor(
         val aar = aarBundleFileCollection.first { it.name.endsWith("aar") }
         inputRepresentation = aar.name
 
-        val tree = PackageTree(deobfuscator)
+        val tree = PackageTree(deobfuscatorProvider.get())
 
         val dataList = DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec)
         try {

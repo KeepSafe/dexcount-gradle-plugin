@@ -218,7 +218,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.group       = "Reporting"
 
             t.configProperty.set(ext)
-            t.variantNameProperty.set("")
+            t.outputFileNameProperty.set(jarTask.archiveFile.map { it.asFile.nameWithoutExtension })
             t.jarFileProperty.set(jarTask.archiveFile)
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
@@ -273,7 +273,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.group               = "Reporting"
 
             t.configProperty.set(ext)
-            t.variantNameProperty.set(outputName)
+            t.outputFileNameProperty.set(outputName)
             t.mappingFileProvider.set(getMappingFile(variant))
             t.outputDirectoryProperty.set(project.file(path))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file(treePath))
@@ -514,7 +514,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.group       = "Reporting"
 
             t.configProperty.set(ext)
-            t.variantNameProperty.set(name)
+            t.outputFileNameProperty.set(name)
             t.apkDirectoryProperty.set(artifacts.get(ArtifactType.APK))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
@@ -547,7 +547,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.group       = "Reporting"
 
             t.configProperty.set(ext)
-            t.variantNameProperty.set(name)
+            t.outputFileNameProperty.set(name)
             t.bundleFileProperty.set(artifacts.get(ArtifactType.BUNDLE))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
@@ -584,7 +584,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
                 t.group       = "Reporting"
 
                 t.configProperty.set(ext)
-                t.variantNameProperty.set(name)
+                t.outputFileNameProperty.set(name)
                 t.aarBundleFileCollection.from(bundleTaskProvider)
                 t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
                 t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
@@ -622,7 +622,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.group       = "Reporting"
 
             t.configProperty.set(ext)
-            t.variantNameProperty.set("")
+            t.outputFileNameProperty.set(jarTaskProvider.flatMap { jarTask -> jarTask.archiveFile.map { it.asFile.nameWithoutExtension } })
             t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
