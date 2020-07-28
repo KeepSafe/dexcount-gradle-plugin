@@ -1,0 +1,36 @@
+buildscript {
+    ext {
+        minSdkVersion = 19
+        targetSdkVersion = 28
+        compileSdkVersion = 28
+    }
+
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        google()
+    }
+
+    dependencies {
+        classpath dependencies.create("com.android.tools.build:gradle:$agpVersion") {
+            // Android build tools (as of 3.2.0-alpha18) bundle the deprecated
+            // 'jre' stdlib modules, which cause warnings at build-time that
+            // fail the build.
+            exclude module: 'kotlin-stdlib-jdk7'
+            exclude module: 'kotlin-stdlib-jdk8'
+        }
+        classpath "com.getkeepsafe.dexcount:dexcount-gradle-plugin:+"
+    }
+}
+
+allprojects {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        google()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

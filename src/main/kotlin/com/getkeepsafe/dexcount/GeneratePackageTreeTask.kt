@@ -162,9 +162,9 @@ abstract class BaseGeneratePackageTreeTask constructor(
         val chartDirectory = outputDirectoryProperty.dir("chart").get().asFile
         chartDirectory.mkdirs()
 
-        val options = configProperty.get().toPrintOptions(isAndroidProject).apply {
-            includeClasses = true
-        }
+        val options = configProperty.get()
+            .toPrintOptions(isAndroidProject)
+            .copy(includeClasses = true)
 
         File(chartDirectory, "data.js").printStream().use { out ->
             out.print("var data = ")
