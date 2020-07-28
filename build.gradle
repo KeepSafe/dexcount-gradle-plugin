@@ -125,3 +125,12 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
         allWarningsAsErrors = false
     }
 }
+
+gradlePlugin {
+    plugins {
+        dexcount {
+            id = "com.getkeepsafe.dexcount"
+            implementationClass = "com.getkeepsafe.dexcount.DexMethodCountPlugin"
+        }
+    }
+}
