@@ -65,6 +65,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
 
         private val MIN_GRADLE_VERSION = GradleVersion(major = 5, minor = 1)
+        private val MIN_AGP_VERSION = Revision(3, 4, 0)
     }
 
     override fun apply(project: Project) {
@@ -123,6 +124,10 @@ open class DexMethodCountPlugin : Plugin<Project> {
         }
 
         val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
+        if (gradlePluginRevision > JavaOnlyApplicator.Factory().minimumRevision && gradlePluginRevision < MIN_AGP_VERSION) {
+            project.logger.error("dexcount requires Android Gradle Plugin $MIN_AGP_VERSION or above")
+            return
+        }
 
         val factories = listOf(
             FourOneApplicator.Factory(),
