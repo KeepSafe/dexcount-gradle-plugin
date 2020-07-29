@@ -1,3 +1,4 @@
+rootProject.name = "integration"
 include ":app"
 include ":java-app"
 include ":java-library"

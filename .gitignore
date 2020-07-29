@@ -8,3 +8,4 @@ out/
 .cxx/
 *.hprof
 build-cache/
+tmp/

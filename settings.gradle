@@ -7,3 +7,5 @@ buildCache {
         removeUnusedEntriesAfterDays = 30
     }
 }
+
+enableFeaturePreview("GROOVY_COMPILATION_AVOIDANCE")

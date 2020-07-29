@@ -22,8 +22,7 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            build-cache
-            integration/build-cache
+            **/build-cache
           key: ${{ runner.os }}-${{ matrix.jdk }}-gradle-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.jdk }}-gradle-
@@ -34,7 +33,9 @@ jobs:
           java-version: ${{ matrix.jdk }}
 
       - name: Build and test
-        run: .buildscript/test.sh
+        uses: eskatos/gradle-command-action@v1
+        with:
+          arguments: check
 
       - name: Deploy snapshot
         if: matrix.jdk == 1.8

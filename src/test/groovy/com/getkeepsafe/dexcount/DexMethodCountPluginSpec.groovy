@@ -16,7 +16,6 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 final class DexMethodCountPluginSpec extends Specification {
     @Rule public TemporaryFolder testProjectDir = new TemporaryFolder()
-    private List<File> pluginClasspath
     private File buildFile
     private String reportFolder
     private Project project
@@ -25,13 +24,6 @@ final class DexMethodCountPluginSpec extends Specification {
     def MANIFEST_FILE_TEXT = "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"com.example\"/>"
 
     def 'setup'() {
-        def pluginClasspathResource = getClass().classLoader.findResource('plugin-classpath.txt')
-        if (pluginClasspathResource == null) {
-            throw new IllegalStateException(
-                'Did not find plugin classpath resource, run `testClasses` build task.')
-        }
-
-        pluginClasspath = pluginClasspathResource.readLines().collect { new File(it) }
         buildFile = testProjectDir.newFile('build.gradle')
         reportFolder = "${testProjectDir.root.path}/build/outputs/dexcount"
         testProjectDir.newFolder('src', 'main')
@@ -46,21 +38,12 @@ final class DexMethodCountPluginSpec extends Specification {
 
     @Unroll def '#projectPlugin project'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "${projectPlugin}"
+            id "com.getkeepsafe.dexcount"
         }
-
-        apply plugin: 'com.getkeepsafe.dexcount'
-        apply plugin: "${projectPlugin}"
 
         android {
           compileSdkVersion 28
@@ -76,6 +59,7 @@ final class DexMethodCountPluginSpec extends Specification {
         when:
         GradleRunner.create()
             .withProjectDir(testProjectDir.root)
+            .withPluginClasspath()
             .build()
 
         then:
@@ -87,21 +71,12 @@ final class DexMethodCountPluginSpec extends Specification {
 
     @Unroll def '#projectPlugin project success'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "${projectPlugin}"
+            id "com.getkeepsafe.dexcount"
         }
-
-        apply plugin: "${projectPlugin}"
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         dexcount {
           printDeclarations = true
@@ -110,6 +85,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments("countDeclaredMethods", "--stacktrace")
             .build()
@@ -123,21 +99,12 @@ final class DexMethodCountPluginSpec extends Specification {
 
     @Unroll def '#projectPlugin project failure when printDeclaration is false'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "${projectPlugin}"
+            id "com.getkeepsafe.dexcount"
         }
-
-        apply plugin: "${projectPlugin}"
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         dexcount {
           printDeclarations = false
@@ -146,6 +113,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments("countDeclaredMethods")
             .build()
@@ -159,17 +127,11 @@ final class DexMethodCountPluginSpec extends Specification {
 
     @Unroll def '#taskName with default buildTypes'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "com.android.application"
+            id "com.getkeepsafe.dexcount"
         }
 
         // TODO(???) - Repositories from test
@@ -177,9 +139,6 @@ final class DexMethodCountPluginSpec extends Specification {
           google()
           jcenter()
         }
-
-        apply plugin: 'com.android.application'
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         android {
           compileSdkVersion 28
@@ -192,6 +151,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments("${taskName}", "--full-stacktrace")
             .build()
@@ -205,17 +165,11 @@ final class DexMethodCountPluginSpec extends Specification {
 
     @Unroll def '#taskName with buildTypes'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "com.android.application"
+            id "com.getkeepsafe.dexcount"
         }
 
         // TODO(???) - Repositories from test
@@ -223,9 +177,6 @@ final class DexMethodCountPluginSpec extends Specification {
           google()
           jcenter()
         }
-
-        apply plugin: 'com.android.application'
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         android {
           compileSdkVersion 28
@@ -243,6 +194,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments("${taskName}")
             .build()
@@ -256,17 +208,11 @@ final class DexMethodCountPluginSpec extends Specification {
 
     @Unroll def '#taskName with buildTypes + productFlavors + flavorDimensions'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "com.android.application"
+            id "com.getkeepsafe.dexcount"
         }
 
         // TODO(???) - Repositories from test
@@ -274,9 +220,6 @@ final class DexMethodCountPluginSpec extends Specification {
           google()
           jcenter()
         }
-
-        apply plugin: 'com.android.application'
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         android {
           compileSdkVersion 28
@@ -303,6 +246,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments("${taskName}")
             .build()
@@ -323,17 +267,12 @@ final class DexMethodCountPluginSpec extends Specification {
         apkResource.withStream { input ->
             apkFile.append(input)
         }
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
 
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "com.android.application"
+            id "com.getkeepsafe.dexcount"
         }
 
         // TODO(???) - Repositories from test
@@ -341,9 +280,6 @@ final class DexMethodCountPluginSpec extends Specification {
           google()
           jcenter()
         }
-
-        apply plugin: 'com.android.application'
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         android {
           compileSdkVersion 28
@@ -356,6 +292,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments("${taskName}")
             .build()
@@ -369,21 +306,12 @@ final class DexMethodCountPluginSpec extends Specification {
 
     def 'when enabled is false, no dexcount tasks are added'() {
         given:
-        def classpathString = pluginClasspath
-            .collect { it.absolutePath.replace('\\', '\\\\') } // escape backslashes in Windows paths
-            .collect { "'$it'" }
-            .join(", ")
-
         buildFile <<
             """
-        buildscript {
-          dependencies {
-            classpath files($classpathString)
-          }
+        plugins {
+            id "com.android.application"
+            id "com.getkeepsafe.dexcount"
         }
-
-        apply plugin: 'com.android.application'
-        apply plugin: 'com.getkeepsafe.dexcount'
 
         android {
           compileSdkVersion 28
@@ -400,6 +328,7 @@ final class DexMethodCountPluginSpec extends Specification {
 
         when:
         def result = GradleRunner.create()
+            .withPluginClasspath()
             .withProjectDir(testProjectDir.root)
             .withArguments('tasks')
             .build()

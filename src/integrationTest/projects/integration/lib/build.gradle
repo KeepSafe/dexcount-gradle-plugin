@@ -1,5 +1,7 @@
-apply plugin: "com.android.library"
-apply plugin: "com.getkeepsafe.dexcount"
+plugins {
+    id "com.android.library"
+    id "com.getkeepsafe.dexcount"
+}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -30,7 +32,7 @@ dexcount {
 }
 
 dependencies {
-    implementation deps.appcompatv7
+    implementation "com.android.support:appcompat-v7:28.0.0"
 
-    testImplementation deps.junit
+    testImplementation "junit:junit:4.12"
 }

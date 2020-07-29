@@ -1,5 +1,7 @@
-apply plugin: "com.android.test" // A plugin used for test-only-modules
-apply plugin: "com.getkeepsafe.dexcount"
+plugins {
+    id "com.android.test"
+    id "com.getkeepsafe.dexcount"
+}
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -30,6 +32,11 @@ android {
 
 dependencies {
     // Android Testing Support Library"s runner and rules and hamcrest matchers
-    implementation deps.droidTest
-    implementation deps.hamcrestCore
+    implementation dependencies.create("com.android.support.test:runner:1.0.2") {
+        exclude module: 'support-annotations'
+    }
+    implementation dependencies.create("com.android.support.test:rules:1.0.2") {
+        exclude module: 'support-annotations'
+    }
+    implementation "org.hamcrest:hamcrest-core:1.3"
 }

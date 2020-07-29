@@ -64,7 +64,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
 
-        private val MIN_GRADLE_VERSION = GradleVersion(major = 5, minor = 1)
+        private val MIN_GRADLE_VERSION = GradleVersion(major = 6, minor = 0)
         private val MIN_AGP_VERSION = Revision(3, 4, 0)
     }
 

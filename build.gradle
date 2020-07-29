@@ -14,47 +14,47 @@
  * limitations under the License.
  */
 
-buildscript {
-    apply from: "gradle/dependencies.gradle"
-
-    repositories {
-        gradlePluginPortal()
-        google()
-    }
-
-    dependencies {
-        classpath deps.gradleVersionsPlugin
-        classpath deps.kotlinGradlePlugin
-        classpath deps.dokkaGradlePlugin
-        classpath deps.gradlePublishPlugin
-        classpath deps.thriftyGradlePlugin
-    }
-}
-
 plugins {
+    id "com.github.ben-manes.versions" version "0.17.0"
+    id "org.jetbrains.kotlin.jvm" version "1.3.72"
+    id "org.jetbrains.dokka" version "0.10.0"
+    id "groovy"
+    id "com.microsoft.thrifty" version "2.1.1"
+    id "java-gradle-plugin"
+    id "com.vanniktech.maven.publish" version "0.11.1"
     id "com.gradle.plugin-publish" version "0.12.0"
 }
 
-allprojects {
-    repositories {
-        mavenLocal()
-        gradlePluginPortal()
-        google()
-    }
+ext {
+    libs = [
+        "agp" : [
+            dependencies.create("com.android.tools.build:gradle:4.1.0-beta04") {
+                // Android build tools (as of 3.2.0-alpha18) bundle the deprecated
+                // 'jre' stdlib modules, which cause warnings at build-time that
+                // fail the build.
+                exclude module: 'kotlin-stdlib-jdk7'
+                exclude module: 'kotlin-stdlib-jdk8'
+            }
+        ],
+    ]
 }
-
-apply plugin: "com.github.ben-manes.versions"
-apply plugin: "org.jetbrains.kotlin.jvm"
-apply plugin: "org.jetbrains.dokka"
-apply plugin: "groovy"
-apply plugin: "com.microsoft.thrifty"
-apply plugin: "java-gradle-plugin"
-apply plugin: "com.vanniktech.maven.publish"
-
-sourceCompatibility = rootProject.ext.javaVersion
 
 group = GROUP
 version = VERSION_NAME
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+
+sourceSets {
+    integrationTest
+}
+
+configurations {
+    integrationTestImplementation {
+        extendsFrom testImplementation
+    }
+
+    additionalPluginClasspath
+}
 
 jar {
     manifest {
@@ -69,43 +69,33 @@ dokka {
     outputDirectory = "${project.buildDir}/dokka"
 }
 
-configurations.all {
-    resolutionStrategy {
-        eachDependency { details ->
-            if (details.requested.group == "org.jetbrains.kotlin") {
-                details.useVersion rootProject.ext.kotlinVersion
-            }
-        }
-    }
-}
-
-task createClasspathManifest() {
-    def outputDir = file("$buildDir/$name")
-
-    inputs.files sourceSets.main.runtimeClasspath
-    outputs.dir outputDir
-
-    doLast {
-        outputDir.mkdirs()
-        // Combine both main and test plugin classpaths
-        file("$outputDir/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join('\n') + '\n' + sourceSets.test.runtimeClasspath.join('\n')
-    }
+repositories {
+    mavenLocal()
+    gradlePluginPortal()
+    google()
 }
 
 dependencies {
-    implementation deps.kotlinStdlib
-    implementation deps.gson
-    implementation deps.javassist
-    implementation deps.thrifty
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.72"
+    implementation "com.google.code.gson:gson:2.8.2"
+    implementation "org.javassist:javassist:3.25.0-GA"
+    implementation "com.microsoft.thrifty:thrifty-runtime-ktx:2.1.1"
 
-    compileOnly deps.gradle
+    compileOnly libs.agp
+    additionalPluginClasspath libs.agp
 
-    testRuntimeOnly files(createClasspathManifest)
+    testImplementation "org.codehaus.groovy:groovy-all:2.5.13"
+    testImplementation libs.agp
+    testImplementation "junit:junit:4.12"
+    testImplementation dependencies.create("org.spockframework:spock-core:1.3-groovy-2.5") {
+        exclude module: "groovy-all"
+    }
+}
 
-    testImplementation localGroovy()
-    testImplementation deps.gradle
-    testImplementation deps.junit
-    testImplementation deps.spockCore, { exclude module: "groovy-all" } // Use localGroovy()
+tasks {
+    pluginUnderTestMetadata {
+        pluginClasspath.from(configurations.additionalPluginClasspath)
+    }
 }
 
 thrifty {
@@ -114,8 +104,95 @@ thrifty {
     }
 }
 
-apply from: "gradle/compile.gradle"
-apply from: "gradle/gradle-plugin-portal.gradle"
+def installForTesting = tasks.register("installForIntegrationTests") { t ->
+    t.dependsOn "publishToMavenLocal"
+}
+
+def integrationTest = tasks.register("integrationTest", Test) { t ->
+    t.dependsOn installForTesting
+    t.mustRunAfter tasks.named("test")
+
+    t.group "verification"
+    t.description "Runs integration tests."
+
+    t.testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    t.classpath = sourceSets.integrationTest.runtimeClasspath
+
+    // Workaround for https://github.com/gradle/gradle/issues/4506#issuecomment-570815277
+    t.systemProperty("org.gradle.testkit.dir", file("${buildDir}/tmp/.test-kit"))
+
+    t.jvmArgs(
+        "-XX:+HeapDumpOnOutOfMemoryError", "-XX:GCTimeLimit=20", "-XX:GCHeapFreeLimit=10",
+        "-XX:MaxMetaspaceSize=1g"
+    )
+
+    t.beforeTest { testCase ->
+        logger.lifecycle("Running test: $testCase")
+    }
+}
+
+tasks.named("check").configure { t ->
+    t.dependsOn integrationTest
+}
+
+tasks.register("publishEverywhere") { t ->
+    t.group "publishing"
+    t.description "Publish to Maven Central and the Gradle Plugin Portal"
+
+    t.dependsOn("uploadArchives", "publishPlugins")
+}
+
+// Compiler settings
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    // Show all warnings except boot classpath
+    configure(options) {
+        compilerArgs << "-Xlint:all"            // Turn on all warnings
+        compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
+        compilerArgs << "-Werror"               // Turn warnings into errors
+        encoding = "utf-8"
+        fork = true
+    }
+}
+
+tasks.withType(GroovyCompile) {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    // Show all warnings except boot classpath
+    configure(options) {
+        compilerArgs << "-Xlint:all"            // Turn on all warnings
+        compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
+        compilerArgs << "-Werror"               // Turn warnings into errors
+        encoding = "utf-8"
+        fork = true
+    }
+
+    configure(groovyOptions) {
+        encoding = "utf-8"
+        fork = true
+    }
+}
+
+// Don't fork too much on CI - it tends to run out of metaspace memory.
+def isCi = providers.environmentVariable("CI").forUseAtConfigurationTime().isPresent()
+
+tasks.withType(Test) {
+    // Turn on logging for all tests, filter to show failures/skips only
+    testLogging {
+        exceptionFormat "full"
+        showCauses true
+        showExceptions true
+        showStackTraces true
+        events "failed", "skipped"
+    }
+
+    failFast = true
+    maxParallelForks = isCi ? 1 : Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     kotlinOptions {
@@ -126,11 +203,58 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     }
 }
 
+tasks.withType(Javadoc) {
+    title = "${project.name} ${project.version}"
+    configure(options) {
+        header = project.name
+        encoding "UTF-8"
+        docEncoding "UTF-8"
+        charSet "UTF-8"
+        linkSource true
+        author = true
+        links("http://docs.oracle.com/javase/8/docs/api/",
+            "http://docs.oracle.com/javaee/7/api/")
+        exclude "**/*Test.java"
+        if (JavaVersion.current().java8Compatible) addStringOption("Xdoclint:none", "-quiet")
+    }
+}
+
+tasks.withType(Groovydoc) {
+    docTitle = "${project.name} ${project.version}"
+    header = project.name
+    link("http://docs.oracle.com/javase/8/docs/api/",
+        "http://docs.oracle.com/javaee/7/api/",
+        "http://groovy.codehaus.org/gapi/")
+    exclude "**/*Spec.java"
+}
+
+// Plugin Portal publishing
+
 gradlePlugin {
     plugins {
         dexcount {
             id = "com.getkeepsafe.dexcount"
             implementationClass = "com.getkeepsafe.dexcount.DexMethodCountPlugin"
         }
+    }
+}
+
+pluginBundle {
+    website = POM_URL
+    vcsUrl = POM_SCM_URL
+    description = POM_DESCRIPTION
+    tags = ['android', 'dex', 'method count']
+
+    plugins {
+        dexcount {
+            id = "com.getkeepsafe.dexcount"
+            displayName = POM_NAME
+        }
+    }
+
+    mavenCoordinates {
+        groupId = GROUP
+        artifactId = POM_ARTIFACT_ID
+        version = VERSION_NAME
     }
 }
