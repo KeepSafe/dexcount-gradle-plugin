@@ -9,8 +9,9 @@ copyright: "Copyright &copy; 2014-2020 KeepSafe Software, Inc"
 
 theme:
   name: material
-  logo: "images/logo.png"
-  favicon: "images/favicon.ico"
+  icon:
+    logo: material/chart-bar
+  favicon: images/favicon.png
   palette:
     primary: indigo
     accent: lime
