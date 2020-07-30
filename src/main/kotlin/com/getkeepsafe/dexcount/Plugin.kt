@@ -132,8 +132,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         val factories = listOf(
             FourOneApplicator.Factory(),
             ThreeSixApplicator.Factory(),
-            ThreeThreeApplicator.Factory(),
-            ThreeOhApplicator.Factory(),
+            ThreeFourApplicator.Factory(),
             JavaOnlyApplicator.Factory()
         )
 
@@ -344,49 +343,10 @@ class JavaOnlyApplicator(ext: DexCountExtension, project: Project) : LegacyTaskA
     }
 }
 
-class ThreeOhApplicator(ext: DexCountExtension, project: Project) : LegacyTaskApplicator(ext, project) {
+open class ThreeFourApplicator(ext: DexCountExtension, project: Project): LegacyTaskApplicator(ext, project) {
     class Factory : TaskApplicator.Factory {
-        override val minimumRevision: Revision = Revision.parseRevision("3.0.0")
-        override fun create(ext: DexCountExtension, project: Project) = ThreeOhApplicator(ext, project)
-    }
-
-    override fun applyToApplicationVariant(variant: ApplicationVariant) {
-        applyToApkVariant(variant)
-    }
-
-    override fun applyToTestVariant(variant: TestVariant) {
-        applyToApkVariant(variant)
-    }
-
-    override fun applyToLibraryVariant(variant: LibraryVariant) {
-        @Suppress("DEPRECATION")
-        val packageTask = variant.packageLibrary
-        createTask(variant, packageTask, null) { t ->
-            t.inputFileProperty.set(packageTask.archiveFile)
-        }
-    }
-
-    private fun applyToApkVariant(variant: ApkVariant) {
-        checkPrintDeclarationsIsFalse()
-
-        variant.outputs.all { output ->
-            if (output is ApkVariantOutput) {
-                // why wouldn't it be?
-                @Suppress("DEPRECATION")
-                createTask(variant, output.packageApplication, output) { t ->
-                    t.inputFileProperty.fileProvider(project.provider { output.outputFile })
-                }
-            } else {
-                throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
-            }
-        }
-    }
-}
-
-open class ThreeThreeApplicator(ext: DexCountExtension, project: Project): LegacyTaskApplicator(ext, project) {
-    class Factory : TaskApplicator.Factory {
-        override val minimumRevision: Revision = Revision.parseRevision("4.1.0")
-        override fun create(ext: DexCountExtension, project: Project) = ThreeThreeApplicator(ext, project)
+        override val minimumRevision: Revision = Revision.parseRevision("3.4.0")
+        override fun create(ext: DexCountExtension, project: Project) = ThreeFourApplicator(ext, project)
     }
 
     // As of AGP 3.6, this method changed its return type from File to DirectoryProperty.
@@ -447,7 +407,7 @@ open class ThreeThreeApplicator(ext: DexCountExtension, project: Project): Legac
     }
 }
 
-open class ThreeSixApplicator(ext: DexCountExtension, project: Project) : ThreeThreeApplicator(ext, project) {
+open class ThreeSixApplicator(ext: DexCountExtension, project: Project) : ThreeFourApplicator(ext, project) {
     class Factory : TaskApplicator.Factory {
         override val minimumRevision: Revision = Revision.parseRevision("3.6.0")
         override fun create(ext: DexCountExtension, project: Project) = ThreeSixApplicator(ext, project)
