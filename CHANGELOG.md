@@ -1,3 +1,15 @@
+2.0.0 (unreleased)
+---------
+* **BREAKING** Raise minimum Gradle version to 6.0
+* **BREAKING** Raise minimum AGP version to 3.4.0
+* **BREAKING** Raise minimum JDK version to 1.8
+* **BREAKING** On AGP 4.1.0 and above, Dexcount tasks do not run automatically during a build and must be manually executed.
+* **BREAKING** Dexcount output layout on disk has changed; all output files now go in a directory named `build/outputs/dexcount/$variant/`, where `$variant` is the name of the variant whose output was analyzed.
+* Added support for AGP 4.1.0 (#305)
+* Added support for counting AAB files, AGP 4.1.0+ only (#309)
+* Fix: JvmStatic methods on Kotlin interface companion objects, in AARs (#311)
+* Fix: Properly publish Gradle Plugin DSL marker artifact (#333)
+
 1.0.3
 ---------
 * Fix: AGP 4.1 bugfixes (#300)
