@@ -25,20 +25,6 @@ plugins {
     id "com.gradle.plugin-publish" version "0.12.0"
 }
 
-ext {
-    libs = [
-        "agp" : [
-            dependencies.create("com.android.tools.build:gradle:4.1.0-beta04") {
-                // Android build tools (as of 3.2.0-alpha18) bundle the deprecated
-                // 'jre' stdlib modules, which cause warnings at build-time that
-                // fail the build.
-                exclude module: 'kotlin-stdlib-jdk7'
-                exclude module: 'kotlin-stdlib-jdk8'
-            }
-        ],
-    ]
-}
-
 group = GROUP
 version = VERSION_NAME
 
@@ -75,17 +61,19 @@ repositories {
     google()
 }
 
+def agpVersion = "4.1.0-beta05"
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.72"
+    implementation platform("org.jetbrains.kotlin:kotlin-bom")
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.google.code.gson:gson:2.8.6"
     implementation "org.javassist:javassist:3.27.0-GA"
     implementation "com.microsoft.thrifty:thrifty-runtime-ktx:2.1.1"
 
-    compileOnly libs.agp
-    additionalPluginClasspath libs.agp
+    compileOnly "com.android.tools.build:gradle:$agpVersion"
+    additionalPluginClasspath "com.android.tools.build:gradle:$agpVersion"
 
     testImplementation "org.codehaus.groovy:groovy-all:2.5.13"
-    testImplementation libs.agp
+    testImplementation "com.android.tools.build:gradle:$agpVersion"
     testImplementation "junit:junit:4.13"
     testImplementation dependencies.create("org.spockframework:spock-core:1.3-groovy-2.5") {
         exclude module: "groovy-all"
