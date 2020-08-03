@@ -16,16 +16,12 @@
 
 package com.getkeepsafe.dexcount
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class JarFileSpec extends Specification {
-    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
-
     def "test AAR method count"() {
         given:
-        def aarFile = temporaryFolder.newFile("test.aar")
+        def aarFile = File.createTempFile("test", ".aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
             aarFile.append(input)
@@ -38,5 +34,8 @@ final class JarFileSpec extends Specification {
         jarFile != null
         jarFile.methodRefs.size() == 659
         jarFile.fieldRefs.size() == 405
+
+        cleanup:
+        aarFile.delete()
     }
 }

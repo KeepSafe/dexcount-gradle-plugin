@@ -23,12 +23,9 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.ProjectConfigurationException
 import org.gradle.testfixtures.ProjectBuilder
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DexCountExtensionSpec extends Specification {
-    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
     private Project project
     private File apkFile
 
@@ -48,7 +45,7 @@ final class DexCountExtensionSpec extends Specification {
           </manifest>
         """)
 
-        apkFile = temporaryFolder.newFile("tiles.apk")
+        apkFile = File.createTempFile("tiles", ".apk")
         def apkResource = getClass().getResourceAsStream("/tiles.apk")
         apkResource.withStream { input ->
             apkFile.append(input)
@@ -61,6 +58,10 @@ final class DexCountExtensionSpec extends Specification {
         apkArtifact.outputFile >> apkFile.canonicalPath
         builtArtifacts.elements >> [apkArtifact]
         loader.load(_) >> builtArtifacts
+    }
+
+    def "cleanup"() {
+        apkFile.delete()
     }
 
     def "maxMethodCount methods < tiles.apk methods, throw exception"() {

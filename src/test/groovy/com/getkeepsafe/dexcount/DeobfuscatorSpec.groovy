@@ -16,13 +16,9 @@
 
 package com.getkeepsafe.dexcount
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DeobfuscatorSpec extends Specification {
-    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
-
     def "when no mapping file exists, returns given classnames unaltered"() {
         given:
         def deobs = Deobfuscator.create(null)
@@ -38,7 +34,7 @@ final class DeobfuscatorSpec extends Specification {
 
     def "maps proguarded names to original names"() {
         given:
-        File file = temporaryFolder.newFile()
+        File file = File.createTempFile("tmp", ".map")
         file.withPrintWriter {
             // Proguard mapping for classnames is "old -> new:"
             it.println("com.foo.Bar -> a:")
@@ -54,6 +50,9 @@ final class DeobfuscatorSpec extends Specification {
         then:
         classOne == "com.foo.Bar"
         classTwo == "com.baz.Quux"
+
+        cleanup:
+        file.delete()
     }
 }
 
