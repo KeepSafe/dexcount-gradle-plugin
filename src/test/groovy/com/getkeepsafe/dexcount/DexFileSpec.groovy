@@ -16,13 +16,9 @@
 
 package com.getkeepsafe.dexcount
 
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 final class DexFileSpec extends Specification {
-    @Rule TemporaryFolder temporaryFolder = new TemporaryFolder()
-
     def "test AAR dexcount"() {
         given:
         if (new File("local.properties").exists()) {
@@ -35,7 +31,7 @@ final class DexFileSpec extends Specification {
             DexMethodCountPlugin.sdkLocation = new File(System.getenv("ANDROID_HOME"))
         }
 
-        def aarFile = temporaryFolder.newFile("test.aar")
+        def aarFile = File.createTempFile("test", ".aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
             aarFile.append(input)
@@ -49,11 +45,14 @@ final class DexFileSpec extends Specification {
         dexFiles.size() == 1
         dexFiles[0].methodRefs.size() == 982
         dexFiles[0].fieldRefs.size() == 436
+
+        cleanup:
+        aarFile.delete()
     }
 
     def "test APK built with tools v24"() {
         given:
-        def apk = temporaryFolder.newFile("app-debug-tools-v24.apk")
+        def apk = File.createTempFile("app-debug-tools-v24", ".apk")
 
         getClass().getResourceAsStream("/app-debug-tools-v24.apk").withStream { input ->
             apk.append(input)
@@ -67,5 +66,8 @@ final class DexFileSpec extends Specification {
         dexFiles.size() == 2
         dexFiles[0].methodRefs.size() == 3
         dexFiles[1].methodRefs.size() == 297
+
+        cleanup:
+        apk.delete()
     }
 }
