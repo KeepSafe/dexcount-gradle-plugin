@@ -151,31 +151,27 @@ private class AppendablePrintWriterAdapter(private val appendable: Appendable) :
 }
 
 private val styledTextOutputFactoryClass: Class<*> by lazy {
-    getClassWithFallback(
-        "org.gradle.internal.logging.text.StyledTextOutputFactory",
-        "org.gradle.logging.StyledTextOutputFactory"
+    findClass(
+        "org.gradle.internal.logging.text.StyledTextOutputFactory"
     )
 }
 
 private val styledTextOutputClass: Class<*> by lazy {
-    getClassWithFallback(
-        "org.gradle.internal.logging.text.StyledTextOutput",
-        "org.gradle.logging.StyledTextOutput"
+    findClass(
+        "org.gradle.internal.logging.text.StyledTextOutput"
     )
 }
 
 @Suppress("UNCHECKED_CAST")
 private val styleClass: Class<Enum<*>> by lazy {
-    getClassWithFallback(
-        "org.gradle.internal.logging.text.StyledTextOutput\$Style",
-        "org.gradle.logging.StyledTextOutput\$Style"
+    findClass(
+        "org.gradle.internal.logging.text.StyledTextOutput\$Style"
     ) as Class<Enum<*>>
 }
 
 private val serviceRegistryClass: Class<*> by lazy {
-    getClassWithFallback(
-        "org.gradle.internal.service.ServiceRegistry",
-        "org.gradle.api.internal.project.ServiceRegistry"
+    findClass(
+        "org.gradle.internal.service.ServiceRegistry"
     )
 }
 
@@ -216,13 +212,14 @@ private fun Class<*>.method(name: String, vararg paramTypes: Class<*>): Method {
     }
 }
 
-private fun getClassWithFallback(name: String, fallbackName: String): Class<*> {
-    return try {
-        Class.forName(name)
-    } catch (ignored: ClassNotFoundException) {
-        // We're probably on Gradle 2.X; if not, oh well - another bug for
-        // us to fix!
-        Class.forName(fallbackName)
+private fun findClass(vararg names: String): Class<*> {
+    for (name in names) {
+        try {
+            return Class.forName(name)
+        } catch (ignored: ClassNotFoundException) {
+            // skip
+        }
     }
+    throw ClassNotFoundException(names.first())
 }
 
