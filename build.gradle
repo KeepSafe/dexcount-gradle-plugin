@@ -258,3 +258,16 @@ pluginBundle {
         version = VERSION_NAME
     }
 }
+
+// Convenient entrypoint for the "upload snapshot" CI action.
+// It's easier to do the version check here than in a Github action.
+def isSnapshot = providers.gradleProperty("VERSION_NAME").forUseAtConfigurationTime().get().endsWith("-SNAPSHOT")
+tasks.register("uploadSnapshot") {
+    if (isSnapshot) {
+        dependsOn("uploadArchives")
+    } else {
+        doFirst {
+            logger.lifecycle("Skipping upload of non-snapshot version '{}'", VERSION_NAME)
+        }
+    }
+}

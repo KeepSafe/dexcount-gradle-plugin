@@ -40,7 +40,7 @@ jobs:
       - name: Deploy snapshot
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: uploadArchives
+          arguments: uploadSnapshot
         if: >-
           matrix.jdk == 1.8 &&
           github.event_name == 'push' &&
