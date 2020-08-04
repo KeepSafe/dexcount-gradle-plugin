@@ -31,7 +31,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.CacheableTask
@@ -49,8 +48,6 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.io.PrintStream
-import javax.annotation.Nullable
-import javax.inject.Inject
 
 fun DexCountExtension.toPrintOptions(isAndroidProject: Boolean = true): PrintOptions {
     return PrintOptions(
@@ -68,20 +65,18 @@ fun DexCountExtension.toPrintOptions(isAndroidProject: Boolean = true): PrintOpt
     )
 }
 
-abstract class BaseGeneratePackageTreeTask constructor(
-    objects: ObjectFactory
-) : DefaultTask() {
+abstract class BaseGeneratePackageTreeTask() : DefaultTask() {
     /**
      * The plugin configuration, as provided by the 'dexcount' block.
      */
-    @Nested
-    val configProperty: Property<DexCountExtension> = objects.property()
+    @get:Nested
+    abstract val configProperty: Property<DexCountExtension>
 
     /**
      * The name of the the method-count report file, without a file extension.
      */
-    @Input
-    val outputFileNameProperty: Property<String> = objects.property()
+    @get:Input
+    abstract val outputFileNameProperty: Property<String>
 
     /**
      * The full path to the serialized [PackageTree] produced by this task.
@@ -89,15 +84,15 @@ abstract class BaseGeneratePackageTreeTask constructor(
      * This file is an intermediate representation, not intended for public
      * consumption.  Its format is likely to change without notice.
      */
-    @OutputFile
-    val packageTreeFileProperty: RegularFileProperty = objects.fileProperty()
+    @get:OutputFile
+    abstract val packageTreeFileProperty: RegularFileProperty
 
     /**
      * The directory in which plugin outputs (the report file, summary file,
      * and charts) will be written.
      */
-    @OutputDirectory
-    val outputDirectoryProperty: DirectoryProperty = objects.directoryProperty()
+    @get:OutputDirectory
+    abstract val outputDirectoryProperty: DirectoryProperty
 
     @get:Internal
     abstract val inputRepresentation: String
@@ -203,20 +198,18 @@ abstract class BaseGeneratePackageTreeTask constructor(
 }
 
 @CacheableTask
-abstract class LegacyGeneratePackageTreeTask @Inject constructor(
-    objects: ObjectFactory
-) : BaseGeneratePackageTreeTask(objects) {
+abstract class LegacyGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
     /**
      * The output of the 'package' task; will be either an APK or an AAR.
      */
-    @InputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val inputFileProperty: RegularFileProperty = objects.fileProperty()
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val inputFileProperty: RegularFileProperty
 
-    @Nullable
-    @InputFiles
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val mappingFileProvider: Property<FileCollection> = objects.property()
+    @get:Optional
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val mappingFileProvider: Property<FileCollection>
 
     override var inputRepresentation: String = ""
 
@@ -262,26 +255,21 @@ abstract class LegacyGeneratePackageTreeTask @Inject constructor(
     }
 }
 
-abstract class ModernGeneratePackageTreeTask constructor(
-    objects: ObjectFactory
-) : BaseGeneratePackageTreeTask(objects) {
-    @InputFile
-    @Optional
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val mappingFileProperty: RegularFileProperty = objects.fileProperty()
+abstract class ModernGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
+    @get:InputFile
+    @get:Optional
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val mappingFileProperty: RegularFileProperty
 
-    @Internal
-    val loaderProperty: Property<BuiltArtifactsLoader> = objects.property()
+    @get:Internal
+    abstract val loaderProperty: Property<BuiltArtifactsLoader>
 
-    @Internal
-    protected val deobfuscatorProvider: Provider<Deobfuscator> = mappingFileProperty
-        .map { Deobfuscator.create(it.asFile) }
-        .orElse(Deobfuscator.empty)
+    @get:Internal
+    protected val deobfuscatorProvider: Provider<Deobfuscator>
+        get() = mappingFileProperty.map { Deobfuscator.create(it.asFile) }.orElse(Deobfuscator.empty)
 }
 
-abstract class ApkishPackageTreeTask constructor(
-    objects: ObjectFactory
-) : ModernGeneratePackageTreeTask(objects) {
+abstract class ApkishPackageTreeTask : ModernGeneratePackageTreeTask() {
 
     @get:Internal
     protected abstract val inputFile: File
@@ -308,12 +296,10 @@ abstract class ApkishPackageTreeTask constructor(
 }
 
 @CacheableTask
-abstract class ApkPackageTreeTask @Inject constructor(
-    objects: ObjectFactory
-) : ApkishPackageTreeTask(objects) {
-    @InputDirectory
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val apkDirectoryProperty: DirectoryProperty = objects.directoryProperty()
+abstract class ApkPackageTreeTask : ApkishPackageTreeTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val apkDirectoryProperty: DirectoryProperty
 
     override val inputFile: File
         get() {
@@ -324,12 +310,10 @@ abstract class ApkPackageTreeTask @Inject constructor(
 }
 
 @CacheableTask
-abstract class BundlePackageTreeTask @Inject constructor(
-    objects: ObjectFactory
-) : ApkishPackageTreeTask(objects) {
-    @InputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val bundleFileProperty: RegularFileProperty = objects.fileProperty()
+abstract class BundlePackageTreeTask : ApkishPackageTreeTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val bundleFileProperty: RegularFileProperty
 
     override val inputFile: File
         get() = bundleFileProperty.asFile.get()
@@ -340,13 +324,10 @@ abstract class BundlePackageTreeTask @Inject constructor(
 // new API for the time being.  In 4.2 we'll probably be able to consolidate
 // this and the APK task above.
 @CacheableTask
-abstract class Agp41LibraryPackageTreeTask @Inject constructor(
-    objects: ObjectFactory
-) : ModernGeneratePackageTreeTask(objects) {
-
-    @InputFiles
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val aarBundleFileCollection: ConfigurableFileCollection = objects.fileCollection()
+abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val aarBundleFileCollection: ConfigurableFileCollection
 
     @get:Input
     abstract val buildToolsVersion: Property<String>
@@ -385,12 +366,10 @@ abstract class Agp41LibraryPackageTreeTask @Inject constructor(
 }
 
 @CacheableTask
-abstract class JarPackageTreeTask @Inject constructor(
-    objects: ObjectFactory
-) : BaseGeneratePackageTreeTask(objects) {
-    @InputFile
-    @PathSensitive(PathSensitivity.RELATIVE)
-    val jarFileProperty: RegularFileProperty = objects.fileProperty()
+abstract class JarPackageTreeTask : BaseGeneratePackageTreeTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val jarFileProperty: RegularFileProperty
 
     override var inputRepresentation: String = ""
 
