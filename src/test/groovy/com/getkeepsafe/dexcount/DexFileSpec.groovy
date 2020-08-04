@@ -38,7 +38,7 @@ final class DexFileSpec extends Specification {
         }
 
         when:
-        def dexFiles = DexFile.extractDexData(aarFile, 60)
+        def dexFiles = DexFile.extractDexData(aarFile, 60, null)
 
         then:
         dexFiles != null

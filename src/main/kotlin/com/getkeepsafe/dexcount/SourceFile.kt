@@ -21,6 +21,8 @@ import com.android.dexdeps.DexData
 import com.android.dexdeps.DexDataException
 import com.android.dexdeps.FieldRef
 import com.android.dexdeps.MethodRef
+import com.android.repository.Revision
+import com.android.sdklib.BuildToolInfo
 import javassist.ByteArrayClassPath
 import javassist.ClassPool
 import javassist.CtBehavior
@@ -86,17 +88,18 @@ internal class DexFile(
          *
          * @param file the APK or dex file.
          * @param dxTimeoutSecs timeout when running Dx in seconds
+         * @param buildToolsVersion if specified, the build-tools version used to build the input file.
          * @return a list of DexFile objects representing data in the given file.
          */
         @JvmStatic
-        fun extractDexData(file: File?, dxTimeoutSecs: Int): List<DexFile> {
+        fun extractDexData(file: File?, dxTimeoutSecs: Int, buildToolsVersion: String? = null): List<DexFile> {
             if (file == null || !file.exists()) {
                 return emptyList()
             }
 
             // AAR files need special treatment
             if (file.name.endsWith(".aar")) {
-                return extractDexFromAar(file, dxTimeoutSecs)
+                return extractDexFromAar(file, dxTimeoutSecs, buildToolsVersion)
             }
 
             try {
@@ -109,7 +112,7 @@ internal class DexFile(
         }
 
         @JvmStatic
-        private fun extractDexFromAar(file: File, dxTimeoutSecs: Int): List<DexFile> {
+        private fun extractDexFromAar(file: File, dxTimeoutSecs: Int, buildToolsVersion: String?): List<DexFile> {
             // unzip classes.jar from the AAR
             var minSdk = 13 // the default minSdkVersion of dx
             val tempClasses = file.unzip { entries ->
@@ -134,20 +137,35 @@ internal class DexFile(
                 checkNotNull(tempFile) { "No classes.jar file found in ${file.canonicalPath}" }
             }
 
-            // convert it to DEX format by using the Android dx tool
-            val androidSdkHome = DexMethodCountPlugin.sdkLocation ?: throw Exception("Android SDK not found!")
-            val buildToolsSubDirs = File(androidSdkHome, "build-tools")
-
-            // get latest Dx tool by sorting by name
-            val dirs = buildToolsSubDirs.listFiles()?.sortedBy { it.name }?.asReversed()
-            if (dirs == null || dirs.isEmpty()) {
-                throw Exception ("No Build Tools found in " + buildToolsSubDirs.absolutePath)
+            var dxExe: File? = null
+            if (buildToolsVersion != null) {
+                val revision = Revision.parseRevision(buildToolsVersion, Revision.Precision.MICRO)
+                val info = BuildToolInfo.fromStandardDirectoryLayout(revision, DexMethodCountPlugin.sdkLocation)
+                val dxPath = info.getPath(BuildToolInfo.PathId.DX)
+                val maybeDxExe = File(dxPath)
+                if (maybeDxExe.isFile) {
+                    dxExe = maybeDxExe
+                } else {
+                    println("Could not find dx executable at $dxPath, defaulting to latest version")
+                }
             }
 
-            val isWindows = SdkConstants.currentPlatform() == SdkConstants.PLATFORM_WINDOWS
-            val dxExeName = if (isWindows) "dx.bat" else "dx"
+            // convert it to DEX format by using the Android dx tool
+            if (dxExe == null) {
+                val androidSdkHome = DexMethodCountPlugin.sdkLocation ?: throw Exception("Android SDK not found!")
+                val buildToolsSubDirs = File(androidSdkHome, "build-tools")
 
-            val dxExe = File(dirs[0], dxExeName)
+                // get latest Dx tool by sorting by name
+                val dirs = buildToolsSubDirs.listFiles()?.sortedBy { it.name }?.asReversed()
+                if (dirs == null || dirs.isEmpty()) {
+                    throw Exception("No Build Tools found in " + buildToolsSubDirs.absolutePath)
+                }
+
+                val isWindows = SdkConstants.currentPlatform() == SdkConstants.PLATFORM_WINDOWS
+                val dxExeName = if (isWindows) "dx.bat" else "dx"
+
+                dxExe = File(dirs[0], dxExeName)
+            }
 
             if (!dxExe.exists()) {
                 throw Exception ("dx tool not found at " + dxExe.absolutePath)

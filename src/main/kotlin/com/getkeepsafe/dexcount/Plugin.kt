@@ -445,7 +445,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         project.plugins.withType(LibraryPlugin::class.java) {
             val android = project.extensions.getByType(LibraryExtension::class.java)
             android.onVariantProperties {
-                registerAarTask()
+                registerAarTask(android.buildToolsRevision)
             }
         }
 
@@ -531,7 +531,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
     }
 
-    protected open fun LibraryVariantProperties.registerAarTask() {
+    protected open fun LibraryVariantProperties.registerAarTask(buildToolsRevision: Revision) {
         if (!ext.enabled) {
             return
         }
@@ -551,6 +551,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
                 t.configProperty.set(ext)
                 t.outputFileNameProperty.set(name)
                 t.aarBundleFileCollection.from(bundleTaskProvider)
+                t.buildToolsVersion.set(buildToolsRevision.toString())
                 t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
                 t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
                 t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$name/tree.compact.gz"))
