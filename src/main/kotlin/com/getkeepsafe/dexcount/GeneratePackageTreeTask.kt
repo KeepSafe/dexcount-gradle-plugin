@@ -348,6 +348,9 @@ abstract class Agp41LibraryPackageTreeTask @Inject constructor(
     @PathSensitive(PathSensitivity.RELATIVE)
     val aarBundleFileCollection: ConfigurableFileCollection = objects.fileCollection()
 
+    @get:Input
+    abstract val buildToolsVersion: Property<String>
+
     override var inputRepresentation: String = ""
 
     override fun generatePackageTree(): PackageTree {
@@ -360,7 +363,7 @@ abstract class Agp41LibraryPackageTreeTask @Inject constructor(
 
         val tree = PackageTree(deobfuscatorProvider.get())
 
-        val dataList = DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec)
+        val dataList = DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec, buildToolsVersion.get())
         try {
             for (dexFile in dataList) {
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
