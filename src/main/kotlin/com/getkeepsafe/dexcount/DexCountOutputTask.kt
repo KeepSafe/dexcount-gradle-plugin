@@ -26,29 +26,25 @@ import okio.gzip
 import okio.source
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import javax.inject.Inject
 
-abstract class DexCountOutputTask @Inject constructor (
-    objects: ObjectFactory
-) : DefaultTask() {
+abstract class DexCountOutputTask : DefaultTask() {
     @get:Input
-    val variantNameProperty: Property<String> = objects.property()
+    abstract val variantNameProperty: Property<String>
 
-    @Nested
-    val configProperty: Property<DexCountExtension> = objects.property()
+    @get:Nested
+    abstract val configProperty: Property<DexCountExtension>
 
-    @InputFile
-    val packageTreeFileProperty: RegularFileProperty = objects.fileProperty()
+    @get:InputFile
+    abstract val packageTreeFileProperty: RegularFileProperty
 
-    @Internal
-    val androidProject: Property<Boolean> = objects.property()
+    @get:Internal
+    abstract val androidProject: Property<Boolean>
 
     @TaskAction
     open fun run() {
