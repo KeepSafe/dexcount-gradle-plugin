@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("UnstableApiUsage")
-
 package com.getkeepsafe.dexcount
 
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput
@@ -48,19 +46,10 @@ abstract class DexCountOutputTask : DefaultTask() {
 
     @TaskAction
     open fun run() {
-        lateinit var tree: PackageTree
-        lateinit var inputRepresentation: String
-        packageTreeFileProperty.asFile.get().source().gzip().use {
-            val buffer = Buffer()
-            buffer.writeAll(it)
-
-            val transport = BufferTransport(buffer)
-            val protocol = CompactProtocol(transport)
-            val thrift = TreeGenOutput.ADAPTER.read(protocol)
-
-            tree = PackageTree.fromThrift(thrift.tree!!)
-            inputRepresentation = thrift.inputRepresentation ?: ""
-        }
+        val thrift = readTreeGenFile()
+        val thriftTree = checkNotNull(thrift.tree) { "Malformed dexcount data; please clean and rebuild." }
+        val inputRepresentation = checkNotNull(thrift.inputRepresentation) { "Malformed dexcount data; please clean and rebuild." }
+        val tree = PackageTree.fromThrift(thriftTree)
 
         val reporter = CountReporter(
             packageTree = tree,
@@ -73,5 +62,16 @@ abstract class DexCountOutputTask : DefaultTask() {
         )
 
         reporter.report()
+    }
+
+    private fun readTreeGenFile(): TreeGenOutput {
+        return packageTreeFileProperty.asFile.get().source().gzip().use { source ->
+            val buffer = Buffer()
+            buffer.writeAll(source)
+
+            val transport = BufferTransport(buffer)
+            val protocol = CompactProtocol(transport)
+            TreeGenOutput.ADAPTER.read(protocol)
+        }
     }
 }
