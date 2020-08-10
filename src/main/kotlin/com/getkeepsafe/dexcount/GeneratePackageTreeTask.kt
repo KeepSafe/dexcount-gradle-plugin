@@ -46,6 +46,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import java.io.Closeable
 import java.io.File
 import java.io.PrintStream
 
@@ -228,27 +229,24 @@ abstract class LegacyGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
 
         check(isApk || isAar || isJar) { "File extension is unclear: $file" }
 
-        val dataList = if (isAndroidProject) DexFile.extractDexData(file, config.dxTimeoutSec) else emptyList()
+        val tree = PackageTree(deobfuscator)
+
+        if (isAndroidProject) {
+            DexFile.extractDexData(file, config.dxTimeoutSec).useMany { dataList ->
+                dataList.flatMap { it.methodRefs }.forEach(tree::addMethodRef)
+                dataList.flatMap { it.fieldRefs }.forEach(tree::addFieldRef)
+            }
+        }
+
         val jarFile = when {
             isAar && config.printDeclarations -> JarFile.extractJarFromAar(file)
             isJar && config.printDeclarations -> JarFile.extractJarFromJar(file)
             else -> null
         }
 
-        val tree: PackageTree
-        try {
-            tree = PackageTree(deobfuscator)
-
-            dataList.flatMap { it.methodRefs }.forEach(tree::addMethodRef)
-            dataList.flatMap { it.fieldRefs }.forEach(tree::addFieldRef)
-
-            if (jarFile != null) {
-                jarFile.methodRefs.forEach(tree::addDeclaredMethodRef)
-                jarFile.fieldRefs.forEach(tree::addDeclaredFieldRef)
-            }
-        } finally {
-            dataList.forEach { it.close() }
-            jarFile?.close()
+        jarFile?.use { jar ->
+            jar.methodRefs.forEach(tree::addDeclaredMethodRef)
+            jar.fieldRefs.forEach(tree::addDeclaredFieldRef)
         }
 
         return tree
@@ -281,16 +279,11 @@ abstract class ApkishPackageTreeTask : ModernGeneratePackageTreeTask() {
 
         inputRepresentation = file.name
 
-        val dataList = DexFile.extractDexData(file, configProperty.get().dxTimeoutSec)
-        try {
-            val tree = PackageTree(deobfuscatorProvider.get())
-            for (dexFile in dataList) {
+        return DexFile.extractDexData(file, configProperty.get().dxTimeoutSec).useMany { dataList ->
+            dataList.forEachWithObject(PackageTree(deobfuscatorProvider.get())) { tree, dexFile ->
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
             }
-            return tree
-        } finally {
-            dataList.forEach { it.close() }
         }
     }
 }
@@ -344,14 +337,11 @@ abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
 
         val tree = PackageTree(deobfuscatorProvider.get())
 
-        val dataList = DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec, buildToolsVersion.get())
-        try {
-            for (dexFile in dataList) {
+        DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec, buildToolsVersion.get()).useMany {
+            for (dexFile in it) {
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
             }
-        } finally {
-            dataList.forEach { it.close() }
         }
 
         if (configProperty.get().printDeclarations) {
@@ -388,4 +378,19 @@ abstract class JarPackageTreeTask : BaseGeneratePackageTreeTask() {
 
         return tree
     }
+}
+
+internal inline fun <C : Collection<Closeable>, R> C.useMany(fn: (C) -> R): R {
+    try {
+        return fn(this)
+    } finally {
+        forEach { it.close() }
+    }
+}
+
+internal inline fun <T, R> Iterable<T>.forEachWithObject(obj: R, fn: (R, T) -> Unit): R {
+    for (elem in this) {
+        fn(obj, elem)
+    }
+    return obj
 }
