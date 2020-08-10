@@ -61,7 +61,7 @@ repositories {
     google()
 }
 
-def agpVersion = "4.1.0-beta05"
+def agpVersion = "4.1.0-rc01"
 dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
@@ -74,13 +74,9 @@ dependencies {
 
     testImplementation "org.codehaus.groovy:groovy-all:2.5.13"
     testImplementation "com.android.tools.build:gradle:$agpVersion"
-    testImplementation dependencies.create("org.spockframework:spock-core:2.0-M3-groovy-2.5") {
+    testImplementation dependencies.create("org.spockframework:spock-core:1.3-groovy-2.5") {
         exclude module: "groovy-all"
     }
-}
-
-test {
-    useJUnitPlatform()
 }
 
 tasks {
