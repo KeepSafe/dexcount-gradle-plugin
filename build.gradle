@@ -259,3 +259,7 @@ tasks.register("uploadSnapshot") {
         }
     }
 }
+
+wrapper {
+    gradleVersion = "6.6"
+}
