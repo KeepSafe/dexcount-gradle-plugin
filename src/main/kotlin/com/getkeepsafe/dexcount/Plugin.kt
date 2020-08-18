@@ -197,9 +197,9 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             else -> throw IllegalArgumentException("Dexcount plugin requires the Android plugin to be configured")
         }
 
-        variants.all { variant ->
+        variants.configureEach { variant ->
             if (!ext.enabled) {
-                return@all
+                return@configureEach
             }
 
             when (variant) {
@@ -256,7 +256,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
 
     protected fun createTask(
             variant: BaseVariant,
-            parentTask: Task,
+            parentTask: TaskProvider<*>,
             output: BaseVariantOutput?,
             applyInputConfiguration: (LegacyGeneratePackageTreeTask) -> Unit)  {
         var slug = variant.name.capitalize()
@@ -283,12 +283,9 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file(treePath))
 
             applyInputConfiguration(t)
-
-            t.mustRunAfter(parentTask)
-            t.dependsOn(parentTask)
         }
 
-        project.tasks.register("count${slug}DexMethods", DexCountOutputTask::class.java) { t ->
+        val countTask = project.tasks.register("count${slug}DexMethods", DexCountOutputTask::class.java) { t ->
             t.description         = "Outputs dex method count for ${variant.name}."
             t.group               = "Reporting"
 
@@ -296,9 +293,11 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.variantNameProperty.set(outputName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+        }
 
-            if (ext.runOnEachPackage) {
-                parentTask.finalizedBy(t)
+        if (ext.runOnEachPackage) {
+            parentTask.configure { t ->
+                t.finalizedBy(countTask)
             }
         }
     }
@@ -367,33 +366,22 @@ open class ThreeFourApplicator(ext: DexCountExtension, project: Project): Legacy
 
     override fun applyToLibraryVariant(variant: LibraryVariant) {
         val packageTaskProvider = variant.packageLibraryProvider
-        val packageTask = packageTaskProvider.orNull
-        if (packageTask == null) {
-            project.logger.error("LibraryVariant.getPackageLibraryProvider().getOrNull() unexpectedly returned null")
-            return
-        }
-
-        createTask(variant, packageTask, null) { t ->
-            t.inputFileProperty.set(packageTask.archiveFile)
+        createTask(variant, packageTaskProvider, null) { t ->
+            t.inputFileProperty.set(packageTaskProvider.flatMap { it.archiveFile })
         }
     }
 
     private fun applyToApkVariant(variant: ApkVariant) {
         checkPrintDeclarationsIsFalse()
 
-        variant.outputs.all { output ->
+        variant.outputs.configureEach { output ->
             if (output !is ApkVariantOutput) {
                 throw IllegalArgumentException("Unexpected output type for variant ${variant.name}: ${output::class.java}")
             }
 
-            val packageTask = variant.packageApplicationProvider.orNull
-            if (packageTask == null) {
-                project.logger.error("ApkVariant.getPackageApplicationProvider().getOrNull() unexpectedly returned null")
-                return@all
-            }
-
-            createTask(variant, packageTask, output) { t ->
-                val fileProvider = getOutputDirectory(packageTask).map { it.file(output.outputFileName) }
+            createTask(variant, variant.packageApplicationProvider, output) { t ->
+                val outputDirProvider = variant.packageApplicationProvider.flatMap { getOutputDirectory(it) }
+                val fileProvider = outputDirProvider.map { it.file(output.outputFileName) }
                 t.inputFileProperty.value(fileProvider)
             }
         }
@@ -434,7 +422,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             return
         }
 
-        project.plugins.withType(AppPlugin::class.java) {
+        project.plugins.withType(AppPlugin::class.java).configureEach {
             val android = project.extensions.getByType(ApplicationExtension::class.java)
             android.onVariantProperties {
                 registerApkTask()
@@ -442,14 +430,14 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             }
         }
 
-        project.plugins.withType(LibraryPlugin::class.java) {
+        project.plugins.withType(LibraryPlugin::class.java).configureEach() {
             val android = project.extensions.getByType(LibraryExtension::class.java)
             android.onVariantProperties {
                 registerAarTask(android.buildToolsRevision)
             }
         }
 
-        project.plugins.withType(TestPlugin::class.java) {
+        project.plugins.withType(TestPlugin::class.java).configureEach {
             val android = project.extensions.getByType(TestExtension::class.java)
             android.onVariantProperties {
                 registerApkTask()
