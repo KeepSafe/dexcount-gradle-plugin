@@ -64,7 +64,6 @@ repositories {
 def agpVersion = "4.1.0-rc01"
 dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.google.code.gson:gson:2.8.6"
     implementation "org.javassist:javassist:3.27.0-GA"
     implementation "com.microsoft.thrifty:thrifty-runtime-ktx:2.1.1"
