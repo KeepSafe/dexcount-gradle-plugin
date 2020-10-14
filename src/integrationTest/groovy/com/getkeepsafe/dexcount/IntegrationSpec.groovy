@@ -121,7 +121,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion | gradleVersion || numMethods | numClasses | numFields
-        "4.1.0"   rc01 | "6.5.1"       || 7356       | 926        | 2597
+        "4.1.0"    | "6.5.1"       || 7356       | 926        | 2597
     }
 
     private File projectDir(String agpVersion, String gradleVersion) {
