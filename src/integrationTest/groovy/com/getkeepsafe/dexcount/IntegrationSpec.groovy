@@ -30,14 +30,14 @@ class IntegrationSpec extends Specification {
         result.output =~ /Total classes in app-debug-it.apk:\s+${numClasses}/
 
         where:
-        agpVersion   | gradleVersion || numMethods | numClasses | numFields
-        "4.1.0-rc01" | "6.5.1"       || 7356       | 926        | 2597
-        "3.6.0"      | "6.5.1"       || 7370       | 926        | 3780
-        "3.6.0"      | "6.0"         || 7370       | 926        | 3780
-        "3.5.4"      | "6.5.1"       || 7369       | 926        | 3780
-        "3.5.4"      | "6.0"         || 7369       | 926        | 3780
-        "3.4.0"      | "6.5.1"       || 7435       | 926        | 3847
-        "3.4.0"      | "6.0"         || 7435       | 926        | 3847
+        agpVersion | gradleVersion || numMethods | numClasses | numFields
+        "4.1.0"    | "6.5.1"       || 7356       | 926        | 2597
+        "3.6.0"    | "6.5.1"       || 7370       | 926        | 3780
+        "3.6.0"    | "6.0"         || 7370       | 926        | 3780
+        "3.5.4"    | "6.5.1"       || 7369       | 926        | 3780
+        "3.5.4"    | "6.0"         || 7369       | 926        | 3780
+        "3.4.0"    | "6.5.1"       || 7435       | 926        | 3847
+        "3.4.0"    | "6.0"         || 7435       | 926        | 3847
     }
 
     @Unroll
@@ -60,14 +60,14 @@ class IntegrationSpec extends Specification {
         result.output =~ /Total classes in lib-debug.aar:\s+${numClasses}/
 
         where:
-        agpVersion   | gradleVersion || numMethods | numClasses | numFields
-        "4.1.0-rc01" | "6.5.1"       || 7          | 6          | 3
-        "3.6.0"      | "6.5.1"       || 7          | 6          | 7
-        "3.6.0"      | "6.0"         || 7          | 6          | 7
-        "3.5.4"      | "6.5.1"       || 7          | 6          | 7
-        "3.5.4"      | "6.0"         || 7          | 6          | 7
-        "3.4.0"      | "6.5.1"       || 7          | 6          | 6
-        "3.4.0"      | "6.0"         || 7          | 6          | 6
+        agpVersion | gradleVersion || numMethods | numClasses | numFields
+        "4.1.0"    | "6.5.1"       || 7          | 6          | 3
+        "3.6.0"    | "6.5.1"       || 7          | 6          | 7
+        "3.6.0"    | "6.0"         || 7          | 6          | 7
+        "3.5.4"    | "6.5.1"       || 7          | 6          | 7
+        "3.5.4"    | "6.0"         || 7          | 6          | 7
+        "3.4.0"    | "6.5.1"       || 7          | 6          | 6
+        "3.4.0"    | "6.0"         || 7          | 6          | 6
     }
 
     @Unroll
@@ -90,14 +90,14 @@ class IntegrationSpec extends Specification {
         result.output =~ /Total classes in tests-debug.apk:\s+${numClasses}/
 
         where:
-        agpVersion   | gradleVersion || numMethods | numClasses | numFields
-        "4.1.0-rc01" | "6.5.1"       || 4266       | 723        | 1268
-        "3.6.0"      | "6.5.1"       || 4265       | 723        | 1271
-        "3.6.0"      | "6.0"         || 4265       | 723        | 1271
-        "3.5.4"      | "6.5.1"       || 4266       | 723        | 1271
-        "3.5.4"      | "6.0"         || 4266       | 723        | 1271
-        "3.4.0"      | "6.5.1"       || 4267       | 723        | 1271
-        "3.4.0"      | "6.0"         || 4267       | 723        | 1271
+        agpVersion | gradleVersion || numMethods | numClasses | numFields
+        "4.1.0"    | "6.5.1"       || 4266       | 723        | 1268
+        "3.6.0"    | "6.5.1"       || 4265       | 723        | 1271
+        "3.6.0"    | "6.0"         || 4265       | 723        | 1271
+        "3.5.4"    | "6.5.1"       || 4266       | 723        | 1271
+        "3.5.4"    | "6.0"         || 4266       | 723        | 1271
+        "3.4.0"    | "6.5.1"       || 4267       | 723        | 1271
+        "3.4.0"    | "6.0"         || 4267       | 723        | 1271
     }
 
     @Unroll
@@ -120,8 +120,8 @@ class IntegrationSpec extends Specification {
         result.output =~ /Total classes in app-debug.aab:\s+${numClasses}/
 
         where:
-        agpVersion   | gradleVersion || numMethods | numClasses | numFields
-        "4.1.0-rc01" | "6.5.1"       || 7356       | 926        | 2597
+        agpVersion | gradleVersion || numMethods | numClasses | numFields
+        "4.1.0"    | "6.5.1"       || 7356       | 926        | 2597
     }
 
     private File projectDir(String agpVersion, String gradleVersion) {
