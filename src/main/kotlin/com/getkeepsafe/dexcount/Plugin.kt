@@ -243,17 +243,6 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
         }
     }
 
-    protected fun addDexcountTaskToGraph(parentTask: Task, dexcountTask: Task) {
-        // Dexcount tasks require that their parent task has been run...
-        dexcountTask.dependsOn(parentTask)
-        dexcountTask.mustRunAfter(parentTask)
-
-        // But package should always imply that dexcount runs, unless configured not to.
-        if (ext.runOnEachPackage) {
-            parentTask.finalizedBy(dexcountTask)
-        }
-    }
-
     protected fun createTask(
             variant: BaseVariant,
             parentTask: TaskProvider<*>,
@@ -283,6 +272,10 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file(treePath))
 
             applyInputConfiguration(t)
+
+            // Depending on the runtime AGP version, inputFileProperty (as provided in applyInputConfiguration)
+            // may or may not carry task-dependency information with it.  We need to set that up manually here.
+            t.dependsOn(parentTask)
         }
 
         val countTask = project.tasks.register("count${slug}DexMethods", DexCountOutputTask::class.java) { t ->
