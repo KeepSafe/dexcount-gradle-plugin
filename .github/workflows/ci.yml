@@ -23,6 +23,7 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             **/build-cache
+            !tmp
           key: ${{ runner.os }}-${{ matrix.jdk }}-gradle-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.jdk }}-gradle-
