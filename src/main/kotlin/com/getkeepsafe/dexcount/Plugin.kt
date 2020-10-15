@@ -273,7 +273,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
 
             applyInputConfiguration(t)
 
-            // Depending on the runtime AGP version, inputFileProperty (as proved in applyInputConfiguration)
+            // Depending on the runtime AGP version, inputFileProperty (as provided in applyInputConfiguration)
             // may or may not carry task-dependency information with it.  We need to set that up manually here.
             t.dependsOn(parentTask)
         }
