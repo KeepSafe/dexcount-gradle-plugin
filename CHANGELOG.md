@@ -1,4 +1,4 @@
-2.0.0 (unreleased)
+2.0.0 (15 October 2020)
 ---------
 * **BREAKING** Raise minimum Gradle version to 6.0
 * **BREAKING** Raise minimum AGP version to 3.4.0
@@ -7,6 +7,7 @@
 * **BREAKING** Dexcount output layout on disk has changed; all output files now go in a directory named `build/outputs/dexcount/$variant/`, where `$variant` is the name of the variant whose output was analyzed.
 * Added support for AGP 4.1.0 (#305)
 * Added support for counting AAB files, AGP 4.1.0+ only (#309)
+* Fix: Crash in Android Studio 4.0.1 (#353)
 * Fix: JvmStatic methods on Kotlin interface companion objects, in AARs (#311)
 * Fix: Properly publish Gradle Plugin DSL marker artifact (#333)
 

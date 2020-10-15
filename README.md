@@ -15,7 +15,7 @@ For more information, please see [the website](https://keepsafe.github.io/dexcou
 
 ## Download
 
-The plugin is available from the Gradle Plugin Portal under the ID `com.getkeepsafe.dexcount`, and from Maven Central under the coordinates `com.getkeepsafe.dexcount:dexcount-gradle-plugin:2.0.0-RC1`.
+The plugin is available from the Gradle Plugin Portal under the ID `com.getkeepsafe.dexcount`, and from Maven Central under the coordinates `com.getkeepsafe.dexcount:dexcount-gradle-plugin:2.0.0`.
 
 Snapshot builds are available from the Sonatype Snapshot Repository at `https://oss.sonatype.org/content/repositories/snapshots`.
 
