@@ -22,6 +22,10 @@ import com.android.build.api.artifact.ArtifactType
 import com.android.build.api.artifact.Artifacts
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.extension.ApplicationAndroidComponentsExtension
+import com.android.build.api.extension.LibraryAndroidComponentsExtension
+import com.android.build.api.extension.TestAndroidComponentsExtension
+import com.android.build.api.variant.Variant
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.LibraryExtension
@@ -129,6 +133,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         }
 
         val factories = listOf(
+            FourTwoApplicator.Factory(),
             FourOneApplicator.Factory(),
             ThreeSixApplicator.Factory(),
             ThreeFourApplicator.Factory(),
@@ -409,6 +414,29 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         override fun create(ext: DexCountExtension, project: Project) = FourOneApplicator(ext, project)
     }
 
+    companion object {
+        private val clsVariantProperties: Class<*> by lazy { Class.forName("com.android.build.api.variant.VariantProperties") }
+        private val fnGetName: Method by lazy { clsVariantProperties.getMethod("getName") }
+        private val fnGetArtifacts: Method by lazy { clsVariantProperties.getMethod("getArtifacts") }
+
+        private val clsKotlinUnaryFn: Class<*> by lazy { Class.forName("kotlin.jvm.functions.Function1") }
+        private val clsCommonExtension: Class<*> by lazy { Class.forName("com.android.build.api.dsl.CommonExtension") }
+        private val fnOnVariantProperties: Method by lazy { clsCommonExtension.getMethod("onVariantProperties", clsKotlinUnaryFn) }
+    }
+
+    // In AGP 4.1.0, 'onVariantProperties' lambdas have a receiver deriving from the VariantProperties
+    // interface.  In 4.2.0, the receivers switch to deriving from Variant instead.
+    // To work around this, we have to fall back to type-erasure and reflection to produce a callback
+    // that the compiler will accept and will still do the job.
+    private fun <T> makeVariantPropertiesCallback(fn: (String, Artifacts) -> Unit): T.() -> Unit {
+        return {
+            val name: String = fnGetName(this) as String
+            val artifacts: Artifacts = fnGetArtifacts(this) as Artifacts
+
+            fn(name, artifacts)
+        }
+    }
+
     override fun apply() {
         if (!ext.enabled) {
             return
@@ -416,24 +444,24 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
         project.plugins.withType(AppPlugin::class.java).configureEach {
             val android = project.extensions.getByType(ApplicationExtension::class.java)
-            android.onVariantProperties {
+            fnOnVariantProperties(android, makeVariantPropertiesCallback<Any> { name, artifacts ->
                 registerApkTask(name, artifacts)
                 registerAabTask(name, artifacts)
-            }
+            })
         }
 
-        project.plugins.withType(LibraryPlugin::class.java).configureEach() {
+        project.plugins.withType(LibraryPlugin::class.java).configureEach {
             val android = project.extensions.getByType(LibraryExtension::class.java)
-            android.onVariantProperties {
+            fnOnVariantProperties(android, makeVariantPropertiesCallback<Any> { name, artifacts ->
                 registerAarTask(name, artifacts, android.buildToolsRevision)
-            }
+            })
         }
 
         project.plugins.withType(TestPlugin::class.java).configureEach {
             val android = project.extensions.getByType(TestExtension::class.java)
-            android.onVariantProperties {
+            fnOnVariantProperties(android, makeVariantPropertiesCallback<Any> { name, artifacts ->
                 registerApkTask(name, artifacts)
-            }
+            })
         }
 
         project.afterEvaluate {
@@ -588,6 +616,49 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
     private inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
         return register(name, T::class.java) { t ->
             fn(t)
+        }
+    }
+}
+
+open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOneApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("4.2.0")
+        override fun create(ext: DexCountExtension, project: Project) = FourTwoApplicator(ext, project)
+    }
+
+    override fun apply() {
+        if (!ext.enabled) {
+            return
+        }
+
+        project.plugins.withType(AppPlugin::class.java).configureEach {
+            val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+            androidComponents.onVariants { variant ->
+                registerApkTask(variant.name, variant.artifacts)
+                registerAabTask(variant.name, variant.artifacts)
+            }
+        }
+
+        project.plugins.withType(LibraryPlugin::class.java).configureEach {
+            val android = project.extensions.getByType(LibraryExtension::class.java)
+            val androidComponents = project.extensions.getByType(LibraryAndroidComponentsExtension::class.java)
+            androidComponents.onVariants { variant ->
+                registerAarTask(variant.name, variant.artifacts, android.buildToolsRevision)
+            }
+        }
+
+        project.plugins.withType(TestPlugin::class.java).configureEach {
+            val androidComponents = project.extensions.getByType(TestAndroidComponentsExtension::class.java)
+            androidComponents.onVariants { variant ->
+                registerApkTask(variant.name, variant.artifacts)
+            }
+        }
+
+        project.afterEvaluate {
+            if (project.extensions.findByType(CommonExtension::class.java) == null) {
+                // No Android plugins were registered; this may be a jar-count usage.
+                registerJarTask()
+            }
         }
     }
 }
