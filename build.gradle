@@ -61,7 +61,7 @@ repositories {
     google()
 }
 
-def agpVersion = "4.1.0"
+def agpVersion = "4.2.0-beta02"
 dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation "com.google.code.gson:gson:2.8.6"
