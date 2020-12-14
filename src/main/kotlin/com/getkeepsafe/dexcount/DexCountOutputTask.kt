@@ -17,9 +17,7 @@
 package com.getkeepsafe.dexcount
 
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput
-import com.microsoft.thrifty.protocol.CompactProtocol
-import com.microsoft.thrifty.transport.BufferTransport
-import okio.Buffer
+import okio.buffer
 import okio.gzip
 import okio.source
 import org.gradle.api.DefaultTask
@@ -65,13 +63,12 @@ abstract class DexCountOutputTask : DefaultTask() {
     }
 
     private fun readTreeGenFile(): TreeGenOutput {
-        return packageTreeFileProperty.asFile.get().source().gzip().use { source ->
-            val buffer = Buffer()
-            buffer.writeAll(source)
-
-            val transport = BufferTransport(buffer)
-            val protocol = CompactProtocol(transport)
-            TreeGenOutput.ADAPTER.read(protocol)
-        }
+        return packageTreeFileProperty.asFile.get()
+            .source()
+            .gzip()
+            .buffer()
+            .transport()
+            .compactProtocol()
+            .use(TreeGenOutput.ADAPTER::read)
     }
 }

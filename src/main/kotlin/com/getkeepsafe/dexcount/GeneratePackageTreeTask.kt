@@ -20,9 +20,7 @@ package com.getkeepsafe.dexcount
 
 import com.android.build.api.variant.BuiltArtifactsLoader
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput
-import com.microsoft.thrifty.protocol.CompactProtocol
-import com.microsoft.thrifty.transport.BufferTransport
-import okio.Buffer
+import okio.buffer
 import okio.gzip
 import okio.sink
 import org.gradle.api.DefaultTask
@@ -123,21 +121,17 @@ abstract class BaseGeneratePackageTreeTask() : DefaultTask() {
             tree = PackageTree.toThrift(tree),
             inputRepresentation = inputRepresentation
         )
-        val buffer = Buffer()
-        val transport = BufferTransport(buffer)
-        val protocol = CompactProtocol(transport)
-
-        thrift.write(protocol)
-        protocol.flush()
 
         val treeFile = packageTreeFileProperty.asFile.get()
         treeFile.parentFile.mkdirs()
-        treeFile.delete()
 
-        treeFile.sink().gzip().use { out ->
-            buffer.readAll(out)
-            out.flush()
-        }
+        treeFile
+            .sink(append = false)
+            .gzip()
+            .buffer()
+            .transport()
+            .compactProtocol()
+            .use(thrift::write)
     }
 
     private fun writeSummaryFile(tree: PackageTree) {
