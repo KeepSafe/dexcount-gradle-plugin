@@ -1,6 +1,6 @@
 ## Use with Jenkins Plot Plugin
 
-A common use-case is to plot method and field counts across builds.  The [Jenkins Plot plugin][0] is a general-purpose tool that graphs per-build scalar values through time.  It reads java .properties files, CSV files, and XML files.  Dexcount generates two files for each variant - a full package list, and a summary CSV file.  The summary file is usable as-is with the Jenkins Plot Plugin.  You can find it in `app/build/outputs/variant.csv` (note the `.csv` extension).
+A common use-case is to plot method and field counts across builds.  The [Jenkins Plot plugin][0] is a general-purpose tool that graphs per-build scalar values through time.  It reads java .properties files, CSV files, and XML files.  Dexcount generates two files for each variant - a full package list, and a summary CSV file.  The summary file is usable as-is with the Jenkins Plot Plugin.  You can find it in `app/build/outputs/dexcount/variant/summary.csv` (note the `.csv` extension).
 
 Consult the plugin documentation for details on how to configure it.
 
