@@ -31,7 +31,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion     | gradleVersion || numMethods | numClasses | numFields
-        "4.2.0-beta02" | "6.7.1"       || 7422       | 926        | 2677
+        "4.2.0"        | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"        | "6.7.1"       || 7356       | 926        | 2597
         "4.1.0"        | "6.5.1"       || 7356       | 926        | 2597
         "3.6.0"        | "6.5.1"       || 7370       | 926        | 3780
@@ -63,7 +63,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion     | gradleVersion || numMethods | numClasses | numFields
-        "4.2.0-beta02" | "6.7.1"       || 7          | 6          | 3
+        "4.2.0"        | "6.8.1"       || 7          | 6          | 3
         "4.1.0"        | "6.7.1"       || 7          | 6          | 3
         "4.1.0"        | "6.5.1"       || 7          | 6          | 3
         "3.6.0"        | "6.5.1"       || 7          | 6          | 7
@@ -95,7 +95,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion        | gradleVersion || numMethods | numClasses | numFields
-        "4.2.0-beta02"    | "6.7.1"       || 4266       | 723        | 1268
+        "4.2.0"           | "6.8.1"       || 4266       | 723        | 1268
         "4.1.0"           | "6.7.1"       || 4266       | 723        | 1268
         "4.1.0"           | "6.5.1"       || 4266       | 723        | 1268
         "3.6.0"           | "6.5.1"       || 4265       | 723        | 1271
@@ -127,7 +127,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion     | gradleVersion || numMethods | numClasses | numFields
-        "4.2.0-beta02" | "6.7.1"       || 7422       | 926        | 2677
+        "4.2.0"        | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"        | "6.7.1"       || 7356       | 926        | 2597
         "4.1.0"        | "6.5.1"       || 7356       | 926        | 2597
     }
