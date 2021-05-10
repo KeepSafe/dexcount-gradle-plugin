@@ -8,6 +8,7 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildResultException
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -343,6 +344,7 @@ final class DexMethodCountPluginSpec extends Specification {
     }
 
     // TODO migrate to new test strategy
+    @Ignore
     def 'android apk report example'() {
         given:
         def apkFile = new File(testProjectDir, 'tiniest-smallest-app.apk')

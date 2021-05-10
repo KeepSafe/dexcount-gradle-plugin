@@ -21,8 +21,11 @@ package com.getkeepsafe.dexcount
 import com.android.build.api.artifact.ArtifactType
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
-import com.android.build.api.variant.LibraryVariantProperties
-import com.android.build.api.variant.VariantProperties
+import com.android.build.api.extension.ApplicationAndroidComponentsExtension
+import com.android.build.api.extension.LibraryAndroidComponentsExtension
+import com.android.build.api.extension.TestAndroidComponentsExtension
+import com.android.build.api.variant.Variant
+import com.android.build.api.variant.LibraryVariant as LibVariant
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.LibraryExtension
@@ -130,7 +133,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         }
 
         val factories = listOf(
-            FourOneApplicator.Factory(),
+            FourTwoApplicator.Factory(),
             ThreeSixApplicator.Factory(),
             ThreeFourApplicator.Factory(),
             JavaOnlyApplicator.Factory()
@@ -411,10 +414,10 @@ open class ThreeSixApplicator(ext: DexCountExtension, project: Project) : ThreeF
 }
 
 @Suppress("UnstableApiUsage")
-open class FourOneApplicator(ext: DexCountExtension, project: Project) : AbstractTaskApplicator(ext, project) {
+open class FourTwoApplicator(ext: DexCountExtension, project: Project) : AbstractTaskApplicator(ext, project) {
     class Factory : TaskApplicator.Factory {
-        override val minimumRevision: Revision = Revision.parseRevision("4.1.0")
-        override fun create(ext: DexCountExtension, project: Project) = FourOneApplicator(ext, project)
+        override val minimumRevision: Revision = Revision.parseRevision("4.2.0")
+        override fun create(ext: DexCountExtension, project: Project) = FourTwoApplicator(ext, project)
     }
 
     override fun apply() {
@@ -424,23 +427,26 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
         project.plugins.withType(AppPlugin::class.java).configureEach {
             val android = project.extensions.getByType(ApplicationExtension::class.java)
-            android.onVariantProperties {
-                registerApkTask()
-                registerAabTask()
+            val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+            androidComponents.onVariants {
+                it.registerApkTask()
+                it.registerAabTask()
             }
         }
 
         project.plugins.withType(LibraryPlugin::class.java).configureEach() {
             val android = project.extensions.getByType(LibraryExtension::class.java)
-            android.onVariantProperties {
-                registerAarTask(android.buildToolsRevision)
+            val androidComponents = project.extensions.getByType(LibraryAndroidComponentsExtension::class.java)
+            androidComponents.onVariants {
+                it.registerAarTask(android.buildToolsRevision)
             }
         }
 
         project.plugins.withType(TestPlugin::class.java).configureEach {
             val android = project.extensions.getByType(TestExtension::class.java)
-            android.onVariantProperties {
-                registerApkTask()
+            val androidComponents = project.extensions.getByType(TestAndroidComponentsExtension::class.java)
+            androidComponents.onVariants {
+                it.registerApkTask()
             }
         }
 
@@ -452,7 +458,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
     }
 
-    protected open fun VariantProperties.registerApkTask() {
+    protected open fun Variant.registerApkTask() {
         if (!ext.enabled) {
             return
         }
@@ -486,7 +492,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
     }
 
-    protected open fun VariantProperties.registerAabTask() {
+    protected open fun Variant.registerAabTask() {
         if (!ext.enabled) {
             return
         }
@@ -519,7 +525,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
     }
 
-    protected open fun LibraryVariantProperties.registerAarTask(buildToolsRevision: Revision) {
+    protected open fun LibVariant.registerAarTask(buildToolsRevision: Revision) {
         if (!ext.enabled) {
             return
         }

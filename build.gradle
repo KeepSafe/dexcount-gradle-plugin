@@ -16,7 +16,7 @@
 
 plugins {
     id "com.github.ben-manes.versions" version "0.29.0"
-    id "org.jetbrains.kotlin.jvm" version "1.4.0"
+    id "org.jetbrains.kotlin.jvm" version "1.4.10"
     id "org.jetbrains.dokka" version "0.10.0"
     id "groovy"
     id "com.microsoft.thrifty" version "2.1.1"
@@ -61,7 +61,7 @@ repositories {
     google()
 }
 
-def agpVersion = "4.1.0-rc03"
+def agpVersion = "4.2.0"
 dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation "com.google.code.gson:gson:2.8.6"
