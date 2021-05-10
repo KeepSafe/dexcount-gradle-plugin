@@ -1,3 +1,7 @@
+2.1.0-RC01 (9 May 2021)
+---------
+* Add support for AGP 4.2.0
+
 2.0.0 (15 October 2020)
 ---------
 * **BREAKING** Raise minimum Gradle version to 6.0
