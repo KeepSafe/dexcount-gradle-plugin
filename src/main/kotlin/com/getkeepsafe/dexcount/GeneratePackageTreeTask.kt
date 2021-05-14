@@ -306,6 +306,16 @@ abstract class BundlePackageTreeTask : ApkishPackageTreeTask() {
         get() = bundleFileProperty.asFile.get()
 }
 
+@CacheableTask
+abstract class LibraryPackageTreeTask : ApkishPackageTreeTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val aarFileProperty: RegularFileProperty
+
+    override val inputFile: File
+        get() = aarFileProperty.asFile.get()
+}
+
 // This class is so-named because there is no `ArtifactType.AAR` in AGP 4.1,
 // so we have to resort to looking up the bundle task by name, eschewing the
 // new API for the time being.  In 4.2 we'll probably be able to consolidate
