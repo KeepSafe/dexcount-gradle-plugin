@@ -613,7 +613,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
     }
 
-    private inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
+    protected inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
         return register(name, T::class.java) { t ->
             fn(t)
         }
@@ -659,6 +659,34 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
                 // No Android plugins were registered; this may be a jar-count usage.
                 registerJarTask()
             }
+        }
+    }
+
+    override fun registerAarTask(variantName: String, artifacts: Artifacts, buildToolsRevision: Revision) {
+        val genTaskName = "generate${variantName.capitalize()}PackageTree"
+        val taskName = "count${variantName.capitalize()}DexMethods"
+
+        val gen = project.tasks.register<LibraryPackageTreeTask>(genTaskName) { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.outputFileNameProperty.set(variantName)
+            t.aarFileProperty.set(artifacts.get(ArtifactType.AAR))
+            t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+            t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+        }
+
+        project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(variantName)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
         }
     }
 }
