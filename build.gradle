@@ -114,7 +114,7 @@ def integrationTest = tasks.register("integrationTest", Test) { t ->
 
     t.jvmArgs(
         "-XX:+HeapDumpOnOutOfMemoryError", "-XX:GCTimeLimit=20", "-XX:GCHeapFreeLimit=10",
-        "-XX:MaxMetaspaceSize=1g"
+        "-XX:MaxMetaspaceSize=2g"
     )
 
     t.beforeTest { testCase ->

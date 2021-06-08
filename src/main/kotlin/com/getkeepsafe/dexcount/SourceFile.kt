@@ -135,7 +135,6 @@ internal class DexFile(
                 checkNotNull(tempFile) { "No classes.jar file found in ${file.canonicalPath}" }
             }
 
-            // ~/android-sdk/build-tools/23.0.3/dx --dex --output=temp.dex classes.jar
             val tempDexDir = Files.createTempDirectory("dex").also { it.toFile().deleteOnExit() }
 
             D8Command.builder()
