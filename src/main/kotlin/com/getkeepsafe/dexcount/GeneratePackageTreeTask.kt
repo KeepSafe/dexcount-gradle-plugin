@@ -64,7 +64,7 @@ fun DexCountExtension.toPrintOptions(isAndroidProject: Boolean = true): PrintOpt
     )
 }
 
-abstract class BaseGeneratePackageTreeTask() : DefaultTask() {
+abstract class BaseGeneratePackageTreeTask : DefaultTask() {
     /**
      * The plugin configuration, as provided by the 'dexcount' block.
      */
@@ -163,7 +163,7 @@ abstract class BaseGeneratePackageTreeTask() : DefaultTask() {
         }
 
         listOf("chart-builder.js", "d3.v3.min.js", "index.html", "styles.css").forEach { resourceName ->
-            javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/$resourceName").use { resource ->
+            javaClass.getResourceAsStream("/com/getkeepsafe/dexcount/$resourceName")?.use { resource ->
                 val targetFile = File(chartDirectory, resourceName)
                 targetFile.outputStream().use { output ->
                     resource.copyTo(output)
@@ -226,7 +226,7 @@ abstract class LegacyGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
         val tree = PackageTree(deobfuscator)
 
         if (isAndroidProject) {
-            DexFile.extractDexData(file, config.dxTimeoutSec).useMany { dataList ->
+            DexFile.extractDexData(file).useMany { dataList ->
                 dataList.flatMap { it.methodRefs }.forEach(tree::addMethodRef)
                 dataList.flatMap { it.fieldRefs }.forEach(tree::addFieldRef)
             }
@@ -273,7 +273,7 @@ abstract class ApkishPackageTreeTask : ModernGeneratePackageTreeTask() {
 
         inputRepresentation = file.name
 
-        return DexFile.extractDexData(file, configProperty.get().dxTimeoutSec).useMany { dataList ->
+        return DexFile.extractDexData(file).useMany { dataList ->
             dataList.forEachWithObject(PackageTree(deobfuscatorProvider.get())) { tree, dexFile ->
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
@@ -326,9 +326,6 @@ abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val aarBundleFileCollection: ConfigurableFileCollection
 
-    @get:Input
-    abstract val buildToolsVersion: Property<String>
-
     override var inputRepresentation: String = ""
 
     override fun generatePackageTree(): PackageTree {
@@ -341,7 +338,7 @@ abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
 
         val tree = PackageTree(deobfuscatorProvider.get())
 
-        DexFile.extractDexData(aar, configProperty.get().dxTimeoutSec, buildToolsVersion.get()).useMany {
+        DexFile.extractDexData(aar).useMany {
             for (dexFile in it) {
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)

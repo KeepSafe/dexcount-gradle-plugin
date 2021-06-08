@@ -3,7 +3,6 @@ package com.getkeepsafe.dexcount
 import com.android.build.api.variant.BuiltArtifact
 import com.android.build.api.variant.BuiltArtifacts
 import com.android.build.api.variant.BuiltArtifactsLoader
-import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.initialization.GradlePropertiesController
@@ -42,7 +41,7 @@ final class DexMethodCountPluginSpec extends Specification {
     }
 
     def 'cleanup'() {
-        FileUtils.deleteDirectory(testProjectDir)
+        testProjectDir.deleteDir()
     }
 
     @Unroll def '#projectPlugin project'() {

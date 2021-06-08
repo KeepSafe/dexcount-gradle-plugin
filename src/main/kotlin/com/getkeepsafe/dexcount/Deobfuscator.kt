@@ -16,56 +16,55 @@
 
 package com.getkeepsafe.dexcount
 
-import proguard.obfuscate.MappingProcessor
-import proguard.obfuscate.MappingReader
 import java.io.File
 
 /**
  * An object that can produce an unobfuscated class name from a Proguard
  * mapping file.
  */
-open class Deobfuscator(reader: MappingReader?) {
-    private val mapping = mutableMapOf<String, String>()
-
-    init {
-        reader?.pump(Processor())
-    }
-
+open class Deobfuscator(
+    private val mapping: Map<String, String>,
+) {
     open fun deobfuscate(name: String): String {
         return mapping[name] ?: name
     }
 
-    /**
-     * A Proguard MappingProcessor that builds a map from obfuscated to unobfuscated
-     * class names.
-     */
-    inner class Processor : MappingProcessor {
-        override fun processClassMapping(className: String, newClassName: String): Boolean {
-            mapping[newClassName] = className
-            return false
-        }
-
-        override fun processMethodMapping(className: String, firstLineNumber: Int, lastLineNumber: Int,
-                                          methodReturnType: String, methodName: String, methodArguments: String, newClassName: String,
-                                          newFirstLineNumber: Int, newLastLineNumber: Int, newMethodName: String) {
-            // nothing
-        }
-
-        override fun processFieldMapping(className: String, fieldType: String, fieldName: String,
-                                         newClassName: String, newFieldName: String) {
-            // nothing
-        }
-    }
-
     companion object {
-        @JvmStatic fun create(mappingFile: File?): Deobfuscator {
-            return if (mappingFile == null) empty else Deobfuscator(MappingReader(mappingFile))
+        @JvmStatic
+        fun create(mappingFile: File?): Deobfuscator {
+            if (mappingFile == null) {
+                return empty
+            }
+
+            if (!mappingFile.exists()) {
+                return empty
+            }
+
+            val mapping = mappingFile.useLines(Charsets.UTF_8) { lines ->
+                // This is a little dense.  We're reading the mapping file line-by-line, filtering out
+                // everything except those lines that map a class to its obfuscated name.  Other line types
+                // that we filter are:
+                // - blank lines
+                // - comments (those beginning with '#')
+                // - method and field mappings (beginning with whitespace)
+                //
+                // Class mapping lines always have the form "com.foo.Bar -> a.b.c:", even when the class
+                // is empty.
+                lines.filter { it.isNotBlank() }
+                    .filterNot { it.startsWith("#") }
+                    .filterNot { it.matches(Regex("^\\s+.*")) }
+                    .map { it.split(" -> ").map { parts -> parts.removeSuffix(":") } }
+                    .map { (cleartext, obfuscated) -> obfuscated to cleartext }
+                    .toMap()
+            }
+
+            return Deobfuscator(mapping)
         }
 
         /**
          * An always-empty deobfuscator that doesn't need to look things up.
          */
-        val empty: Deobfuscator = object : Deobfuscator(null) {
+        val empty: Deobfuscator = object : Deobfuscator(emptyMap()) {
             override fun deobfuscate(name: String): String {
                 return name
             }

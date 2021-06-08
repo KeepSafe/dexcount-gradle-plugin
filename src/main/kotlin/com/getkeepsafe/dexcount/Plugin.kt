@@ -18,14 +18,13 @@
 
 package com.getkeepsafe.dexcount
 
-import com.android.build.api.artifact.ArtifactType
 import com.android.build.api.artifact.Artifacts
+import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.extension.ApplicationAndroidComponentsExtension
 import com.android.build.api.extension.LibraryAndroidComponentsExtension
 import com.android.build.api.extension.TestAndroidComponentsExtension
-import com.android.build.api.variant.Variant
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.LibraryExtension
@@ -46,8 +45,10 @@ import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.file.RegularFile
 import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -133,6 +134,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         }
 
         val factories = listOf(
+            SevenOhApplicator.Factory(),
             FourTwoApplicator.Factory(),
             FourOneApplicator.Factory(),
             ThreeSixApplicator.Factory(),
@@ -163,7 +165,13 @@ interface TaskApplicator {
 abstract class AbstractTaskApplicator(
     protected val ext: DexCountExtension,
     protected val project: Project
-) : TaskApplicator
+) : TaskApplicator {
+    protected inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
+        return register(name, T::class.java) { t ->
+            fn(t)
+        }
+    }
+}
 
 abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : AbstractTaskApplicator(ext, project) {
     private val baseVariant_getOutputs: Method by lazy {
@@ -422,6 +430,15 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         private val clsKotlinUnaryFn: Class<*> by lazy { Class.forName("kotlin.jvm.functions.Function1") }
         private val clsCommonExtension: Class<*> by lazy { Class.forName("com.android.build.api.dsl.CommonExtension") }
         private val fnOnVariantProperties: Method by lazy { clsCommonExtension.getMethod("onVariantProperties", clsKotlinUnaryFn) }
+
+        private val clsArtifactType: Class<*> by lazy { Class.forName("com.android.build.api.artifact.ArtifactType") }
+        private val emArtifactTypeApk: Enum<*> by lazy { clsArtifactType.enumConstants.find { (it as Enum<*>).name == "APK" } as Enum<*> }
+        private val emArtifactTypeBundle: Enum<*> by lazy { clsArtifactType.enumConstants.find { (it as Enum<*>).name == "BUNDLE" } as Enum<*> }
+        private val emArtifactTypeAar: Enum<*> by lazy { clsArtifactType.enumConstants.find { (it as Enum<*>).name == "AAR" } as Enum<*> }
+        private val emArtifactTypeObfuscationMappingFile: Enum<*> by lazy { clsArtifactType.enumConstants.find { (it as Enum<*>).name == "OBFUSCATION_MAPPING_FILE" } as Enum<*> }
+
+        private val clsArtifacts: Class<*> by lazy { Class.forName("com.android.build.api.artifact.Artifacts") }
+        private val fnGetArtifact: Method by lazy { clsArtifacts.getMethod("get", clsArtifactType ) }
     }
 
     // In AGP 4.1.0, 'onVariantProperties' lambdas have a receiver deriving from the VariantProperties
@@ -434,6 +451,18 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             val artifacts: Artifacts = fnGetArtifacts(this) as Artifacts
 
             fn(name, artifacts)
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    sealed class OldArtifactType<T>(val artifactType: () -> Enum<*>) {
+        object Apk : OldArtifactType<Provider<Directory>>({ emArtifactTypeApk })
+        object Bundle : OldArtifactType<Provider<RegularFile>>({ emArtifactTypeBundle })
+        object Aar : OldArtifactType<Provider<RegularFile>>({ emArtifactTypeAar })
+        object ObfuscationMappingFile : OldArtifactType<Provider<RegularFile>>({ emArtifactTypeObfuscationMappingFile })
+
+        fun get(artifacts: Artifacts): T {
+            return fnGetArtifact(artifacts, artifactType()) as T
         }
     }
 
@@ -453,7 +482,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         project.plugins.withType(LibraryPlugin::class.java).configureEach {
             val android = project.extensions.getByType(LibraryExtension::class.java)
             fnOnVariantProperties(android, makeVariantPropertiesCallback<Any> { name, artifacts ->
-                registerAarTask(name, artifacts, android.buildToolsRevision)
+                registerAarTask(name, artifacts)
             })
         }
 
@@ -488,9 +517,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.apkDirectoryProperty.set(artifacts.get(ArtifactType.APK))
+            t.apkDirectoryProperty.set(OldArtifactType.Apk.get(artifacts))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
-            t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
         }
@@ -521,9 +550,9 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.bundleFileProperty.set(artifacts.get(ArtifactType.BUNDLE))
+            t.bundleFileProperty.set(OldArtifactType.Bundle.get(artifacts))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
-            t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
         }
@@ -539,7 +568,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
         }
     }
 
-    protected open fun registerAarTask(variantName: String, artifacts: Artifacts, buildToolsRevision: Revision) {
+    protected open fun registerAarTask(variantName: String, artifacts: Artifacts) {
         if (!ext.enabled) {
             return
         }
@@ -559,9 +588,8 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
                 t.configProperty.set(ext)
                 t.outputFileNameProperty.set(variantName)
                 t.aarBundleFileCollection.from(bundleTaskProvider)
-                t.buildToolsVersion.set(buildToolsRevision.toString())
                 t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
-                t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+                t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
                 t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
                 t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
             }
@@ -612,12 +640,6 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.androidProject.set(false)
         }
     }
-
-    protected inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
-        return register(name, T::class.java) { t ->
-            fn(t)
-        }
-    }
 }
 
 open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOneApplicator(ext, project) {
@@ -640,10 +662,9 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
         }
 
         project.plugins.withType(LibraryPlugin::class.java).configureEach {
-            val android = project.extensions.getByType(LibraryExtension::class.java)
             val androidComponents = project.extensions.getByType(LibraryAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
-                registerAarTask(variant.name, variant.artifacts, android.buildToolsRevision)
+                registerAarTask(variant.name, variant.artifacts)
             }
         }
 
@@ -662,7 +683,7 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
         }
     }
 
-    override fun registerAarTask(variantName: String, artifacts: Artifacts, buildToolsRevision: Revision) {
+    override fun registerAarTask(variantName: String, artifacts: Artifacts) {
         val genTaskName = "generate${variantName.capitalize()}PackageTree"
         val taskName = "count${variantName.capitalize()}DexMethods"
 
@@ -672,9 +693,9 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.aarFileProperty.set(artifacts.get(ArtifactType.AAR))
+            t.aarFileProperty.set(OldArtifactType.Aar.get(artifacts))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
-            t.mappingFileProperty.set(artifacts.get(ArtifactType.OBFUSCATION_MAPPING_FILE))
+            t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
         }
@@ -687,6 +708,178 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+        }
+    }
+}
+
+open class SevenOhApplicator(ext: DexCountExtension, project: Project) : AbstractTaskApplicator(ext, project) {
+    class Factory : TaskApplicator.Factory {
+        override val minimumRevision: Revision = Revision.parseRevision("7.0.0")
+        override fun create(ext: DexCountExtension, project: Project) = SevenOhApplicator(ext, project)
+    }
+
+    override fun apply() {
+        if (!ext.enabled) {
+            return
+        }
+
+        project.plugins.withType(AppPlugin::class.java).configureEach {
+            val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+            androidComponents.onVariants { variant ->
+                registerApkTask(variant.name, variant.artifacts)
+                registerAabTask(variant.name, variant.artifacts)
+            }
+        }
+
+        project.plugins.withType(LibraryPlugin::class.java).configureEach {
+            val androidComponents = project.extensions.getByType(LibraryAndroidComponentsExtension::class.java)
+            androidComponents.onVariants { variant ->
+                registerAarTask(variant.name, variant.artifacts)
+            }
+        }
+
+        project.plugins.withType(TestPlugin::class.java).configureEach {
+            val androidComponents = project.extensions.getByType(TestAndroidComponentsExtension::class.java)
+            androidComponents.onVariants { variant ->
+                registerApkTask(variant.name, variant.artifacts)
+            }
+        }
+
+        project.afterEvaluate {
+            if (project.extensions.findByType(CommonExtension::class.java) == null) {
+                // No Android plugins were registered; this may be a jar-count usage.
+                registerJarTask()
+            }
+        }
+    }
+
+    protected fun registerApkTask(variantName: String, artifacts: Artifacts) {
+        if (!ext.enabled) {
+            return
+        }
+
+        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+
+        val genTaskName = "generate${variantName.capitalize()}PackageTree"
+        val taskName = "count${variantName.capitalize()}DexMethods"
+
+        val gen = project.tasks.register<ApkPackageTreeTask>(genTaskName) { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.outputFileNameProperty.set(variantName)
+            t.apkDirectoryProperty.set(artifacts.get(SingleArtifact.APK))
+            t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+            t.mappingFileProperty.set(artifacts.get(SingleArtifact.OBFUSCATION_MAPPING_FILE))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+        }
+
+        project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(variantName)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
+        }
+    }
+
+    protected fun registerAabTask(variantName: String, artifacts: Artifacts) {
+        if (!ext.enabled) {
+            return
+        }
+
+        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+
+        val taskName = "count${variantName.capitalize()}BundleDexMethods"
+
+        val gen = project.tasks.register<BundlePackageTreeTask>("generate${variantName.capitalize()}BundlePackageTree") { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.outputFileNameProperty.set(variantName)
+            t.bundleFileProperty.set(artifacts.get(SingleArtifact.BUNDLE))
+            t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+            t.mappingFileProperty.set(artifacts.get(SingleArtifact.OBFUSCATION_MAPPING_FILE))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+        }
+
+        project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(variantName)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
+        }
+    }
+
+    protected fun registerAarTask(variantName: String, artifacts: Artifacts) {
+        val genTaskName = "generate${variantName.capitalize()}PackageTree"
+        val taskName = "count${variantName.capitalize()}DexMethods"
+
+        val gen = project.tasks.register<LibraryPackageTreeTask>(genTaskName) { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.outputFileNameProperty.set(variantName)
+            t.aarFileProperty.set(artifacts.get(SingleArtifact.AAR))
+            t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
+            t.mappingFileProperty.set(artifacts.get(SingleArtifact.OBFUSCATION_MAPPING_FILE))
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+        }
+
+        project.tasks.register<DexCountOutputTask>(taskName) { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set(variantName)
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(true)
+        }
+    }
+
+    protected open fun registerJarTask() {
+        if (!ext.enabled) {
+            return
+        }
+
+        if (!project.plugins.hasPlugin(JavaPlugin::class.java) && !project.plugins.hasPlugin(JavaLibraryPlugin::class.java)) {
+            return
+        }
+
+        check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+
+        val jarTaskProvider = project.tasks.named("jar", Jar::class.java)
+
+        val gen = project.tasks.register<JarPackageTreeTask>("generatePackageTree") { t ->
+            t.description = "Generate dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.outputFileNameProperty.set(jarTaskProvider.flatMap { jarTask -> jarTask.archiveFile.map { it.asFile.nameWithoutExtension } })
+            t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
+            t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.compact.gz"))
+            t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+        }
+
+        project.tasks.register<DexCountOutputTask>("countDeclaredMethods") { t ->
+            t.description = "Output dex method counts"
+            t.group       = "Reporting"
+
+            t.configProperty.set(ext)
+            t.variantNameProperty.set("")
+            t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.androidProject.set(false)
         }
     }
 }

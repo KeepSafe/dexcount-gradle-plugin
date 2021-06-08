@@ -21,16 +21,6 @@ import spock.lang.Specification
 final class DexFileSpec extends Specification {
     def "test AAR dexcount"() {
         given:
-        if (new File("local.properties").exists()) {
-            Properties properties = new Properties()
-            InputStream inputStream = new FileInputStream("local.properties")
-            properties.load(inputStream)
-            inputStream.close()
-            DexMethodCountPlugin.sdkLocation = new File(properties.getProperty("sdk.dir"))
-        } else {
-            DexMethodCountPlugin.sdkLocation = new File(System.getenv("ANDROID_HOME"))
-        }
-
         def aarFile = File.createTempFile("test", ".aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
@@ -38,12 +28,12 @@ final class DexFileSpec extends Specification {
         }
 
         when:
-        def dexFiles = DexFile.extractDexData(aarFile, 60, null)
+        def dexFiles = DexFile.extractDexData(aarFile)
 
         then:
         dexFiles != null
         dexFiles.size() == 1
-        dexFiles[0].methodRefs.size() == 982
+        dexFiles[0].methodRefs.size() == 983
         dexFiles[0].fieldRefs.size() == 436
 
         cleanup:

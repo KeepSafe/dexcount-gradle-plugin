@@ -62,7 +62,7 @@ repositories {
     google()
 }
 
-def agpVersion = "4.2.1"
+def agpVersion = "7.0.0-beta03"
 dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation "com.google.code.gson:gson:2.8.6"
@@ -70,11 +70,15 @@ dependencies {
     implementation "com.microsoft.thrifty:thrifty-runtime-ktx:2.1.1"
 
     compileOnly "com.android.tools.build:gradle:$agpVersion"
+    compileOnly "com.android.tools:r8:2.2.64"
+    compileOnly "com.android.tools:repository:30.0.0-beta03"
     additionalPluginClasspath "com.android.tools.build:gradle:$agpVersion"
+    additionalPluginClasspath "com.android.tools:r8:2.2.64"
+    additionalPluginClasspath "com.android.tools:repository:30.0.0-beta03"
 
-    testImplementation "org.codehaus.groovy:groovy-all:2.5.13"
+    testImplementation "org.codehaus.groovy:groovy-all:3.0.7"
     testImplementation "com.android.tools.build:gradle:$agpVersion"
-    testImplementation dependencies.create("org.spockframework:spock-core:1.3-groovy-2.5") {
+    testImplementation dependencies.create("org.spockframework:spock-core:2.0-groovy-3.0") {
         exclude module: "groovy-all"
     }
 }
@@ -110,7 +114,7 @@ def integrationTest = tasks.register("integrationTest", Test) { t ->
 
     t.jvmArgs(
         "-XX:+HeapDumpOnOutOfMemoryError", "-XX:GCTimeLimit=20", "-XX:GCHeapFreeLimit=10",
-        "-XX:MaxMetaspaceSize=1g"
+        "-XX:MaxMetaspaceSize=2g"
     )
 
     t.beforeTest { testCase ->
@@ -177,6 +181,8 @@ tasks.withType(Test) {
         showStackTraces true
         events "failed", "skipped"
     }
+
+    useJUnitPlatform()
 
     failFast = true
     maxParallelForks = isCi ? 1 : Runtime.runtime.availableProcessors().intdiv(2) ?: 1

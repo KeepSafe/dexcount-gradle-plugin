@@ -1,6 +1,5 @@
 package com.getkeepsafe.dexcount
 
-import org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Shared
@@ -31,15 +30,12 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion     | gradleVersion || numMethods | numClasses | numFields
+        "7.0.0-beta03" | "7.0.2"       || 7421       | 926        | 2676
         "4.2.0"        | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"        | "6.7.1"       || 7356       | 926        | 2597
-        "4.1.0"        | "6.5.1"       || 7356       | 926        | 2597
         "3.6.0"        | "6.5.1"       || 7370       | 926        | 3780
-        "3.6.0"        | "6.0"         || 7370       | 926        | 3780
         "3.5.4"        | "6.5.1"       || 7369       | 926        | 3780
-        "3.5.4"        | "6.0"         || 7369       | 926        | 3780
         "3.4.0"        | "6.5.1"       || 7435       | 926        | 3847
-        "3.4.0"        | "6.0"         || 7435       | 926        | 3847
     }
 
     @Unroll
@@ -63,15 +59,12 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion     | gradleVersion || numMethods | numClasses | numFields
+        "7.0.0-beta03" | "7.0.2"       || 7          | 5          | 3
         "4.2.0"        | "6.8.1"       || 7          | 6          | 3
         "4.1.0"        | "6.7.1"       || 7          | 6          | 3
-        "4.1.0"        | "6.5.1"       || 7          | 6          | 3
         "3.6.0"        | "6.5.1"       || 7          | 6          | 7
-        "3.6.0"        | "6.0"         || 7          | 6          | 7
         "3.5.4"        | "6.5.1"       || 7          | 6          | 7
-        "3.5.4"        | "6.0"         || 7          | 6          | 7
         "3.4.0"        | "6.5.1"       || 7          | 6          | 6
-        "3.4.0"        | "6.0"         || 7          | 6          | 6
     }
 
     @Unroll
@@ -95,15 +88,12 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion        | gradleVersion || numMethods | numClasses | numFields
+        "7.0.0-beta03"    | "7.0.2"       || 4266       | 723        | 1268
         "4.2.0"           | "6.8.1"       || 4266       | 723        | 1268
         "4.1.0"           | "6.7.1"       || 4266       | 723        | 1268
-        "4.1.0"           | "6.5.1"       || 4266       | 723        | 1268
         "3.6.0"           | "6.5.1"       || 4265       | 723        | 1271
-        "3.6.0"           | "6.0"         || 4265       | 723        | 1271
         "3.5.4"           | "6.5.1"       || 4266       | 723        | 1271
-        "3.5.4"           | "6.0"         || 4266       | 723        | 1271
         "3.4.0"           | "6.5.1"       || 4267       | 723        | 1271
-        "3.4.0"           | "6.0"         || 4267       | 723        | 1271
     }
 
     @Unroll
@@ -127,14 +117,16 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion     | gradleVersion || numMethods | numClasses | numFields
+        "7.0.0-beta03" | "7.0.2"       || 7421       | 926        | 2676
         "4.2.0"        | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"        | "6.7.1"       || 7356       | 926        | 2597
-        "4.1.0"        | "6.5.1"       || 7356       | 926        | 2597
     }
 
     private File projectDir(String agpVersion, String gradleVersion) {
         def projectDir = new File(new File("tmp", gradleVersion), agpVersion)
-        FileUtils.copyDirectory(integrationTestDir, projectDir)
+        new AntBuilder().copy(todir: projectDir.absolutePath) {
+            fileset(dir: integrationTestDir.absolutePath)
+        }
 
         def gradleProperties = new File(projectDir, "gradle.properties")
         gradleProperties.delete()
