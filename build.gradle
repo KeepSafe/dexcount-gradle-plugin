@@ -73,8 +73,6 @@ dependencies {
     compileOnly "com.android.tools:r8:2.2.64"
     compileOnly "com.android.tools:repository:30.0.0-beta03"
     additionalPluginClasspath "com.android.tools.build:gradle:$agpVersion"
-    additionalPluginClasspath "com.android.tools:r8:2.2.64"
-    additionalPluginClasspath "com.android.tools:repository:30.0.0-beta03"
 
     testImplementation "org.codehaus.groovy:groovy-all:3.0.7"
     testImplementation "com.android.tools.build:gradle:$agpVersion"
