@@ -44,7 +44,7 @@ open class Deobfuscator(
          * lines that start with an identifier character.  We can just pluck them
          * out of the file with a regex.
          */
-        private val CLASS_LINE = Regex("^([a-zA-Z][a-zA-Z0-9_.]*) -> ([^:]+):$")
+        private val CLASS_LINE = Regex("^([a-zA-Z][^\\s]*) -> ([^:]+):$")
 
         @JvmStatic
         fun create(mappingFile: File?): Deobfuscator {
