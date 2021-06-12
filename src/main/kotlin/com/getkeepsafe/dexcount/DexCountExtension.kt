@@ -31,21 +31,6 @@ open class DexCountExtension {
     var runOnEachPackage: Boolean = true
 
     /**
-     * When false, does not automatically count methods following the `package` task.
-     *
-     * Deprecated since 0.7.0, as dexcount no longer depends on the `assemble` task.
-     * Currently a synonym for {@link #runOnEachPackage}; will be removed in a future
-     * version.
-     */
-    @Deprecated("since 0.7.0; prefer {@link #runOnEachPackage}.", ReplaceWith("runOnEachPackage"))
-    @get:Internal("plugin input, not task input")
-    var runOnEachAssemble: Boolean
-        get() = runOnEachPackage
-        set(value) {
-            runOnEachPackage = value
-        }
-
-    /**
      * The format of the method count output, either "list", "tree", "json", or "yaml".
      */
     @get:Input
@@ -131,12 +116,6 @@ open class DexCountExtension {
      */
     @Internal("stdout-only")
     var printVersion: Boolean = false
-
-    /**
-     * Timeout when running Dx in seconds.
-     */
-    @Internal("Not input or output")
-    var dxTimeoutSec = 60
 
     /**
      * When true, then the plugin only counts the declared methods and fields inside this module.
