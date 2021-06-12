@@ -45,13 +45,12 @@ internal sealed class SourceFile : Closeable {
 }
 
 /**
- * A physical file and the {@link DexData} contained therein.
+ * A physical file and the [DexData] contained therein.
  *
  * A DexFile contains an open file, possibly a temp file.  When consumers are
  * finished with the DexFile, it should be cleaned up with [DexFile.close].
  */
-@Suppress("ConvertSecondaryConstructorToPrimary")
-internal class DexFile(
+internal class DexFile private constructor(
     private val file: File,
     private val isTemp: Boolean,
 ): SourceFile() {
@@ -81,13 +80,13 @@ internal class DexFile(
 
     companion object {
         /**
-         * Extracts a list of {@link DexFile} instances from the given file.
+         * Extracts a list of [DexFile] instances from the given [file].
          *
          * DexFiles can be extracted either from an Android APK file, or from a raw
-         * {@code classes.dex} file.
+         * `classes.dex` file.
          *
          * @param file the APK or dex file.
-         * @return a list of DexFile objects representing data in the given file.
+         * @return a list of [DexFile] objects representing data in the given file.
          */
         @JvmStatic
         fun extractDexData(file: File?): List<DexFile> {
@@ -151,14 +150,14 @@ internal class DexFile(
         }
 
         /**
-         * Attempts to unzip the file and extract all dex files inside of it.
+         * Attempts to unzip the [file] and extract all dex files inside of it.
          *
-         * It is assumed that {@code file} is an APK file resulting from an Android
+         * It is assumed that [file] is an APK file resulting from an Android
          * build, containing one or more appropriately-named classes.dex files.
          *
          * @param file the APK file from which to extract dex data.
          * @return a list of contained dex files.
-         * @throws ZipException if {@code file} is not a zip file.
+         * @throws ZipException if [file] is not a zip file.
          */
         @JvmStatic
         fun extractDexFromZip(file: File): List<DexFile> {

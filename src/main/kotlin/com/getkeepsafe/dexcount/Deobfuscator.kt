@@ -30,6 +30,22 @@ open class Deobfuscator(
     }
 
     companion object {
+        /**
+         * Proguard mapping files have the following syntax:
+         *
+         * ```
+         * line : comment | class_mapping | member_mapping
+         * comment: '#' ...
+         * class_mapping: type_name ' -> ' obfuscated_name ':'
+         * member_mapping: '    ' type_name ' ' member_name ' -> ' obfuscated_name
+         * ```
+         *
+         * Class mapping lines are easily distinguished because they're the only
+         * lines that start with an identifier character.  We can just pluck them
+         * out of the file with a regex.
+         */
+        private val CLASS_LINE = Regex("^([a-zA-Z][^\\s]*) -> ([^:]+):$")
+
         @JvmStatic
         fun create(mappingFile: File?): Deobfuscator {
             if (mappingFile == null) {
@@ -41,19 +57,8 @@ open class Deobfuscator(
             }
 
             val mapping = mappingFile.useLines(Charsets.UTF_8) { lines ->
-                // This is a little dense.  We're reading the mapping file line-by-line, filtering out
-                // everything except those lines that map a class to its obfuscated name.  Other line types
-                // that we filter are:
-                // - blank lines
-                // - comments (those beginning with '#')
-                // - method and field mappings (beginning with whitespace)
-                //
-                // Class mapping lines always have the form "com.foo.Bar -> a.b.c:", even when the class
-                // is empty.
-                lines.filter { it.isNotBlank() }
-                    .filterNot { it.startsWith("#") }
-                    .filterNot { it.matches(Regex("^\\s+.*")) }
-                    .map { it.split(" -> ").map { parts -> parts.removeSuffix(":") } }
+                lines
+                    .mapNotNull { CLASS_LINE.matchEntire(it)?.destructured }
                     .map { (cleartext, obfuscated) -> obfuscated to cleartext }
                     .toMap()
             }
