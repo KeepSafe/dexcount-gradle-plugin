@@ -27,11 +27,15 @@ import org.gradle.initialization.GradlePropertiesController
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Ignore
 import spock.lang.Specification
+import spock.lang.TempDir
 
 @Ignore
 final class DexCountExtensionSpec extends Specification {
     private Project project
     private File apkFile
+
+    @TempDir
+    private File tempDir
 
     private BuiltArtifact apkArtifact
     private BuiltArtifacts builtArtifacts
@@ -50,7 +54,7 @@ final class DexCountExtensionSpec extends Specification {
           </manifest>
         """)
 
-        apkFile = File.createTempFile("tiles", ".apk")
+        apkFile = new File(tempDir, "tiles.apk")
         def apkResource = getClass().getResourceAsStream("/tiles.apk")
         apkResource.withStream { input ->
             apkFile.append(input)
@@ -63,10 +67,6 @@ final class DexCountExtensionSpec extends Specification {
         apkArtifact.outputFile >> apkFile.canonicalPath
         builtArtifacts.elements >> [apkArtifact]
         loader.load(_) >> builtArtifacts
-    }
-
-    def "cleanup"() {
-        apkFile.delete()
     }
 
     def "maxMethodCount methods < tiles.apk methods, throw exception"() {

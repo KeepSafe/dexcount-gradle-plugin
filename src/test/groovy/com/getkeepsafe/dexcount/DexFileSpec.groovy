@@ -17,11 +17,15 @@
 package com.getkeepsafe.dexcount
 
 import spock.lang.Specification
+import spock.lang.TempDir
 
 final class DexFileSpec extends Specification {
+    @TempDir
+    File tempDir
+
     def "test AAR dexcount"() {
         given:
-        def aarFile = File.createTempFile("test", ".aar")
+        def aarFile = new File(tempDir, "test.aar")
 
         getClass().getResourceAsStream('/android-beacon-library-2.7.aar').withStream { input ->
             aarFile.append(input)
@@ -35,14 +39,11 @@ final class DexFileSpec extends Specification {
         dexFiles.size() == 1
         dexFiles[0].methodRefs.size() == 983
         dexFiles[0].fieldRefs.size() == 436
-
-        cleanup:
-        aarFile.delete()
     }
 
     def "test APK built with tools v24"() {
         given:
-        def apk = File.createTempFile("app-debug-tools-v24", ".apk")
+        def apk = new File(tempDir, "app-debug-tools-v24.apk")
 
         getClass().getResourceAsStream("/app-debug-tools-v24.apk").withStream { input ->
             apk.append(input)
@@ -56,8 +57,5 @@ final class DexFileSpec extends Specification {
         dexFiles.size() == 2
         dexFiles[0].methodRefs.size() == 3
         dexFiles[1].methodRefs.size() == 297
-
-        cleanup:
-        apk.delete()
     }
 }

@@ -11,13 +11,13 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildResultException
 import spock.lang.Ignore
 import spock.lang.Specification
+import spock.lang.TempDir
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 @Ignore
 final class DexMethodCountPluginSpec extends Specification {
-    private File testProjectDir
     private File buildFile
     private String reportFolder
     private Project project
@@ -25,8 +25,10 @@ final class DexMethodCountPluginSpec extends Specification {
     def MANIFEST_FILE_PATH = 'src/main/AndroidManifest.xml'
     def MANIFEST_FILE_TEXT = "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"com.example\"/>"
 
+    @TempDir
+    private File testProjectDir
+
     def 'setup'() {
-        testProjectDir = File.createTempDir()
         buildFile = new File(testProjectDir, 'build.gradle')
         reportFolder = "${testProjectDir.absolutePath}/build/outputs/dexcount"
         new File(new File(testProjectDir, 'src'), 'main').mkdirs()
@@ -38,10 +40,6 @@ final class DexMethodCountPluginSpec extends Specification {
         manifestFile = new File(project.projectDir, 'src/main/AndroidManifest.xml')
         manifestFile.parentFile.mkdirs()
         manifestFile.write(MANIFEST_FILE_TEXT)
-    }
-
-    def 'cleanup'() {
-        testProjectDir.deleteDir()
     }
 
     @Unroll def '#projectPlugin project'() {
