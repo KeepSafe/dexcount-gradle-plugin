@@ -22,9 +22,12 @@ import com.android.build.api.artifact.Artifacts
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.dsl.CommonExtension
-import com.android.build.api.extension.ApplicationAndroidComponentsExtension
-import com.android.build.api.extension.LibraryAndroidComponentsExtension
-import com.android.build.api.extension.TestAndroidComponentsExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
+import com.android.build.api.variant.TestAndroidComponentsExtension
+import com.android.build.api.extension.ApplicationAndroidComponentsExtension as OldApplicationAndroidComponentsExtension
+import com.android.build.api.extension.LibraryAndroidComponentsExtension as OldLibraryAndroidComponentsExtension
+import com.android.build.api.extension.TestAndroidComponentsExtension as OldTestAndroidComponentsExtension
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.LibraryExtension
@@ -59,6 +62,7 @@ import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
 
+@Suppress("unused")
 open class DexMethodCountPlugin : Plugin<Project> {
     companion object {
         var sdkLocation: File? = null
@@ -648,13 +652,14 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
         override fun create(ext: DexCountExtension, project: Project) = FourTwoApplicator(ext, project)
     }
 
+    @Suppress("DEPRECATION")
     override fun apply() {
         if (!ext.enabled) {
             return
         }
 
         project.plugins.withType(AppPlugin::class.java).configureEach {
-            val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
+            val androidComponents = project.extensions.getByType(OldApplicationAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
                 registerApkTask(variant.name, variant.artifacts)
                 registerAabTask(variant.name, variant.artifacts)
@@ -662,14 +667,14 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
         }
 
         project.plugins.withType(LibraryPlugin::class.java).configureEach {
-            val androidComponents = project.extensions.getByType(LibraryAndroidComponentsExtension::class.java)
+            val androidComponents = project.extensions.getByType(OldLibraryAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
                 registerAarTask(variant.name, variant.artifacts)
             }
         }
 
         project.plugins.withType(TestPlugin::class.java).configureEach {
-            val androidComponents = project.extensions.getByType(TestAndroidComponentsExtension::class.java)
+            val androidComponents = project.extensions.getByType(OldTestAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
                 registerApkTask(variant.name, variant.artifacts)
             }
