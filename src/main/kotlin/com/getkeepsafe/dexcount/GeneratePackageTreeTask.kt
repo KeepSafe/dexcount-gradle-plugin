@@ -50,16 +50,16 @@ import java.io.PrintStream
 
 fun DexCountExtension.toPrintOptions(isAndroidProject: Boolean = true): PrintOptions {
     return PrintOptions(
-        includeClassCount = includeClassCount,
+        includeClassCount = includeClassCount.get(),
         includeMethodCount = true,
-        includeFieldCount = includeFieldCount,
-        includeTotalMethodCount = includeTotalMethodCount,
-        teamCityIntegration = teamCityIntegration,
-        orderByMethodCount = orderByMethodCount,
-        includeClasses = includeClasses,
+        includeFieldCount = includeFieldCount.get(),
+        includeTotalMethodCount = includeTotalMethodCount.get(),
+        teamCityIntegration = teamCityIntegration.get(),
+        orderByMethodCount = orderByMethodCount.get(),
+        includeClasses = includeClasses.get(),
         printHeader = true,
-        maxTreeDepth = maxTreeDepth,
-        printDeclarations = printDeclarations,
+        maxTreeDepth = maxTreeDepth.get(),
+        printDeclarations = printDeclarations.get(),
         isAndroidProject = isAndroidProject
     )
 }
@@ -175,7 +175,7 @@ abstract class BaseGeneratePackageTreeTask : DefaultTask() {
     }
 
     private fun writeFullTree(tree: PackageTree) {
-        val outputFormat = configProperty.get().format as OutputFormat
+        val outputFormat = configProperty.flatMap { it.format }.get()
         val fullCountFileName = outputFileNameProperty.get() + outputFormat.extension
         val fullCountFile = outputDirectoryProperty.file(fullCountFileName).get().asFile
 
@@ -233,8 +233,8 @@ abstract class LegacyGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
         }
 
         val jarFile = when {
-            isAar && config.printDeclarations -> JarFile.extractJarFromAar(file)
-            isJar && config.printDeclarations -> JarFile.extractJarFromJar(file)
+            isAar && config.printDeclarations.get() -> JarFile.extractJarFromAar(file)
+            isJar && config.printDeclarations.get() -> JarFile.extractJarFromJar(file)
             else -> null
         }
 
@@ -345,7 +345,7 @@ abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
             }
         }
 
-        if (configProperty.get().printDeclarations) {
+        if (configProperty.flatMap { it.printDeclarations }.get()) {
             JarFile.extractJarFromAar(aar).use { jar ->
                 for (ref in jar.methodRefs) tree.addDeclaredMethodRef(ref)
                 for (ref in jar.fieldRefs) tree.addDeclaredFieldRef(ref)

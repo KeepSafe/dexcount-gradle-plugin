@@ -26,9 +26,15 @@ class CountReporter(
 ) : Styleable by styleable {
     private val options = config.toPrintOptions(isAndroidProject)
 
+    private val enabled = config.enabled.get()
+    private val verbose = config.verbose.get()
+    private val format = config.format.get()
+    private val printVersion = config.printVersion.get()
+    private val maxMethodCount = config.maxMethodCount.get()
+
     fun report() {
         try {
-            check(config.enabled) { "Tasks should not be executed if the plugin is disabled" }
+            check(enabled) { "Tasks should not be executed if the plugin is disabled" }
 
             printPreamble()
             printSummary()
@@ -43,7 +49,7 @@ class CountReporter(
     }
 
     private fun printPreamble() {
-        if (config.printVersion) {
+        if (printVersion) {
             val projectName = javaClass.`package`.implementationTitle
             val projectVersion = javaClass.`package`.implementationVersion
 
@@ -94,11 +100,12 @@ class CountReporter(
             }
         }
 
-        if (options.teamCityIntegration || config.teamCitySlug != null) {
+        if (options.teamCityIntegration || config.teamCitySlug.isPresent) {
             withStyledOutput { out ->
-                val slug = "Dexcount" + when (val ts = config.teamCitySlug) {
+                val configuredSlug = config.teamCitySlug.getOrElse("")
+                val slug = "Dexcount" + when (configuredSlug) {
                     null -> ""
-                    else -> "_" + ts.replace(' ', '_')
+                    else -> "_" + configuredSlug.replace(' ', '_')
                 }
                 val prefix = "${slug}_${variantName}"
 
@@ -120,19 +127,19 @@ class CountReporter(
     private fun printTaskDiagnosticData() {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
-        val level = if (config.verbose) LogLevel.LIFECYCLE else LogLevel.DEBUG
+        val level = if (verbose) LogLevel.LIFECYCLE else LogLevel.DEBUG
 
         withStyledOutput(Color.YELLOW, level) { out ->
             val strBuilder = StringBuilder()
-            packageTree.print(strBuilder, config.format as OutputFormat, options)
+            packageTree.print(strBuilder, format, options)
 
             out.format(strBuilder.toString())
         }
     }
 
     private fun failBuildMaxMethods() {
-        if (config.maxMethodCount > 0 && packageTree.methodCount > config.maxMethodCount) {
-            throw GradleException("The current APK has ${packageTree.methodCount} methods, the current max is: ${config.maxMethodCount}.")
+        if (maxMethodCount > 0 && packageTree.methodCount > maxMethodCount) {
+            throw GradleException("The current APK has ${packageTree.methodCount} methods, the current max is: ${maxMethodCount}.")
         }
     }
 
