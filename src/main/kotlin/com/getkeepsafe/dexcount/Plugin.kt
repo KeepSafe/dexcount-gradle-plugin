@@ -119,7 +119,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
             // that they are trying to report a dexcount bug.  Help them help us out
             // by printing the current plugin title and version.
             if (project.gradle.startParameter.showStacktrace != ShowStacktrace.INTERNAL_EXCEPTIONS) {
-                printVersion = true
+                printVersion.set(true)
             }
         }
 
@@ -214,7 +214,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
         }
 
         variants.configureEach { variant ->
-            if (!ext.enabled) {
+            if (!ext.enabled.get()) {
                 return@configureEach
             }
 
@@ -253,7 +253,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.androidProject.set(false)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
 
-            if (ext.runOnEachPackage) {
+            if (ext.runOnEachPackage.get()) {
                 jarTask.finalizedBy(t)
             }
         }
@@ -304,7 +304,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.androidProject.set(true)
         }
 
-        if (ext.runOnEachPackage) {
+        if (ext.runOnEachPackage.get()) {
             parentTask.configure { t ->
                 t.finalizedBy(countTask)
             }
@@ -312,11 +312,11 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
     }
 
     protected fun checkPrintDeclarationsIsFalse() {
-        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+        check(!ext.printDeclarations.get()) { "Cannot compute declarations for project $project" }
     }
 
     protected fun checkPrintDeclarationsIsTrue() {
-        check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+        check(ext.printDeclarations.get()) { "printDeclarations must be true for Java projects: $project" }
     }
 
     protected open fun getMappingFile(variant: BaseVariant): Provider<FileCollection> {
@@ -471,7 +471,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     override fun apply() {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
@@ -506,11 +506,11 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected open fun registerApkTask(variantName: String, artifacts: Artifacts) {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
-        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+        check(!ext.printDeclarations.get()) { "Cannot compute declarations for project $project" }
 
         val genTaskName = "generate${variantName.capitalize()}PackageTree"
         val taskName = "count${variantName.capitalize()}DexMethods"
@@ -540,11 +540,11 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected open fun registerAabTask(variantName: String, artifacts: Artifacts) {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
-        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+        check(!ext.printDeclarations.get()) { "Cannot compute declarations for project $project" }
 
         val taskName = "count${variantName.capitalize()}BundleDexMethods"
 
@@ -573,7 +573,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected open fun registerAarTask(variantName: String, artifacts: Artifacts) {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
@@ -611,7 +611,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected open fun registerJarTask() {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
@@ -619,7 +619,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             return
         }
 
-        check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+        check(ext.printDeclarations.get()) { "printDeclarations must be true for Java projects: $project" }
 
         val jarTaskProvider = project.tasks.named("jar", Jar::class.java)
 
@@ -654,7 +654,7 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
 
     @Suppress("DEPRECATION")
     override fun apply() {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
@@ -724,7 +724,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     override fun apply() {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
@@ -759,11 +759,11 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected fun registerApkTask(variantName: String, artifacts: Artifacts) {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
-        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+        check(!ext.printDeclarations.get()) { "Cannot compute declarations for project $project" }
 
         val genTaskName = "generate${variantName.capitalize()}PackageTree"
         val taskName = "count${variantName.capitalize()}DexMethods"
@@ -793,11 +793,11 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected fun registerAabTask(variantName: String, artifacts: Artifacts) {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
-        check(!ext.printDeclarations) { "Cannot compute declarations for project $project" }
+        check(!ext.printDeclarations.get()) { "Cannot compute declarations for project $project" }
 
         val taskName = "count${variantName.capitalize()}BundleDexMethods"
 
@@ -854,7 +854,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
     }
 
     protected open fun registerJarTask() {
-        if (!ext.enabled) {
+        if (!ext.enabled.get()) {
             return
         }
 
@@ -862,7 +862,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
             return
         }
 
-        check(ext.printDeclarations) { "printDeclarations must be true for Java projects: $project" }
+        check(ext.printDeclarations.get()) { "printDeclarations must be true for Java projects: $project" }
 
         val jarTaskProvider = project.tasks.named("jar", Jar::class.java)
 

@@ -22,8 +22,6 @@ import com.android.build.api.variant.BuiltArtifactsLoader
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.ProjectConfigurationException
-import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.initialization.GradlePropertiesController
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -160,60 +158,14 @@ final class DexCountExtensionSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "format can be a String"() {
-        given:
-        def ext = new DexCountExtension()
-
-        when:
-        ext.format = "tree"
-
-        then:
-        ext.format == OutputFormat.TREE
-    }
-
-    def "format can be an OutputFormat enum"() {
-        given:
-        def ext = new DexCountExtension()
-
-        when:
-        ext.format = OutputFormat.TREE
-
-        then:
-        ext.format == OutputFormat.TREE
-    }
-
-    def "setFormat throws on invalid format class"() {
-        given:
-        def ext = new DexCountExtension()
-
-        when:
-        ext.format = 12345
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message == "Unrecognized output format '12345'"
-    }
-
-    def "setFormat throws on invalid format name"() {
-        given:
-        def ext = new DexCountExtension()
-
-        when:
-        ext.format = "splay-tree"
-
-        then:
-        def e = thrown(IllegalArgumentException)
-        e.message == "Unrecognized output format 'splay-tree'"
-    }
-
     def "format defaults to LIST"() {
         expect:
-        new DexCountExtension().format == OutputFormat.LIST
+        new DexCountExtension(project.objects, project.providers).format == OutputFormat.LIST
     }
 
     def "runOnEachPackage defaults to true"() {
         when:
-        def ext = new DexCountExtension()
+        def ext = new DexCountExtension(project.objects, project.providers)
 
         then:
         ext.runOnEachPackage
@@ -221,7 +173,7 @@ final class DexCountExtensionSpec extends Specification {
 
     def "runOnEachAssemble is a synonym for runOnEachPackage"() {
         given:
-        def ext = new DexCountExtension()
+        def ext = new DexCountExtension(project.objects, project.providers)
 
         when:
         ext.runOnEachAssemble = false
@@ -232,7 +184,7 @@ final class DexCountExtensionSpec extends Specification {
 
     def "runOnEachPackage is a synonym for runOnEachAssemble"() {
         given:
-        def ext = new DexCountExtension()
+        def ext = new DexCountExtension(project.objects, project.providers)
 
         when:
         ext.runOnEachPackage = false
