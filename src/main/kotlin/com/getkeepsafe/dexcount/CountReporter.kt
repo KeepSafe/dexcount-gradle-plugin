@@ -24,7 +24,7 @@ class CountReporter(
     val isAndroidProject: Boolean = true,
     val isInstantRun: Boolean = false
 ) : Styleable by styleable {
-    private val options = config.toPrintOptions(isAndroidProject)
+    private val options = PrintOptions.fromDexCountExtension(config).withIsAndroidProject(isAndroidProject)
 
     private val enabled = config.enabled.get()
     private val verbose = config.verbose.get()

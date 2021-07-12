@@ -63,11 +63,16 @@ repositories {
 }
 
 def agpVersion = "7.1.0-alpha03"
+def autoValueVersion = "1.8.1"
+
 dependencies {
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation "com.google.code.gson:gson:2.8.6"
     implementation "org.javassist:javassist:3.27.0-GA"
     implementation "com.microsoft.thrifty:thrifty-runtime-ktx:2.1.1"
+
+    compileOnlyApi "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
+    annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
 
     compileOnly "com.android.tools.build:gradle:$agpVersion"
     compileOnly "com.android.tools:r8:2.2.64"
@@ -141,6 +146,7 @@ tasks.withType(JavaCompile) {
     configure(options) {
         compilerArgs << "-Xlint:all"            // Turn on all warnings
         compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
+        compilerArgs << "-Xlint:-processing"    // Turn off "no processor claimed these annotatiosn" warning
         compilerArgs << "-Werror"               // Turn warnings into errors
         encoding = "utf-8"
         fork = true
