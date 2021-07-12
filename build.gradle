@@ -66,6 +66,7 @@ def agpVersion = "7.1.0-alpha03"
 def autoValueVersion = "1.8.1"
 
 dependencies {
+    implementation 'commons-io:commons-io:2.10.0'
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
     implementation "com.google.code.gson:gson:2.8.6"
     implementation "org.javassist:javassist:3.27.0-GA"

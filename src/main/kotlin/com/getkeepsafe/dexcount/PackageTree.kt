@@ -89,7 +89,7 @@ class PackageTree(
         }
 
         @JvmStatic fun fromThrift(thrift: ThriftPackageTree): PackageTree {
-            val tree = PackageTree(thrift.name ?: "", thrift.isClass ?: false, Deobfuscator.empty)
+            val tree = PackageTree(thrift.name ?: "", thrift.isClass ?: false, Deobfuscator.EMPTY)
             if (thrift.children != null) {
                 for ((name, node) in thrift.children) {
                     tree.children_[name] = fromThrift(node)
@@ -136,7 +136,7 @@ class PackageTree(
     // Same semantics as methodTotal_.
     private var fieldTotal_ = mutableMapOf<Type, Int>()
 
-    private val deobfuscator_: Deobfuscator = deobfuscator ?: Deobfuscator.empty
+    private val deobfuscator_: Deobfuscator = deobfuscator ?: Deobfuscator.EMPTY
     private val children_: SortedMap<String, PackageTree> = TreeMap()
 
     // The set of methods declared on this node.  Will be empty for package

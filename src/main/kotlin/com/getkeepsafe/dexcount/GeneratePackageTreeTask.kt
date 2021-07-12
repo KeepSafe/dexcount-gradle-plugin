@@ -244,7 +244,7 @@ abstract class ModernGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
 
     @get:Internal
     protected val deobfuscatorProvider: Provider<Deobfuscator>
-        get() = mappingFileProperty.map { Deobfuscator.create(it.asFile) }.orElse(Deobfuscator.empty)
+        get() = mappingFileProperty.map { Deobfuscator.create(it.asFile) }.orElse(Deobfuscator.EMPTY)
 }
 
 abstract class ApkishPackageTreeTask : ModernGeneratePackageTreeTask() {
@@ -354,7 +354,7 @@ abstract class JarPackageTreeTask : BaseGeneratePackageTreeTask() {
         get() = false
 
     override fun generatePackageTree(): PackageTree {
-        val tree = PackageTree(Deobfuscator.empty)
+        val tree = PackageTree(Deobfuscator.EMPTY)
         val jarFile = jarFileProperty.get().asFile
         JarFile.extractJarFromJar(jarFile).use { jar ->
             for (ref in jar.methodRefs) tree.addDeclaredMethodRef(ref)
