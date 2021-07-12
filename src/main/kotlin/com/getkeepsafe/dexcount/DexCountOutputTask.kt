@@ -21,6 +21,7 @@ import okio.buffer
 import okio.gzip
 import okio.source
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -28,6 +29,7 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import java.io.IOException
 
 abstract class DexCountOutputTask : DefaultTask() {
     @get:Input
@@ -58,7 +60,11 @@ abstract class DexCountOutputTask : DefaultTask() {
             androidProject.get(),
             false)
 
-        reporter.report()
+        try {
+            reporter.report()
+        } catch (e: IOException) {
+            throw GradleException("Failed to report dexcount output", e)
+        }
     }
 
     private fun readTreeGenFile(): TreeGenOutput {

@@ -19,6 +19,8 @@ import kotlin.Unit;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.LogLevel;
 
+import java.io.IOException;
+
 /**
  * An object that can produce formatted output from a {@link PackageTree} instance.
  */
@@ -64,7 +66,7 @@ public class CountReporter {
         this.isInstantRun = isInstantRun;
     }
 
-    public void report() {
+    public void report() throws IOException {
         try {
             if (!enabled) {
                 throw new IllegalStateException("Tasks should not be executed if the plugin is disabled");
@@ -78,12 +80,11 @@ public class CountReporter {
             styleable.withStyledOutput(Color.RED, LogLevel.ERROR, out -> {
                 out.println("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues");
                 e.printStackTrace(out);
-                return Unit.INSTANCE;
             });
         }
     }
 
-    private void printPreamble() {
+    private void printPreamble() throws IOException {
         if (printOptions.getPrintHeader()) {
             String projectName = getClass().getPackage().getImplementationTitle();
             String projectVersion = getClass().getPackage().getImplementationVersion();
@@ -92,7 +93,6 @@ public class CountReporter {
                 out.println("Dexcount name:    " + projectName);
                 out.println("Dexcount version: " + projectVersion);
                 out.println("Dexcount input:   " + inputRepresentation);
-                return Unit.INSTANCE;
             });
         }
     }
@@ -102,11 +102,10 @@ public class CountReporter {
         return String.format("%.2f", used);
     }
 
-    private void printSummary() {
+    private void printSummary() throws IOException {
         if (isInstantRun) {
             styleable.withStyledOutput(Color.RED, null, out -> {
                 out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.");
-                return Unit.INSTANCE;
             });
         }
 
@@ -141,8 +140,6 @@ public class CountReporter {
                 out.println("Fields remaining in " + inputRepresentation + ": " + fieldsRemaining);
                 out.println("Classes remaining in " + inputRepresentation + ": " + classesRemaining);
             }
-
-            return Unit.INSTANCE;
         });
 
         if (printOptions.getTeamCityIntegration() || (teamCitySlug != null && teamCitySlug.length() > 0)) {
@@ -160,13 +157,11 @@ public class CountReporter {
                 out.println(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "ClassCount", packageTree.getClassCount()));
                 out.println(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "MethodCount", packageTree.getMethodCount()));
                 out.println(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "FieldCount", packageTree.getFieldCount()));
-
-                return Unit.INSTANCE;
             });
         }
     }
 
-    private void printTaskDiagnosticData() {
+    private void printTaskDiagnosticData() throws IOException {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
         LogLevel level = verbose ? LogLevel.LIFECYCLE : LogLevel.DEBUG;
@@ -176,8 +171,6 @@ public class CountReporter {
             packageTree.print(strBuilder, format, printOptions);
 
             out.format(strBuilder.toString());
-
-            return Unit.INSTANCE;
         });
     }
 

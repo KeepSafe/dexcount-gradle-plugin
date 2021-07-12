@@ -80,7 +80,7 @@ abstract class BaseGeneratePackageTreeTask : DefaultTask() {
     @get:Internal
     abstract val inputRepresentation: String
 
-    abstract fun generatePackageTree(): PackageTree
+    internal abstract fun generatePackageTree(): PackageTree
 
     @get:Internal
     protected open val isAndroidProject: Boolean

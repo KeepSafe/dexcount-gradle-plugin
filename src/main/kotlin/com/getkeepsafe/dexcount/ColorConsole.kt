@@ -2,9 +2,11 @@ package com.getkeepsafe.dexcount
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.logging.LogLevel
+import java.io.IOException
 import java.io.PrintWriter
 import java.io.Writer
 import java.lang.reflect.Method
+import kotlin.jvm.Throws
 
 
 enum class Color {
@@ -42,10 +44,21 @@ private enum class Style {
 }
 
 /**
+ * A temporary functional interface that declares it throws an IOException.
+ *
+ * Necessary only until we move ColorConsole.kt to Java.
+ */
+interface ThrowingLambda {
+    @Throws(IOException::class)
+    operator fun invoke(pw: PrintWriter)
+}
+
+/**
  * A thing that can print output, styled based on a given [Color] and [LogLevel].
  */
 interface Styleable {
-    fun withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: (PrintWriter) -> Unit)
+    @Throws(IOException::class)
+    fun withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: ThrowingLambda)
 }
 
 /**
@@ -54,12 +67,12 @@ interface Styleable {
 class StyleableTaskAdapter(
     private val task: DefaultTask
 ) : Styleable {
-    override fun withStyledOutput(color: Color, level: LogLevel?, fn: (PrintWriter) -> Unit) {
+    override fun withStyledOutput(color: Color, level: LogLevel?, fn: ThrowingLambda) {
         task.withStyledOutput(color, level, fn)
     }
 }
 
-fun DefaultTask.withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: (PrintWriter) -> Unit) {
+fun DefaultTask.withStyledOutput(color: Color = Color.DEFAULT, level: LogLevel? = null, fn: ThrowingLambda) {
     val style = color.toStyle()
     val factory = this.createStyledOutputFactory()
     val output = factory.create("dexcount", level)
