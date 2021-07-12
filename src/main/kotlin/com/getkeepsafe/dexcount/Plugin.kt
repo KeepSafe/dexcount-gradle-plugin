@@ -72,12 +72,12 @@ open class DexMethodCountPlugin : Plugin<Project> {
         private const val ANDROID_EXTENSION_NAME = "android"
         private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
 
-        private val MIN_GRADLE_VERSION = GradleVersion(major = 6, minor = 0)
+        private val MIN_GRADLE_VERSION = GradleVersion(6, 0)
         private val MIN_AGP_VERSION = Revision(3, 4, 0)
     }
 
     override fun apply(project: Project) {
-        if (project.gradleVersion < MIN_GRADLE_VERSION) {
+        if (ProjectUtils.gradleVersion(project) < MIN_GRADLE_VERSION) {
             project.logger.error("dexcount requires Gradle $MIN_GRADLE_VERSION or above")
             return
         }
@@ -126,7 +126,7 @@ open class DexMethodCountPlugin : Plugin<Project> {
         // We need to do this check *after* we create the 'dexcount' Gradle extension.
         // If we bail on instant run builds any earlier, then the build will break
         // for anyone configuring dexcount due to the extension not being registered.
-        if (project.isInstantRun) {
+        if (ProjectUtils.isInstantRun(project)) {
             project.logger.info("Instant Run detected; disabling dexcount")
             return
         }
