@@ -50,14 +50,13 @@ abstract class DexCountOutputTask : DefaultTask() {
         val tree = PackageTree.fromThrift(thriftTree)
 
         val reporter = CountReporter(
-            packageTree = tree,
-            variantName = variantNameProperty.get(),
-            styleable = StyleableTaskAdapter(this),
-            config = configProperty.get(),
-            inputRepresentation = inputRepresentation,
-            isAndroidProject = androidProject.get(),
-            isInstantRun = false
-        )
+            tree,
+            variantNameProperty.get(),
+            StyleableTaskAdapter(this),
+            configProperty.get(),
+            inputRepresentation,
+            androidProject.get(),
+            false)
 
         reporter.report()
     }
