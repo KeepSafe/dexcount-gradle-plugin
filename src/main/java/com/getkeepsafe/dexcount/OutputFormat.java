@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 KeepSafe Software
+ * Copyright (C) 2015-2021 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.getkeepsafe.dexcount
+package com.getkeepsafe.dexcount;
 
 /**
  * Specifies what format the task output should take.
  */
-enum class OutputFormat(val extension: String) {
+public enum OutputFormat {
     /**
      * Specifies that method counts will be printed in a flat list of packages.
      */
@@ -38,5 +37,15 @@ enum class OutputFormat(val extension: String) {
     /**
      * Specifies that output will be a YAML document.
      */
-    YAML(".yml")
+    YAML(".yml");
+
+    private final String extension;
+
+    OutputFormat(String extension) {
+        this.extension = extension;
+    }
+
+    public String getExtension() {
+        return extension;
+    }
 }
