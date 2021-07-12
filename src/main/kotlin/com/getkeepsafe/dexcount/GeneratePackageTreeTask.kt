@@ -48,22 +48,6 @@ import java.io.Closeable
 import java.io.File
 import java.io.PrintStream
 
-fun DexCountExtension.toPrintOptions(isAndroidProject: Boolean = true): PrintOptions {
-    return PrintOptions(
-        includeClassCount = includeClassCount.get(),
-        includeMethodCount = true,
-        includeFieldCount = includeFieldCount.get(),
-        includeTotalMethodCount = includeTotalMethodCount.get(),
-        teamCityIntegration = teamCityIntegration.get(),
-        orderByMethodCount = orderByMethodCount.get(),
-        includeClasses = includeClasses.get(),
-        printHeader = true,
-        maxTreeDepth = maxTreeDepth.get(),
-        printDeclarations = printDeclarations.get(),
-        isAndroidProject = isAndroidProject
-    )
-}
-
 abstract class BaseGeneratePackageTreeTask : DefaultTask() {
     /**
      * The plugin configuration, as provided by the 'dexcount' block.
@@ -152,9 +136,11 @@ abstract class BaseGeneratePackageTreeTask : DefaultTask() {
         val chartDirectory = outputDirectoryProperty.dir("chart").get().asFile
         chartDirectory.mkdirs()
 
-        val options = configProperty.get()
-            .toPrintOptions(isAndroidProject)
-            .copy(includeClasses = true)
+        val options = PrintOptions.fromDexCountExtension(configProperty.get())
+            .toBuilder()
+            .setAndroidProject(isAndroidProject)
+            .setIncludeClasses(true)
+            .build();
 
         File(chartDirectory, "data.js").printStream().use { out ->
             out.print("var data = ")
@@ -180,7 +166,7 @@ abstract class BaseGeneratePackageTreeTask : DefaultTask() {
         val fullCountFile = outputDirectoryProperty.file(fullCountFileName).get().asFile
 
         fullCountFile.printStream().use {
-            tree.print(it, outputFormat, configProperty.get().toPrintOptions(isAndroidProject))
+            tree.print(it, outputFormat, PrintOptions.fromDexCountExtension(configProperty.get()).withIsAndroidProject(isAndroidProject))
             it.flush()
         }
     }

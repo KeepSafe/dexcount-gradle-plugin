@@ -63,7 +63,7 @@ final class PackageTreeSpec extends Specification {
         tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printPackageList(writer, new PrintOptions(includeClasses: true))
+        tree.printPackageList(writer, PrintOptions.builder().setIncludeClasses(true).build())
 
         then:
         def trimmed = writer.toString().stripIndent().trim()
@@ -89,7 +89,7 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addDeclaredMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printPackageList(writer, new PrintOptions(includeClasses: true, printDeclarations: true))
+        tree.printPackageList(writer, PrintOptions.builder().setIncludeClasses(true).setPrintDeclarations(true).build())
 
         then:
         def trimmed = writer.toString().stripIndent().trim()
@@ -115,7 +115,7 @@ final class PackageTreeSpec extends Specification {
         tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printPackageList(writer, new PrintOptions(includeClasses: false))
+        tree.printPackageList(writer, PrintOptions.builder().setIncludeClasses(false).build())
 
         then:
         def trimmed = writer.toString().stripIndent().trim()
@@ -139,7 +139,7 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addDeclaredMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printPackageList(writer, new PrintOptions(includeClasses: false, printDeclarations: true))
+        tree.printPackageList(writer, PrintOptions.builder().setIncludeClasses(false).setPrintDeclarations(true).build())
 
         then:
         def trimmed = writer.toString().stripIndent().trim()
@@ -163,7 +163,7 @@ final class PackageTreeSpec extends Specification {
         tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printTree(sb, new PrintOptions(includeClasses: true))
+        tree.printTree(sb, PrintOptions.builder().setIncludeClasses(true).build())
 
         then:
         def trimmed = sb.toString().stripIndent().trim()
@@ -189,7 +189,7 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addDeclaredMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printTree(sb, new PrintOptions(includeClasses: true, printDeclarations: true))
+        tree.printTree(sb, PrintOptions.builder().setIncludeClasses(true).setPrintDeclarations(true).build())
 
         then:
         def trimmed = sb.toString().stripIndent().trim()
@@ -215,9 +215,10 @@ final class PackageTreeSpec extends Specification {
         tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printTree(sb, new PrintOptions(
-            includeClasses: true,
-            maxTreeDepth: 2))
+        tree.printTree(sb, PrintOptions.builder()
+            .setIncludeClasses(true)
+            .setMaxTreeDepth(2)
+            .build())
 
         then:
         def trimmed = sb.toString().stripIndent().trim()
@@ -240,10 +241,11 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
         tree.addDeclaredMethodRef(methodRef("Lcom/alpha/Beta;"))
 
-        tree.printTree(sb, new PrintOptions(
-            includeClasses: true,
-            maxTreeDepth: 2,
-            printDeclarations: true))
+        tree.printTree(sb, PrintOptions.builder()
+            .setIncludeClasses(true)
+            .setMaxTreeDepth(2)
+            .setPrintDeclarations(true)
+            .build())
 
         then:
         def trimmed = sb.toString().stripIndent().trim()
@@ -263,7 +265,7 @@ final class PackageTreeSpec extends Specification {
         when:
         tree.addMethodRef(methodRef('Lcom/foo/bar/$$Generated$Class$$;'))
 
-        tree.printPackageList(sb, new PrintOptions(includeClasses: true))
+        tree.printPackageList(sb, PrintOptions.builder().setIncludeClasses(true).build())
 
         then:
         def trimmed = sb.toString().trim()
@@ -275,8 +277,9 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .build()
 
         when:
         tree.printPackageList(sb, opts)
@@ -292,9 +295,10 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.printPackageList(sb, opts)
@@ -310,9 +314,10 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeFieldCount = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeFieldCount(true)
+            .build()
 
         when:
         tree.printPackageList(sb, opts)
@@ -328,10 +333,11 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeFieldCount = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeFieldCount(true)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.printPackageList(sb, opts)
@@ -347,10 +353,11 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeFieldCount = true
-        opts.includeClasses = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeFieldCount(true)
+            .setIncludeClasses(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lx/y/Z;"))
@@ -377,11 +384,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeFieldCount = true
-        opts.includeClasses = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeFieldCount(true)
+            .setIncludeClasses(true)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.addDeclaredMethodRef(methodRef("Lx/y/Z;"))
@@ -408,11 +416,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeFieldCount = true
-        opts.includeClasses = true
-        opts.orderByMethodCount = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeFieldCount(true)
+            .setIncludeClasses(true)
+            .setOrderByMethodCount(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lx/y/Z;"))
@@ -439,12 +448,13 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeFieldCount = true
-        opts.includeClasses = true
-        opts.orderByMethodCount = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeFieldCount(true)
+            .setIncludeClasses(true)
+            .setOrderByMethodCount(true)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lx/y/Z;"))
@@ -478,10 +488,11 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClasses = false
-        opts.printHeader = false
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClasses(false)
+            .setPrintHeader(false)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
@@ -511,11 +522,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClasses = false
-        opts.printHeader = false
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClasses(false)
+            .setPrintHeader(false)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
@@ -552,11 +564,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = true
-        opts.includeFieldCount = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(true)
+            .setIncludeFieldCount(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Class1;"))
@@ -592,12 +605,13 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.printHeader = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = true
-        opts.includeFieldCount = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(true)
+            .setIncludeFieldCount(true)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Class1;"))
@@ -642,13 +656,14 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.isAndroidProject = false
-        opts.printHeader = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = true
-        opts.includeFieldCount = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setPrintHeader(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(true)
+            .setIncludeFieldCount(true)
+            .setPrintDeclarations(true)
+            .setAndroidProject(false)
+            .build()
 
         when:
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Class1;"))
@@ -684,11 +699,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClasses = false
-        opts.printHeader = false
-        opts.maxTreeDepth = 1
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClasses(false)
+            .setPrintHeader(false)
+            .setMaxTreeDepth(1)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
@@ -714,12 +730,13 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClasses = false
-        opts.printHeader = false
-        opts.maxTreeDepth = 1
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClasses(false)
+            .setPrintHeader(false)
+            .setMaxTreeDepth(1)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;"))
@@ -746,8 +763,9 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .build()
 
         when:
         tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
@@ -790,9 +808,10 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setPrintDeclarations(true)
+            .build()
 
         when:
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;"))
@@ -849,10 +868,11 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = false
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(false)
+            .build()
 
         tree.addFieldRef(fieldRef("Lorg/whatever/Foo;"))
         tree.addMethodRef(methodRef("Lorg/whatever/Foo;"))
@@ -896,11 +916,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = false
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(false)
+            .setPrintDeclarations(true)
+            .build()
 
         tree.addDeclaredFieldRef(fieldRef("Lorg/whatever/Foo;"))
         tree.addDeclaredMethodRef(methodRef("Lorg/whatever/Foo;"))
@@ -958,10 +979,11 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeFieldCount = true
-        opts.includeMethodCount = false
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeFieldCount(true)
+            .setIncludeMethodCount(false)
+            .build()
 
         tree.addFieldRef(fieldRef("Lcom/foo/Bar;"))
         tree.addFieldRef(fieldRef("Lcom/foo/Qux;"))
@@ -1004,11 +1026,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeFieldCount = true
-        opts.includeMethodCount = false
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeFieldCount(true)
+            .setIncludeMethodCount(false)
+            .setPrintDeclarations(true)
+            .build()
 
         tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Bar;"))
         tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Qux;"))
@@ -1065,11 +1088,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeFieldCount = true
-        opts.includeMethodCount = false
-        opts.maxTreeDepth = 1
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeFieldCount(true)
+            .setIncludeMethodCount(false)
+            .setMaxTreeDepth(1)
+            .build()
 
         tree.addFieldRef(fieldRef("Lcom/foo/Bar;"))
         tree.addFieldRef(fieldRef("Lcom/foo/Qux;"))
@@ -1100,12 +1124,13 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeFieldCount = true
-        opts.includeMethodCount = false
-        opts.maxTreeDepth = 1
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeFieldCount(true)
+            .setIncludeMethodCount(false)
+            .setMaxTreeDepth(1)
+            .setPrintDeclarations(true)
+            .build()
 
         tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Bar;"))
         tree.addDeclaredFieldRef(fieldRef("Lcom/foo/Qux;"))
@@ -1142,10 +1167,11 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = false
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(false)
+            .build()
 
         tree.addMethodRef(methodRef("Lcom/foo/Bar;"))
         tree.addMethodRef(methodRef("Lcom/foo/Qux;"))
@@ -1199,11 +1225,12 @@ final class PackageTreeSpec extends Specification {
         given:
         def tree = new PackageTree()
         def sb = new StringBuilder()
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = false
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(false)
+            .setPrintDeclarations(true)
+            .build()
 
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Bar;"))
         tree.addDeclaredMethodRef(methodRef("Lcom/foo/Qux;"))
@@ -1287,11 +1314,12 @@ final class PackageTreeSpec extends Specification {
         tree.addDeclaredFieldRef(fieldRef("Lx/y/z/XYZ;"))
         def roundtripped = PackageTree.fromThrift(PackageTree.toThrift(tree))
 
-        def opts = new PrintOptions()
-        opts.includeTotalMethodCount = true
-        opts.includeClassCount = true
-        opts.includeMethodCount = true
-        opts.printDeclarations = true
+        def opts = PrintOptions.builder()
+            .setIncludeTotalMethodCount(true)
+            .setIncludeClassCount(true)
+            .setIncludeMethodCount(true)
+            .setPrintDeclarations(true)
+            .build()
 
         def originalOutput = new StringBuilder()
         def roundtrippedOutput = new StringBuilder()
