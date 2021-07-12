@@ -18,7 +18,7 @@ package com.getkeepsafe.dexcount.colors;
 /**
  * Various styles that can be applied to text output.
  *
- * These names match the Gradle StyledTextOutput.Style enums exactly.
+ * These names <b>must</b> match the Gradle StyledTextOutput.Style enums exactly.
  */
 enum Style {
     Normal,
