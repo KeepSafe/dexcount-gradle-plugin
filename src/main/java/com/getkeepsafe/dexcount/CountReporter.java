@@ -15,7 +15,8 @@
  */
 package com.getkeepsafe.dexcount;
 
-import kotlin.Unit;
+import com.getkeepsafe.dexcount.colors.Color;
+import com.getkeepsafe.dexcount.colors.Styleable;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.LogLevel;
 
@@ -89,7 +90,7 @@ public class CountReporter {
             String projectName = getClass().getPackage().getImplementationTitle();
             String projectVersion = getClass().getPackage().getImplementationVersion();
 
-            styleable.withStyledOutput(Color.DEFAULT, null, out -> {
+            styleable.withStyledOutput(Color.DEFAULT, out -> {
                 out.println("Dexcount name:    " + projectName);
                 out.println("Dexcount version: " + projectVersion);
                 out.println("Dexcount input:   " + inputRepresentation);
@@ -104,14 +105,14 @@ public class CountReporter {
 
     private void printSummary() throws IOException {
         if (isInstantRun) {
-            styleable.withStyledOutput(Color.RED, null, out -> {
+            styleable.withStyledOutput(Color.RED, out -> {
                 out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.");
             });
         }
 
         Color color = packageTree.getMethodCount() < 50000 ? Color.GREEN : Color.YELLOW;
 
-        styleable.withStyledOutput(color, null, out -> {
+        styleable.withStyledOutput(color, out -> {
             String percentMethodsUsed = percentUsed(packageTree.getMethodCount());
             String percentFieldsUsed = percentUsed(packageTree.getFieldCount());
             String percentClassesUsed = percentUsed(packageTree.getClassCount());
@@ -143,7 +144,7 @@ public class CountReporter {
         });
 
         if (printOptions.getTeamCityIntegration() || (teamCitySlug != null && teamCitySlug.length() > 0)) {
-            styleable.withStyledOutput(Color.DEFAULT, null, out -> {
+            styleable.withStyledOutput(Color.DEFAULT, out -> {
                 String slug = "Dexcount";
                 if (teamCitySlug != null) {
                     slug += "_" + teamCitySlug.replace(' ', '_');
