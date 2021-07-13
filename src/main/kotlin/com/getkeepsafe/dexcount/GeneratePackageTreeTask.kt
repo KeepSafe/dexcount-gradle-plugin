@@ -19,6 +19,7 @@
 package com.getkeepsafe.dexcount
 
 import com.android.build.api.variant.BuiltArtifactsLoader
+import com.getkeepsafe.dexcount.source.SourceFiles
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput
 import okio.buffer
 import okio.gzip
@@ -140,7 +141,7 @@ abstract class BaseGeneratePackageTreeTask : DefaultTask() {
             .toBuilder()
             .setAndroidProject(isAndroidProject)
             .setIncludeClasses(true)
-            .build();
+            .build()
 
         File(chartDirectory, "data.js").printStream().use { out ->
             out.print("var data = ")
@@ -212,15 +213,15 @@ abstract class LegacyGeneratePackageTreeTask : BaseGeneratePackageTreeTask() {
         val tree = PackageTree(deobfuscator)
 
         if (isAndroidProject) {
-            DexFile.extractDexData(file).useMany { dataList ->
+            SourceFiles.extractDexData(file).useMany { dataList ->
                 dataList.flatMap { it.methodRefs }.forEach(tree::addMethodRef)
                 dataList.flatMap { it.fieldRefs }.forEach(tree::addFieldRef)
             }
         }
 
         val jarFile = when {
-            isAar && config.printDeclarations.get() -> JarFile.extractJarFromAar(file)
-            isJar && config.printDeclarations.get() -> JarFile.extractJarFromJar(file)
+            isAar && config.printDeclarations.get() -> SourceFiles.extractJarFromAar(file)
+            isJar && config.printDeclarations.get() -> SourceFiles.extractJarFromJar(file)
             else -> null
         }
 
@@ -259,7 +260,7 @@ abstract class ApkishPackageTreeTask : ModernGeneratePackageTreeTask() {
 
         inputRepresentation = file.name
 
-        return DexFile.extractDexData(file).useMany { dataList ->
+        return SourceFiles.extractDexData(file).useMany { dataList ->
             dataList.forEachWithObject(PackageTree(deobfuscatorProvider.get())) { tree, dexFile ->
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
@@ -324,7 +325,7 @@ abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
 
         val tree = PackageTree(deobfuscatorProvider.get())
 
-        DexFile.extractDexData(aar).useMany {
+        SourceFiles.extractDexData(aar).useMany {
             for (dexFile in it) {
                 for (ref in dexFile.methodRefs) tree.addMethodRef(ref)
                 for (ref in dexFile.fieldRefs) tree.addFieldRef(ref)
@@ -332,7 +333,7 @@ abstract class Agp41LibraryPackageTreeTask : ModernGeneratePackageTreeTask() {
         }
 
         if (configProperty.flatMap { it.printDeclarations }.get()) {
-            JarFile.extractJarFromAar(aar).use { jar ->
+            SourceFiles.extractJarFromAar(aar).use { jar ->
                 for (ref in jar.methodRefs) tree.addDeclaredMethodRef(ref)
                 for (ref in jar.fieldRefs) tree.addDeclaredFieldRef(ref)
             }
@@ -356,7 +357,7 @@ abstract class JarPackageTreeTask : BaseGeneratePackageTreeTask() {
     override fun generatePackageTree(): PackageTree {
         val tree = PackageTree(Deobfuscator.EMPTY)
         val jarFile = jarFileProperty.get().asFile
-        JarFile.extractJarFromJar(jarFile).use { jar ->
+        SourceFiles.extractJarFromJar(jarFile).use { jar ->
             for (ref in jar.methodRefs) tree.addDeclaredMethodRef(ref)
             for (ref in jar.fieldRefs) tree.addDeclaredFieldRef(ref)
         }

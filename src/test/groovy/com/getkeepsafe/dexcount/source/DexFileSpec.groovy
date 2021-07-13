@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 KeepSafe Software
+ * Copyright (C) 2016-2021 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.getkeepsafe.dexcount
+package com.getkeepsafe.dexcount.source
 
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -32,7 +32,7 @@ final class DexFileSpec extends Specification {
         }
 
         when:
-        def dexFiles = DexFile.extractDexData(aarFile)
+        def dexFiles = SourceFiles.extractDexData(aarFile)
 
         then:
         dexFiles != null
@@ -50,7 +50,7 @@ final class DexFileSpec extends Specification {
         }
 
         when:
-        def dexFiles = DexFile.extractDexFromZip(apk)
+        def dexFiles = SourceFiles.extractDexData(apk)
 
         then:
         dexFiles != null
