@@ -44,10 +44,12 @@ import com.android.build.gradle.api.TestVariant
 import com.android.build.gradle.tasks.BundleAar
 import com.android.build.gradle.tasks.PackageAndroidArtifact
 import com.android.repository.Revision
+import com.getkeepsafe.dexcount.report.DexCountOutputTask
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
@@ -170,9 +172,31 @@ abstract class AbstractTaskApplicator(
     protected val ext: DexCountExtension,
     protected val project: Project
 ) : TaskApplicator {
+
     protected inline fun <reified T : Task> TaskContainer.register(name: String, crossinline fn: (T) -> Unit): TaskProvider<T> {
         return register(name, T::class.java) { t ->
             fn(t)
+        }
+    }
+
+    protected val workerConfiguration: Configuration by lazy { makeConfiguration() }
+
+    private fun makeConfiguration(): Configuration {
+        javaClass.classLoader.getResourceAsStream("dependencies.list")!!.bufferedReader().useLines { lines ->
+            val lines = lines.toList()
+            return project.configurations.create("dexcountWorker")
+                .setDescription("configuration for dexcount-gradle-plugin")
+                .setVisible(false)
+                .setTransitive(true)
+                .apply {
+                    isCanBeConsumed = false
+                    isCanBeResolved = true
+                }
+                .defaultDependencies { deps ->
+                    for (line in lines) {
+                        deps += project.dependencies.create(line)
+                    }
+                }
         }
     }
 }
@@ -252,6 +276,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.variantNameProperty.set("")
             t.androidProject.set(false)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
+            t.workerClasspath.from(workerConfiguration)
 
             if (ext.runOnEachPackage.get()) {
                 jarTask.finalizedBy(t)
@@ -302,6 +327,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.variantNameProperty.set(outputName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
 
         if (ext.runOnEachPackage.get()) {
@@ -536,6 +562,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 
@@ -569,6 +596,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 
@@ -606,6 +634,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
                 t.variantNameProperty.set(variantName)
                 t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
                 t.androidProject.set(true)
+                t.workerClasspath.from(workerConfiguration)
             }
         }
     }
@@ -642,6 +671,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set("")
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(false)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 }
@@ -713,6 +743,7 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 }
@@ -789,6 +820,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 
@@ -822,6 +854,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 
@@ -850,6 +883,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set(variantName)
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(true)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 
@@ -885,6 +919,7 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
             t.variantNameProperty.set("")
             t.packageTreeFileProperty.set(gen.flatMap { it.packageTreeFileProperty })
             t.androidProject.set(false)
+            t.workerClasspath.from(workerConfiguration)
         }
     }
 }
