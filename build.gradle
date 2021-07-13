@@ -64,13 +64,20 @@ repositories {
 
 def agpVersion = "7.1.0-alpha03"
 def autoValueVersion = "1.8.1"
+def gsonVersion = "2.8.6"
+def javassistVersion = "3.27.0-GA"
+def thriftyVersion = "2.1.1"
 
 dependencies {
     implementation 'commons-io:commons-io:2.10.0'
     implementation platform("org.jetbrains.kotlin:kotlin-bom")
-    implementation "com.google.code.gson:gson:2.8.6"
-    implementation "org.javassist:javassist:3.27.0-GA"
-    implementation "com.microsoft.thrifty:thrifty-runtime-ktx:2.1.1"
+    implementation "com.google.code.gson:gson:${gsonVersion}"
+    implementation "org.javassist:javassist:${javassistVersion}"
+    implementation "com.microsoft.thrifty:thrifty-runtime-ktx:${thriftyVersion}"
+
+    compileOnly "com.google.code.gson:gson:${gsonVersion}"
+    compileOnly "org.javassist:javassist:${javassistVersion}"
+    compileOnly "com.microsoft.thrifty:thrifty-runtime-ktx:${thriftyVersion}"
 
     compileOnlyApi "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
     annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
@@ -96,6 +103,35 @@ tasks {
 thrifty {
     kotlin {
         builderlessDataClasses true
+    }
+}
+
+def generateDependencyResource = tasks.register("generateDependencyResource") { t ->
+    def generatedResourcesDir = project.layout.buildDirectory.dir(["generated", "sources", "dexcount", "src", "main", "resources"].join(File.separator))
+    def outputFile = generatedResourcesDir.map { it -> it.file("dependencies.list") }
+
+    t.inputs.property("gson-version", gsonVersion)
+    t.inputs.property("javassist-version", javassistVersion)
+    t.inputs.property("thrifty-version", thriftyVersion)
+
+    t.outputs.dir(generatedResourcesDir)
+
+    doFirst {
+        File file = outputFile.get().getAsFile()
+        file.getParentFile().mkdirs()
+        file.createNewFile()
+
+        file.text << "com.google.code.gson:gson:${gsonVersion}\n"
+        file.text << "org.javassist:javassist:${javassistVersion}\n"
+        file.text << "com.microsoft.thrifty:thrifty-runtime-ktx:${thriftyVersion}\n"
+    }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs += generateDependencyResource
+        }
     }
 }
 

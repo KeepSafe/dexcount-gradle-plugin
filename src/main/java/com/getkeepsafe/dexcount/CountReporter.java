@@ -35,44 +35,27 @@ public class CountReporter {
     private final PackageTree packageTree;
     private final String variantName;
     private final Styleable styleable;
-    private final boolean enabled;
-    private final boolean verbose;
-    private final OutputFormat format;
-    private final int maxMethodCount;
-    private final PrintOptions printOptions;
+    private final PrintOptions options;
     private final String inputRepresentation;
-    private final String teamCitySlug;
-    private final boolean isAndroidProject;
     private final boolean isInstantRun;
 
     public CountReporter(
             PackageTree packageTree,
             String variantName,
             Styleable styleable,
-            DexCountExtension config,
+            PrintOptions options,
             String inputRepresentation,
-            boolean isAndroidProject,
             boolean isInstantRun) {
         this.packageTree = packageTree;
         this.variantName = variantName;
         this.styleable = styleable;
-        this.enabled = config.getEnabled().get();
-        this.verbose = config.getVerbose().get();
-        this.format = config.getFormat().get();
-        this.maxMethodCount = config.getMaxMethodCount().get();
-        this.printOptions = PrintOptions.fromDexCountExtension(config).withIsAndroidProject(isAndroidProject);
+        this.options = options;
         this.inputRepresentation = inputRepresentation;
-        this.teamCitySlug = config.getTeamCitySlug().getOrNull();
-        this.isAndroidProject = isAndroidProject;
         this.isInstantRun = isInstantRun;
     }
 
     public void report() throws IOException {
         try {
-            if (!enabled) {
-                throw new IllegalStateException("Tasks should not be executed if the plugin is disabled");
-            }
-
             printPreamble();
             printSummary();
             printTaskDiagnosticData();
@@ -86,7 +69,7 @@ public class CountReporter {
     }
 
     private void printPreamble() throws IOException {
-        if (printOptions.getPrintHeader()) {
+        if (options.getPrintHeader()) {
             String projectName = getClass().getPackage().getImplementationTitle();
             String projectVersion = getClass().getPackage().getImplementationVersion();
 
@@ -122,7 +105,7 @@ public class CountReporter {
             int classesRemaining = Math.max(MAX_DEX_REFS - packageTree.getClassCount(), 0);
 
             int methodCount, fieldCount, classCount;
-            if (isAndroidProject) {
+            if (options.isAndroidProject()) {
                 methodCount = packageTree.getMethodCount();
                 fieldCount = packageTree.getFieldCount();
                 classCount = packageTree.getClassCount();
@@ -132,22 +115,22 @@ public class CountReporter {
                 classCount = packageTree.getClassCountDeclared();
             }
 
-            out.println("Total methods in " + inputRepresentation + ": " + methodCount + "(" + percentMethodsUsed + "% used)");
-            out.println("Total fields in " + inputRepresentation + ": " + fieldCount + "(" + percentFieldsUsed + "% used)");
-            out.println("Total classes in " + inputRepresentation + ": " + classCount + "(" + percentClassesUsed + "% used)");
+            out.println("Total methods in " + inputRepresentation + ": " + methodCount + " (" + percentMethodsUsed + "% used)");
+            out.println("Total fields in " + inputRepresentation + ": " + fieldCount + " (" + percentFieldsUsed + "% used)");
+            out.println("Total classes in " + inputRepresentation + ": " + classCount + " (" + percentClassesUsed + "% used)");
 
-            if (isAndroidProject) {
+            if (options.isAndroidProject()) {
                 out.println("Methods remaining in " + inputRepresentation + ": " + methodsRemaining);
                 out.println("Fields remaining in " + inputRepresentation + ": " + fieldsRemaining);
                 out.println("Classes remaining in " + inputRepresentation + ": " + classesRemaining);
             }
         });
 
-        if (printOptions.getTeamCityIntegration() || (teamCitySlug != null && teamCitySlug.length() > 0)) {
+        if (options.getTeamCityIntegration() || (options.getTeamCitySlug() != null && options.getTeamCitySlug().length() > 0)) {
             styleable.withStyledOutput(Color.DEFAULT, out -> {
                 String slug = "Dexcount";
-                if (teamCitySlug != null) {
-                    slug += "_" + teamCitySlug.replace(' ', '_');
+                if (options.getTeamCitySlug() != null) {
+                    slug += "_" + options.getTeamCitySlug().replace(' ', '_');
                 }
                 String prefix = slug + "_" + variantName;
 
@@ -165,19 +148,19 @@ public class CountReporter {
     private void printTaskDiagnosticData() throws IOException {
         // Log the entire package list/tree at LogLevel.DEBUG, unless
         // verbose is enabled (in which case use the default log level).
-        LogLevel level = verbose ? LogLevel.LIFECYCLE : LogLevel.DEBUG;
+        LogLevel level = options.isVerbose() ? null : LogLevel.DEBUG;
 
         styleable.withStyledOutput(Color.YELLOW, level, out -> {
             StringBuilder strBuilder = new StringBuilder();
-            packageTree.print(strBuilder, format, printOptions);
+            packageTree.print(strBuilder, options.getOutputFormat(), options);
 
             out.format(strBuilder.toString());
         });
     }
 
     private void failBuildMaxMethods() {
-        if (maxMethodCount > 0 && packageTree.getMethodCount() > maxMethodCount) {
-            String message = String.format("The current APK has %d methods, the current max is: %d.", packageTree.getMethodCount(), maxMethodCount);
+        if (options.getMaxMethodCount() > 0 && packageTree.getMethodCount() > options.getMaxMethodCount()) {
+            String message = String.format("The current APK has %d methods, the current max is: %d.", packageTree.getMethodCount(), options.getMaxMethodCount());
             throw new GradleException(message);
         }
     }
