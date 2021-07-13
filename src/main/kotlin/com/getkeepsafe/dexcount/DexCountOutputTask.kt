@@ -16,7 +16,7 @@
 
 package com.getkeepsafe.dexcount
 
-import com.getkeepsafe.dexcount.colors.StyleableTaskAdapter;
+import com.getkeepsafe.dexcount.colors.StyleableTaskAdapter
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput
 import okio.buffer
 import okio.gzip

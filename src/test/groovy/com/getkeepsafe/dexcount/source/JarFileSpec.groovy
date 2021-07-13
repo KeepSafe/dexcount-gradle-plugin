@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 KeepSafe Software
+ * Copyright (C) 2016-2021 KeepSafe Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.getkeepsafe.dexcount
+package com.getkeepsafe.dexcount.source
 
 import spock.lang.Specification
 
@@ -28,7 +28,7 @@ final class JarFileSpec extends Specification {
         }
 
         when:
-        def jarFile = JarFile.extractJarFromAar(aarFile)
+        def jarFile = SourceFiles.extractJarFromAar(aarFile)
 
         then:
         jarFile != null
