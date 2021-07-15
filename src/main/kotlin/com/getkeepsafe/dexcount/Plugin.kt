@@ -45,6 +45,13 @@ import com.android.build.gradle.tasks.BundleAar
 import com.android.build.gradle.tasks.PackageAndroidArtifact
 import com.android.repository.Revision
 import com.getkeepsafe.dexcount.report.DexCountOutputTask
+import com.getkeepsafe.dexcount.treegen.Agp41LibraryPackageTreeTask
+import com.getkeepsafe.dexcount.treegen.ApkPackageTreeTask
+import com.getkeepsafe.dexcount.treegen.BundlePackageTreeTask
+import com.getkeepsafe.dexcount.treegen.JarPackageTreeTask
+import com.getkeepsafe.dexcount.treegen.LegacyGeneratePackageTreeTask
+import com.getkeepsafe.dexcount.treegen.LibraryPackageTreeTask
+import org.apache.commons.io.IOUtils
 import org.gradle.api.DomainObjectCollection
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -63,6 +70,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
+import java.nio.charset.StandardCharsets
 
 @Suppress("unused")
 open class DexMethodCountPlugin : Plugin<Project> {
@@ -182,22 +190,23 @@ abstract class AbstractTaskApplicator(
     protected val workerConfiguration: Configuration by lazy { makeConfiguration() }
 
     private fun makeConfiguration(): Configuration {
-        javaClass.classLoader.getResourceAsStream("dependencies.list")!!.bufferedReader().useLines { lines ->
-            val lines = lines.toList()
-            return project.configurations.create("dexcountWorker")
-                .setDescription("configuration for dexcount-gradle-plugin")
-                .setVisible(false)
-                .setTransitive(true)
-                .apply {
-                    isCanBeConsumed = false
-                    isCanBeResolved = true
-                }
-                .defaultDependencies { deps ->
-                    for (line in lines) {
-                        deps += project.dependencies.create(line)
-                    }
-                }
+        val lines = javaClass.classLoader.getResourceAsStream("dependencies.list")!!.use {
+            IOUtils.readLines(it, StandardCharsets.UTF_8)
         }
+
+        return project.configurations.create("dexcountWorker")
+            .setDescription("configuration for dexcount-gradle-plugin")
+            .setVisible(false)
+            .setTransitive(true)
+            .apply {
+                isCanBeConsumed = false
+                isCanBeResolved = true
+            }
+            .defaultDependencies { deps ->
+                for (line in lines) {
+                    deps += project.dependencies.create(line)
+                }
+            }
     }
 }
 
@@ -263,9 +272,10 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(jarTask.archiveFile.map { it.asFile.nameWithoutExtension })
-            t.jarFileProperty.set(jarTask.archiveFile)
+            t.jarFile.set(jarTask.archiveFile)
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register("countDeclaredMethods", DexCountOutputTask::class.java) { t ->
@@ -311,6 +321,7 @@ abstract class LegacyTaskApplicator(ext: DexCountExtension, project: Project) : 
             t.mappingFileProvider.set(getMappingFile(variant))
             t.outputDirectoryProperty.set(project.file(path))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file(treePath))
+            t.workerClasspath.from(workerConfiguration)
 
             applyInputConfiguration(t)
 
@@ -547,11 +558,12 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.apkDirectoryProperty.set(OldArtifactType.Apk.get(artifacts))
+            t.apkDirectory.set(OldArtifactType.Apk.get(artifacts))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -581,11 +593,12 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.bundleFileProperty.set(OldArtifactType.Bundle.get(artifacts))
+            t.bundleFile.set(OldArtifactType.Bundle.get(artifacts))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -624,6 +637,7 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
                 t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
                 t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
                 t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+                t.workerClasspath.from(workerConfiguration)
             }
 
             project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -658,9 +672,10 @@ open class FourOneApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(jarTaskProvider.flatMap { jarTask -> jarTask.archiveFile.map { it.asFile.nameWithoutExtension } })
-            t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
+            t.jarFile.set(jarTaskProvider.flatMap { it.archiveFile })
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>("countDeclaredMethods") { t ->
@@ -728,11 +743,12 @@ open class FourTwoApplicator(ext: DexCountExtension, project: Project) : FourOne
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.aarFileProperty.set(OldArtifactType.Aar.get(artifacts))
+            t.aarFile.set(OldArtifactType.Aar.get(artifacts))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(OldArtifactType.ObfuscationMappingFile.get(artifacts))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -805,11 +821,12 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.apkDirectoryProperty.set(artifacts.get(SingleArtifact.APK))
+            t.apkDirectory.set(artifacts.get(SingleArtifact.APK))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(SingleArtifact.OBFUSCATION_MAPPING_FILE))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -839,11 +856,12 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.bundleFileProperty.set(artifacts.get(SingleArtifact.BUNDLE))
+            t.bundleFile.set(artifacts.get(SingleArtifact.BUNDLE))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(SingleArtifact.OBFUSCATION_MAPPING_FILE))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -868,11 +886,12 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(variantName)
-            t.aarFileProperty.set(artifacts.get(SingleArtifact.AAR))
+            t.aarFile.set(artifacts.get(SingleArtifact.AAR))
             t.loaderProperty.set(artifacts.getBuiltArtifactsLoader())
             t.mappingFileProperty.set(artifacts.get(SingleArtifact.OBFUSCATION_MAPPING_FILE))
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/$variantName/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount/$variantName"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>(taskName) { t ->
@@ -906,9 +925,10 @@ open class SevenOhApplicator(ext: DexCountExtension, project: Project) : Abstrac
 
             t.configProperty.set(ext)
             t.outputFileNameProperty.set(jarTaskProvider.flatMap { jarTask -> jarTask.archiveFile.map { it.asFile.nameWithoutExtension } })
-            t.jarFileProperty.set(jarTaskProvider.flatMap { it.archiveFile })
+            t.jarFile.set(jarTaskProvider.flatMap { it.archiveFile })
             t.packageTreeFileProperty.set(project.layout.buildDirectory.file("intermediates/dexcount/tree.compact.gz"))
             t.outputDirectoryProperty.set(project.layout.buildDirectory.dir("outputs/dexcount"))
+            t.workerClasspath.from(workerConfiguration)
         }
 
         project.tasks.register<DexCountOutputTask>("countDeclaredMethods") { t ->
