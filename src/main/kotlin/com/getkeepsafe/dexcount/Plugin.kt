@@ -61,7 +61,6 @@ import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFile
-import org.gradle.api.logging.configuration.ShowStacktrace
 import org.gradle.api.plugins.JavaLibraryPlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
@@ -71,101 +70,6 @@ import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
-
-@Suppress("unused")
-open class DexMethodCountPlugin : Plugin<Project> {
-    companion object {
-        var sdkLocation: File? = null
-        private const val VERSION_3_ZERO_FIELD: String = "com.android.builder.Version" // <= 3.0
-        private const val VERSION_3_ONE_FIELD: String = "com.android.builder.model.Version" // > 3.1
-        private const val AGP_VERSION_FIELD: String = "ANDROID_GRADLE_PLUGIN_VERSION"
-        private const val ANDROID_EXTENSION_NAME = "android"
-        private const val SDK_DIRECTORY_METHOD = "getSdkDirectory"
-
-        private val MIN_GRADLE_VERSION = GradleVersion(6, 0)
-        private val MIN_AGP_VERSION = Revision(3, 4, 0)
-    }
-
-    override fun apply(project: Project) {
-        if (ProjectUtils.gradleVersion(project) < MIN_GRADLE_VERSION) {
-            project.logger.error("dexcount requires Gradle $MIN_GRADLE_VERSION or above")
-            return
-        }
-
-        var gradlePluginVersion: String? = null
-        var exception: Exception? = null
-
-        try {
-            gradlePluginVersion = Class.forName(VERSION_3_ZERO_FIELD).getDeclaredField(AGP_VERSION_FIELD).get(this).toString()
-        } catch (e: Exception) {
-            exception = e
-        }
-
-        try {
-            gradlePluginVersion = Class.forName(VERSION_3_ONE_FIELD).getDeclaredField(AGP_VERSION_FIELD).get(this).toString()
-        } catch (e: Exception) {
-            exception = e
-        }
-
-        if (gradlePluginVersion == null && exception != null) {
-            throw IllegalStateException("dexcount requires the Android plugin to be configured", exception)
-        } else if (gradlePluginVersion == null) {
-            throw IllegalStateException("dexcount requires the Android plugin to be configured")
-        }
-
-        // It's important not to invoke the private 'getSdkDirectory()' method until
-        // *after* the project is evaluated; if we access it too early (as of 4.1.0-beta01)
-        // we get a rather obscure exception about 'compileSdkVersion' not being set because
-        // the extension is not yet initialized.
-        project.afterEvaluate {
-            val android = it.extensions.findByName(ANDROID_EXTENSION_NAME)
-            val extClass = android?.javaClass
-            val getSdkDirectory = extClass?.getMethod(SDK_DIRECTORY_METHOD)
-            sdkLocation = getSdkDirectory?.invoke(android) as File?
-        }
-
-        val ext = project.extensions.create("dexcount", DexCountExtension::class.java).apply {
-            // If the user has passed '--stacktrace' or '--full-stacktrace', assume
-            // that they are trying to report a dexcount bug.  Help them help us out
-            // by printing the current plugin title and version.
-            if (project.gradle.startParameter.showStacktrace != ShowStacktrace.INTERNAL_EXCEPTIONS) {
-                printVersion.set(true)
-            }
-        }
-
-        // We need to do this check *after* we create the 'dexcount' Gradle extension.
-        // If we bail on instant run builds any earlier, then the build will break
-        // for anyone configuring dexcount due to the extension not being registered.
-        if (ProjectUtils.isInstantRun(project)) {
-            project.logger.info("Instant Run detected; disabling dexcount")
-            return
-        }
-
-        val gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW)
-        if (gradlePluginRevision > JavaOnlyApplicator.Factory().minimumRevision && gradlePluginRevision < MIN_AGP_VERSION) {
-            project.logger.error("dexcount requires Android Gradle Plugin $MIN_AGP_VERSION or above")
-            return
-        }
-
-        val factories = listOf(
-            SevenOhApplicator.Factory(),
-            FourTwoApplicator.Factory(),
-            FourOneApplicator.Factory(),
-            ThreeSixApplicator.Factory(),
-            ThreeFourApplicator.Factory(),
-            JavaOnlyApplicator.Factory()
-        )
-
-        factories
-            .first { gradlePluginRevision isAtLeast it.minimumRevision }
-            .create(ext, project)
-            .apply()
-    }
-
-    private infix fun Revision.isAtLeast(other: Revision): Boolean {
-        return compareTo(other, Revision.PreviewComparison.IGNORE) >= 0
-    }
-}
 
 interface TaskApplicator {
     fun apply()
