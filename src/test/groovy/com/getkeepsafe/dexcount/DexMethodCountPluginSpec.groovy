@@ -3,6 +3,7 @@ package com.getkeepsafe.dexcount
 import com.android.build.api.variant.BuiltArtifact
 import com.android.build.api.variant.BuiltArtifacts
 import com.android.build.api.variant.BuiltArtifactsLoader
+import com.getkeepsafe.dexcount.treegen.ApkPackageTreeTask
 import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.initialization.GradlePropertiesController

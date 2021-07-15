@@ -393,7 +393,7 @@ public class PackageTree {
         }
     }
 
-    void printJson(Appendable out, PrintOptions opts) throws IOException {
+    public void printJson(Appendable out, PrintOptions opts) throws IOException {
         JsonWriter json = new JsonWriter(new Writer() {
             @Override
             public void write(@NotNull char[] chars, int offset, int length) throws IOException {
