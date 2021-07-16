@@ -16,7 +16,6 @@
 
 plugins {
     id "com.github.ben-manes.versions" version "0.29.0"
-    id "org.jetbrains.dokka" version "0.10.0"
     id "groovy"
     id "com.microsoft.thrifty" version "2.1.1"
     id "java-gradle-plugin"
@@ -46,11 +45,6 @@ jar {
                 "Implementation-Title": POM_ARTIFACT_ID,
                 "Implementation-Version": VERSION_NAME)
     }
-}
-
-dokka {
-    outputFormat = "html"
-    outputDirectory = "${project.buildDir}/dokka"
 }
 
 repositories {
