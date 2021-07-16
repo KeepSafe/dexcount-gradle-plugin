@@ -16,7 +16,6 @@
 
 plugins {
     id "com.github.ben-manes.versions" version "0.29.0"
-    id "org.jetbrains.kotlin.jvm" version "1.4.10"
     id "org.jetbrains.dokka" version "0.10.0"
     id "groovy"
     id "com.microsoft.thrifty" version "2.1.1"
@@ -39,8 +38,6 @@ configurations {
     integrationTestImplementation {
         extendsFrom testImplementation
     }
-
-    additionalPluginClasspath
 }
 
 jar {
@@ -70,14 +67,11 @@ def thriftyVersion = "2.1.1"
 
 dependencies {
     implementation 'commons-io:commons-io:2.10.0'
-    implementation platform("org.jetbrains.kotlin:kotlin-bom")
-    implementation "com.google.code.gson:gson:${gsonVersion}"
-    implementation "org.javassist:javassist:${javassistVersion}"
-    implementation "com.microsoft.thrifty:thrifty-runtime-ktx:${thriftyVersion}"
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
 
     compileOnly "com.google.code.gson:gson:${gsonVersion}"
     compileOnly "org.javassist:javassist:${javassistVersion}"
-    compileOnly "com.microsoft.thrifty:thrifty-runtime-ktx:${thriftyVersion}"
+    compileOnly "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}"
 
     compileOnlyApi "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
     annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
@@ -85,25 +79,19 @@ dependencies {
     compileOnly "com.android.tools.build:gradle:$agpVersion"
     compileOnly "com.android.tools:r8:2.2.64"
     compileOnly "com.android.tools:repository:30.1.0-alpha03"
-    additionalPluginClasspath "com.android.tools.build:gradle:$agpVersion"
 
-    testImplementation "org.codehaus.groovy:groovy-all:3.0.7"
     testImplementation "com.android.tools.build:gradle:$agpVersion"
+    testImplementation "com.google.code.gson:gson:${gsonVersion}"
+    testImplementation "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}"
+    testImplementation "org.codehaus.groovy:groovy-all:3.0.7"
+    testImplementation "org.javassist:javassist:${javassistVersion}"
     testImplementation dependencies.create("org.spockframework:spock-core:2.0-groovy-3.0") {
         exclude module: "groovy-all"
     }
 }
 
-tasks {
-    pluginUnderTestMetadata {
-        pluginClasspath.from(configurations.additionalPluginClasspath)
-    }
-}
-
 thrifty {
-    kotlin {
-        builderlessDataClasses true
-    }
+    java {}
 }
 
 def generateDependencyResource = tasks.register("generateDependencyResource") { t ->
@@ -116,14 +104,14 @@ def generateDependencyResource = tasks.register("generateDependencyResource") { 
 
     t.outputs.dir(generatedResourcesDir)
 
-    doFirst {
+    t.doFirst {
         File file = outputFile.get().getAsFile()
         file.getParentFile().mkdirs()
-        file.createNewFile()
+        file.delete()
 
-        file.text << "com.google.code.gson:gson:${gsonVersion}\n"
-        file.text << "org.javassist:javassist:${javassistVersion}\n"
-        file.text << "com.microsoft.thrifty:thrifty-runtime-ktx:${thriftyVersion}\n"
+        file << "com.google.code.gson:gson:${gsonVersion}\n"
+        file << "org.javassist:javassist:${javassistVersion}\n"
+        file << "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}\n"
     }
 }
 

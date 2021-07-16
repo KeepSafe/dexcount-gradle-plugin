@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -617,12 +618,12 @@ public class PackageTree {
     }
 
     private static com.getkeepsafe.dexcount.thrift.MethodRef methodRefToThrift(MethodRef methodRef) {
-        return new com.getkeepsafe.dexcount.thrift.MethodRef(
-            methodRef.getDeclClassName(),
-            methodRef.getReturnTypeName(),
-            methodRef.getName(),
-            Arrays.asList(methodRef.getArgumentTypeNames())
-        );
+        return new com.getkeepsafe.dexcount.thrift.MethodRef.Builder()
+            .declaringClass(methodRef.getDeclClassName())
+            .returnType(methodRef.getReturnTypeName())
+            .methodName(methodRef.getName())
+            .argumentTypes(Arrays.asList(methodRef.getArgumentTypeNames()))
+            .build();
     }
 
     private static MethodRef methodRefFromThrift(com.getkeepsafe.dexcount.thrift.MethodRef methodRef) {
@@ -640,11 +641,11 @@ public class PackageTree {
     }
 
     private static com.getkeepsafe.dexcount.thrift.FieldRef fieldRefToThrift(FieldRef fieldRef) {
-        return new com.getkeepsafe.dexcount.thrift.FieldRef(
-            fieldRef.getDeclClassName(),
-            fieldRef.getTypeName(),
-            fieldRef.getName()
-        );
+        return new com.getkeepsafe.dexcount.thrift.FieldRef.Builder()
+            .declaringClass(fieldRef.getDeclClassName())
+            .fieldType(fieldRef.getTypeName())
+            .fieldName(fieldRef.getName())
+            .build();
     }
 
     private static FieldRef fieldRefFromThrift(com.getkeepsafe.dexcount.thrift.FieldRef fieldRef) {
@@ -661,15 +662,24 @@ public class PackageTree {
             children.put(entry.getKey(), toThrift(entry.getValue()));
         }
 
-        return new com.getkeepsafe.dexcount.thrift.PackageTree(
-            tree.getName(),
-            tree.isClass(),
-            children,
-            tree.methods.get(Type.DECLARED).stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new)),
-            tree.methods.get(Type.REFERENCED).stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new)),
-            tree.fields.get(Type.DECLARED).stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new)),
-            tree.fields.get(Type.REFERENCED).stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new))
-        );
+        Set<com.getkeepsafe.dexcount.thrift.MethodRef> thriftMethodDecls =
+            tree.methods.get(Type.DECLARED).stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<com.getkeepsafe.dexcount.thrift.MethodRef> thriftMethodRefs =
+            tree.methods.get(Type.REFERENCED).stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<com.getkeepsafe.dexcount.thrift.FieldRef> thriftFieldDecls =
+            tree.fields.get(Type.DECLARED).stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<com.getkeepsafe.dexcount.thrift.FieldRef> thriftFieldRefs =
+            tree.fields.get(Type.REFERENCED).stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+
+        return new com.getkeepsafe.dexcount.thrift.PackageTree.Builder()
+            .name(tree.getName())
+            .isClass(tree.isClass())
+            .children(children)
+            .declaredMethods(thriftMethodDecls)
+            .referencedMethods(thriftMethodRefs)
+            .declaredFields(thriftFieldDecls)
+            .referencedFields(thriftFieldRefs)
+            .build();
     }
 
     public static PackageTree fromThrift(com.getkeepsafe.dexcount.thrift.PackageTree tree) {

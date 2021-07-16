@@ -16,20 +16,24 @@
 package com.getkeepsafe.dexcount;
 
 import com.android.repository.Revision;
-import com.android.repository.Revision.PreviewComparison;
+import com.android.repository.Revision.Precision;
+import com.getkeepsafe.dexcount.plugin.TaskApplicator;
+import com.getkeepsafe.dexcount.plugin.TaskApplicators;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.configuration.ShowStacktrace;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class DexMethodCountPlugin implements Plugin<Project> {
     private static final String VERSION_3_ZERO_FIELD = "com.android.builder.Version"; // <= 3.0
     private static final String VERSION_3_ONE_FIELD = "com.android.builder.model.Version"; // > 3.1
+    private static final String VERSION_7_0_FIELD = "com.android.Version"; // >= 7.0
     private static final String AGP_VERSION_FIELD = "ANDROID_GRADLE_PLUGIN_VERSION";
-    private static final String ANDROID_EXTENSION_NAME = "android";
 
     private static final GradleVersion MIN_GRADLE_VERSION = new GradleVersion(6, 0);
     private static final Revision MIN_AGP_VERSION = new Revision(3, 4, 0);
@@ -42,27 +46,7 @@ public class DexMethodCountPlugin implements Plugin<Project> {
             return;
         }
 
-        String gradlePluginVersion = null;
-        Exception exception = null;
-
-        try {
-            gradlePluginVersion = Class.forName(VERSION_3_ZERO_FIELD).getDeclaredField(AGP_VERSION_FIELD).get(this).toString();
-        } catch (Exception e) {
-            exception = e;
-        }
-
-        try {
-            gradlePluginVersion = Class.forName(VERSION_3_ONE_FIELD).getDeclaredField(AGP_VERSION_FIELD).get(this).toString();
-        } catch (Exception e) {
-            exception = e;
-        }
-
-        if (gradlePluginVersion == null && exception != null) {
-            throw new IllegalStateException("dexcount requires the Android plugin to be configured", exception);
-        } else if (gradlePluginVersion == null) {
-            throw new IllegalStateException("dexcount requires the Android plugin to be configured");
-        }
-
+        Revision gradlePluginRevision = getCurrentAgpRevision();
         DexCountExtension ext = project.getExtensions().create("dexcount", DexCountExtension.class);
 
         // If the user has passed '--stacktrace' or '--full-stacktrace', assume
@@ -80,32 +64,38 @@ public class DexMethodCountPlugin implements Plugin<Project> {
             return;
         }
 
-        Revision gradlePluginRevision = Revision.parseRevision(gradlePluginVersion, Revision.Precision.PREVIEW);
-        if (gradlePluginRevision.compareTo(new JavaOnlyApplicator.Factory().getMinimumRevision()) > 0
-                && gradlePluginRevision.compareTo(MIN_AGP_VERSION) < 0) {
+        if (gradlePluginRevision.compareTo(MIN_AGP_VERSION) < 0) {
             project.getLogger().error("dexcount requires Android Gradle Plugin {} or above", MIN_AGP_VERSION);
             return;
         }
 
-        List<TaskApplicator.Factory> factories = Arrays.asList(
-            new SevenOhApplicator.Factory(),
-            new FourTwoApplicator.Factory(),
-            new FourOneApplicator.Factory(),
-            new ThreeSixApplicator.Factory(),
-            new ThreeFourApplicator.Factory(),
-            new JavaOnlyApplicator.Factory()
-        );
-
-        for (TaskApplicator.Factory factory : factories) {
-            if (gradlePluginRevision.compareTo(factory.getMinimumRevision(), PreviewComparison.IGNORE) < 0) {
-                continue;
-            }
-
-            TaskApplicator applicator = factory.create(ext, project);
+        Optional<TaskApplicator.Factory> maybeFactory = TaskApplicators.getFactory(gradlePluginRevision);
+        if (maybeFactory.isPresent()) {
+            TaskApplicator applicator = maybeFactory.get().create(project, ext);
             applicator.apply();
-            return;
+        } else {
+            project.getLogger().error(
+                "No dexcount TaskApplicator configured for Gradle version {} and AGP version {}",
+                gradleVersion,
+                gradlePluginRevision);
+        }
+    }
+
+    private Revision getCurrentAgpRevision() throws RuntimeException {
+        List<String> versionClassNames = Arrays.asList(VERSION_7_0_FIELD, VERSION_3_ONE_FIELD, VERSION_3_ZERO_FIELD);
+        Exception thrown = null;
+
+        for (String className : versionClassNames) {
+            try {
+                Class<?> versionClass = Class.forName(className);
+                Field agpVersionField = versionClass.getDeclaredField(AGP_VERSION_FIELD);
+                String agpVersion = agpVersionField.get(null).toString();
+                return Revision.parseRevision(agpVersion, Precision.PREVIEW);
+            } catch (Exception e) {
+                thrown = e;
+            }
         }
 
-        project.getLogger().error("No dexcount TaskApplicator configured for Gradle version {} and AGP version {}", gradleVersion, gradlePluginRevision);
+        throw new IllegalStateException("dexcount requires the Android plugin to be configured", thrown);
     }
 }

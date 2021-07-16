@@ -32,6 +32,7 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.workers.WorkQueue;
 import org.gradle.workers.WorkerExecutor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
@@ -54,6 +55,7 @@ public abstract class BaseGeneratePackageTreeTask<P extends BaseWorker.Params, W
      * This file is an intermediate representation, not intended for public
      * consumption.  Its format is likely to change without notice.
      */
+    @NotNull
     @OutputFile
     public abstract RegularFileProperty getPackageTreeFileProperty();
 
