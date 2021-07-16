@@ -73,10 +73,10 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
     }
 
     private void writeIntermediateThriftFile(PackageTree packageTree) throws IOException {
-        TreeGenOutput thrift = new TreeGenOutput(
-            PackageTree.toThrift(packageTree),
-            getInputRepresentation()
-        );
+        TreeGenOutput thrift = new TreeGenOutput.Builder()
+            .tree(PackageTree.toThrift(packageTree))
+            .inputRepresentation(getInputRepresentation())
+            .build();
 
         File treeFile = getParameters().getPackageTreeFile().getAsFile().get();
         FileUtils.deleteQuietly(treeFile);
