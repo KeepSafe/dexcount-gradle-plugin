@@ -1,5 +1,6 @@
 package com.getkeepsafe.dexcount
 
+import org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Shared
@@ -128,9 +129,7 @@ class IntegrationSpec extends Specification {
 
     private File projectDir(String agpVersion, String gradleVersion) {
         def projectDir = new File(new File("tmp", gradleVersion), agpVersion)
-        new AntBuilder().copy(todir: projectDir.absolutePath) {
-            fileset(dir: integrationTestDir.absolutePath)
-        }
+        FileUtils.copyDirectory(integrationTestDir, projectDir, true)
 
         def gradleProperties = new File(projectDir, "gradle.properties")
         gradleProperties.delete()
