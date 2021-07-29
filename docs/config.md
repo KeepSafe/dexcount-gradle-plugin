@@ -8,7 +8,7 @@ dexcount {
 
     // The format of the method count output, either "list", "tree", "json",
     // or "yaml".
-    format = "list"
+    format = OutputFormat.LIST
 
     // When true, individual classes will be included in the package list -
     // otherwise, only packages are included.
