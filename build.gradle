@@ -129,6 +129,8 @@ def integrationTest = tasks.register("integrationTest", Test) { t ->
     t.dependsOn installForTesting
     t.mustRunAfter tasks.named("test")
 
+    t.outputs.cacheIf { false }
+
     t.group "verification"
     t.description "Runs integration tests."
 
