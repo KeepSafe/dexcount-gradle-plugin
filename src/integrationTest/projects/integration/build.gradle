@@ -6,8 +6,16 @@ buildscript {
     }
 
     repositories {
-        mavenLocal()
-        gradlePluginPortal()
+        mavenLocal {
+            content {
+                includeGroup "com.getkeepsafe.dexcount"
+            }
+        }
+        gradlePluginPortal {
+            content {
+                excludeGroup "com.getkeepsafe.dexcount"
+            }
+        }
         google()
     }
 
