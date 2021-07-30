@@ -139,7 +139,7 @@ abstract class AbstractLegacyTaskApplicator extends AbstractTaskApplicator {
 
         final String finalPath = path;
 
-        String treeTaskName = String.format("count%sDexMethods", slug);
+        String treeTaskName = String.format("generate%sPackageTree", slug);
         String treePath = path.replace("outputs", "intermediates") + "/tree.compact.gz";
 
         TaskProvider<LegacyGeneratePackageTreeTask> gen = getProject().getTasks().register(treeTaskName, LegacyGeneratePackageTreeTask.class, t -> {
@@ -159,6 +159,8 @@ abstract class AbstractLegacyTaskApplicator extends AbstractTaskApplicator {
             // may or may not carry task-dependency information with it.  We need to set that up manually here.
             t.dependsOn(parentTask);
         });
+
+        registerOutputTask(gen, slug, true);
     }
 
     protected void checkPrintDeclarationsIsFalse() {

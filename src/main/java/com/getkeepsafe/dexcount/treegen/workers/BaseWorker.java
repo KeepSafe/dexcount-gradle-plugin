@@ -125,7 +125,7 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
 
         List<String> resourceNames = Arrays.asList("chart-builder.js", "d3.v3.min.js", "index.html", "styles.css");
         for (String resourceName : resourceNames) {
-            String resourcePath = "/com/getkeepsafe/dexcount/" + resourceName;
+            String resourcePath = "com/getkeepsafe/dexcount/" + resourceName;
             try (InputStream is = DexMethodCountPlugin.class.getClassLoader().getResourceAsStream(resourcePath)) {
                 if (is == null) {
                     getLogger().error("No such resource: {}", resourcePath);

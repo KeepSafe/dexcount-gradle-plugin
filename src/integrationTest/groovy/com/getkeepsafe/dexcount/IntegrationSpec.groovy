@@ -63,8 +63,8 @@ class IntegrationSpec extends Specification {
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "7.1.0-alpha04" | "7.1.1"       || 7          | 5          | 3
         "7.0.0"         | "7.1.1"       || 7          | 5          | 3
-        "4.2.0"         | "6.8.1"       || 7          | 6          | 3
-        "4.1.0"         | "6.7.1"       || 7          | 6          | 3
+        "4.2.0"         | "6.8.1"       || 7          | 5          | 3
+        "4.1.0"         | "6.7.1"       || 7          | 5          | 3
         "3.6.0"         | "6.5.1"       || 7          | 6          | 7
         "3.5.4"         | "6.5.1"       || 7          | 6          | 7
         "3.4.0"         | "6.5.1"       || 7          | 6          | 6
