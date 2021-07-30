@@ -26,6 +26,7 @@ import com.getkeepsafe.dexcount.treegen.LibraryPackageTreeTask;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 class FourTwoApplicator extends FourOneApplicator {
@@ -95,7 +96,7 @@ class FourTwoApplicator extends FourOneApplicator {
         TaskProvider<LibraryPackageTreeTask> gen = getProject().getTasks().register(genTaskName, LibraryPackageTreeTask.class, t -> {
             setCommonProperties(t, variantName, artifacts);
 
-            t.getAarFile().set(OldArtifactType.AAR.<RegularFile>get(artifacts));
+            t.getAarFile().set(OldArtifactType.AAR.<Provider<RegularFile>>get(artifacts));
         });
 
         registerOutputTask(gen, variantName, true);

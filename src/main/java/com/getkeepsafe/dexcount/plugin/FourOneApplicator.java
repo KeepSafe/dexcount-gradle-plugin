@@ -47,6 +47,7 @@ import org.gradle.internal.impldep.org.codehaus.plexus.util.FileUtils;
 import org.gradle.jvm.tasks.Jar;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.function.BiConsumer;
 
@@ -63,19 +64,20 @@ class FourOneApplicator extends AbstractTaskApplicator {
         }
     }
 
+    // These VariantProperties reflections are used _only_ by AGP 4.1
     private static Class<?> clsVariantProperties;
     private static Method fnGetName;
     private static Method fnGetArtifacts;
 
+    // The rest of these are also used for AGP 4.2
     private static Class<?> clsKotlinUnaryFn;
     private static Class<?> clsCommonExtension;
     private static Method fnOnVariantProperties;
 
-    private static Class<?> clsArtifactType;
-    private static Enum<?> emArtifactTypeApk;
-    private static Enum<?> emArtifactTypeBundle;
-    private static Enum<?> emArtifactTypeAar;
-    private static Enum<?> emArtifactTypeObfuscationMappingFile;
+    private static Object artifactTypeApk;
+    private static Object artifactTypeAar;
+    private static Object artifactTypeBundle;
+    private static Object artifactTypeObfuscationMappingFile;
 
     private static Class<?> clsArtifacts;
     private static Method fnGetArtifact;
@@ -83,19 +85,20 @@ class FourOneApplicator extends AbstractTaskApplicator {
     FourOneApplicator(Project project, DexCountExtension ext) {
         super(project, ext);
         try {
-            clsVariantProperties = Class.forName("com.android.build.api.variant.VariantProperties");
-            fnGetName = getMethod(clsVariantProperties, "getName");
-            fnGetArtifacts = getMethod(clsVariantProperties, "getArtifacts");
+            // These reflections are used by AGP 4.1 and 4.2, and can be unconditionally
+            // initialized.
+            final Class<?> clsArtifactType = Class.forName("com.android.build.api.artifact.ArtifactType");
 
-            clsKotlinUnaryFn = Class.forName("kotlin.jvm.functions.Function1");
-            clsCommonExtension = Class.forName("com.android.build.api.dsl.CommonExtension");
-            fnOnVariantProperties = getMethod(clsCommonExtension, "onVariantProperties", clsKotlinUnaryFn);
+            artifactTypeApk = loadInstance("com.android.build.api.artifact.ArtifactType$APK");
+            artifactTypeBundle = loadInstance("com.android.build.api.artifact.ArtifactType$BUNDLE");
+            artifactTypeObfuscationMappingFile = loadInstance("com.android.build.api.artifact.ArtifactType$OBFUSCATION_MAPPING_FILE");
 
-            clsArtifactType = Class.forName("com.android.build.api.artifact.ArtifactType");
-            emArtifactTypeApk = getEnumConstant(clsArtifactType, "APK");
-            emArtifactTypeBundle = getEnumConstant(clsArtifactType, "BUNDLE");
-            emArtifactTypeAar = getEnumConstant(clsArtifactType, "AAR");
-            emArtifactTypeObfuscationMappingFile = getEnumConstant(clsArtifactType, "OBFUSCATION_MAPPING_FILE");
+            try {
+                // This will succeed only on AGP 4.2; ArtifactType.AAR wasn't added until then.
+                artifactTypeAar = loadInstance("com.android.build.api.artifact.ArtifactType$AAR");
+            } catch (Exception ignored) {
+                // We're on 4.1
+            }
 
             clsArtifacts = Class.forName("com.android.build.api.artifact.Artifacts");
             fnGetArtifact = getMethod(clsArtifacts, "get", clsArtifactType);
@@ -104,13 +107,19 @@ class FourOneApplicator extends AbstractTaskApplicator {
         }
     }
 
+    private static Object loadInstance(String sealedTypeName) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        final Class<?> sealedType = Class.forName(sealedTypeName);
+        final Field instanceField = sealedType.getDeclaredField("INSTANCE");
+        return instanceField.get(null);
+    }
+
     @SuppressWarnings("unchecked")
     enum OldArtifactType {
         APK {
             @Override
-            Directory get(Artifacts artifacts) {
+            Provider<Directory> get(Artifacts artifacts) {
                 try {
-                    return (Directory) fnGetArtifact.invoke(artifacts, emArtifactTypeApk);
+                    return (Provider<Directory>) fnGetArtifact.invoke(artifacts, artifactTypeApk);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new AssertionError(e);
                 }
@@ -119,9 +128,9 @@ class FourOneApplicator extends AbstractTaskApplicator {
 
         BUNDLE {
             @Override
-            RegularFile get(Artifacts artifacts) {
+            Provider<RegularFile> get(Artifacts artifacts) {
                 try {
-                    return (RegularFile) fnGetArtifact.invoke(artifacts, emArtifactTypeBundle);
+                    return (Provider<RegularFile>) fnGetArtifact.invoke(artifacts, artifactTypeBundle);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new AssertionError(e);
                 }
@@ -130,9 +139,9 @@ class FourOneApplicator extends AbstractTaskApplicator {
 
         AAR {
             @Override
-            RegularFile get(Artifacts artifacts) {
+            Provider<RegularFile> get(Artifacts artifacts) {
                 try {
-                    return (RegularFile) fnGetArtifact.invoke(artifacts, emArtifactTypeAar);
+                    return (Provider<RegularFile>) fnGetArtifact.invoke(artifacts, artifactTypeAar);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new AssertionError(e);
                 }
@@ -141,9 +150,9 @@ class FourOneApplicator extends AbstractTaskApplicator {
 
         OBFUSCATION_MAPPING_FILE {
             @Override
-            RegularFile get(Artifacts artifacts) {
+            Provider<RegularFile> get(Artifacts artifacts) {
                 try {
-                    return (RegularFile) fnGetArtifact.invoke(artifacts, emArtifactTypeObfuscationMappingFile);
+                    return (Provider<RegularFile>) fnGetArtifact.invoke(artifacts, artifactTypeObfuscationMappingFile);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new AssertionError(e);
                 }
@@ -186,6 +195,7 @@ class FourOneApplicator extends AbstractTaskApplicator {
     }
 
     private void onVariantProperties(Object target, BiConsumer<String, Artifacts> fn) {
+        initReflection();
         try {
             fnOnVariantProperties.invoke(target, makeVariantPropertiesCallback(fn));
         } catch (InvocationTargetException | IllegalAccessException e) {
@@ -206,6 +216,24 @@ class FourOneApplicator extends AbstractTaskApplicator {
         };
     }
 
+    private void initReflection() {
+        try {
+            if (clsVariantProperties != null) {
+                return;
+            }
+
+            clsVariantProperties = Class.forName("com.android.build.api.variant.VariantProperties");
+            fnGetName = getMethod(clsVariantProperties, "getName");
+            fnGetArtifacts = getMethod(clsVariantProperties, "getArtifacts");
+
+            clsKotlinUnaryFn = Class.forName("kotlin.jvm.functions.Function1");
+            clsCommonExtension = Class.forName("com.android.build.api.dsl.CommonExtension");
+            fnOnVariantProperties = getMethod(clsCommonExtension, "onVariantProperties", clsKotlinUnaryFn);
+        } catch (Exception e) {
+            throw new DexCountException("lol wtf", e);
+        }
+    }
+
     protected void registerApkTask(String variantName, Artifacts artifacts) {
         if (getExt().getPrintDeclarations().get()) {
             throw new IllegalStateException("Cannot compute declarations for project " + getProject());
@@ -216,7 +244,7 @@ class FourOneApplicator extends AbstractTaskApplicator {
         TaskProvider<ApkPackageTreeTask> gen = getProject().getTasks().register(genTaskName, ApkPackageTreeTask.class, t -> {
             setCommonProperties(t, variantName, artifacts);
 
-            t.getApkDirectory().set(OldArtifactType.APK.<Directory>get(artifacts));
+            t.getApkDirectory().set(OldArtifactType.APK.<Provider<Directory>>get(artifacts));
 
         });
 
@@ -233,7 +261,7 @@ class FourOneApplicator extends AbstractTaskApplicator {
         TaskProvider<BundlePackageTreeTask> gen = getProject().getTasks().register(genTaskName, BundlePackageTreeTask.class, t -> {
             setCommonProperties(t, variantName, artifacts);
 
-            t.getBundleFile().set(OldArtifactType.BUNDLE.<RegularFile>get(artifacts));
+            t.getBundleFile().set(OldArtifactType.BUNDLE.<Provider<RegularFile>>get(artifacts));
         });
 
         registerOutputTask(gen, variantName + "Bundle", true);
@@ -296,7 +324,7 @@ class FourOneApplicator extends AbstractTaskApplicator {
         task.getConfigProperty().set(getExt());
         task.getOutputFileNameProperty().set(variantName);
         task.getLoaderProperty().set(artifacts.getBuiltArtifactsLoader());
-        task.getMappingFileProperty().set(OldArtifactType.OBFUSCATION_MAPPING_FILE.<RegularFile>get(artifacts));
+        task.getMappingFileProperty().set(OldArtifactType.OBFUSCATION_MAPPING_FILE.<Provider<RegularFile>>get(artifacts));
         task.getPackageTreeFileProperty().set(packageTreeFile);
         task.getOutputDirectoryProperty().set(outputDirectory);
         task.getWorkerClasspath().from(getWorkerConfiguration());
