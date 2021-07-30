@@ -48,7 +48,11 @@ jar {
 }
 
 repositories {
-    mavenLocal()
+    mavenLocal {
+        content {
+            includeGroup "com.getkeepsafe.dexcount"
+        }
+    }
     gradlePluginPortal()
     google()
 }
