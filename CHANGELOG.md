@@ -1,3 +1,7 @@
+3.0.0-RC02 (30 July 2021)
+---------
+* Fix support for AGP 4.2.0 and below (#400)
+
 3.0.0-RC01 (29 July 2021)
 ---------
 * **BREAKING** Port plugin from Kotlin to Java for better Gradle compatibility; public extension API changed. (#379)
