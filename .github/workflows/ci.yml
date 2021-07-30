@@ -24,9 +24,9 @@ jobs:
             ~/.gradle/wrapper
             **/build-cache
             !tmp
-          key: ${{ runner.os }}-${{ matrix.jdk }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          key: v2-${{ runner.os }}-${{ matrix.jdk }}-gradle-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.jdk }}-gradle-
+            v2-${{ runner.os }}-${{ matrix.jdk }}-gradle-
 
       - name: Set up JDK ${{ matrix.jdk }}
         uses: actions/setup-java@v1
