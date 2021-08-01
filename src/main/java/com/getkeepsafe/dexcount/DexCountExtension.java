@@ -27,39 +27,39 @@ import javax.inject.Inject;
  * Configuration properties for [DexCountTask] instances.
  */
 public class DexCountExtension {
-    private final Property<Boolean> runOnEachPackage;
-    private final Property<OutputFormat> outputFormat;
-    private final Property<Boolean> includeClasses;
-    private final Property<Boolean> includeClassCount;
-    private final Property<Boolean> includeFieldCount;
-    private final Property<Boolean> includeTotalMethodCount;
-    private final Property<Boolean> orderByMethodCount;
-    private final Property<Boolean> verbose;
-    private final Property<Integer> maxTreeDepth;
-    private final Property<Boolean> teamCityIntegration;
-    private final Property<String> teamCitySlug;
-    private final Property<Integer> maxMethodCount;
-    private final Property<Boolean> printVersion;
-    private final Property<Boolean> printDeclarations;
-    private final Property<Boolean> enabled;
+    private final Property<Boolean> runOnEachPackageProperty;
+    private final Property<OutputFormat> outputFormatProperty;
+    private final Property<Boolean> includeClassesProperty;
+    private final Property<Boolean> includeClassCountProperty;
+    private final Property<Boolean> includeFieldCountProperty;
+    private final Property<Boolean> includeTotalMethodCountProperty;
+    private final Property<Boolean> orderByMethodCountProperty;
+    private final Property<Boolean> verboseProperty;
+    private final Property<Integer> maxTreeDepthProperty;
+    private final Property<Boolean> teamCityIntegrationProperty;
+    private final Property<String> teamCitySlugProperty;
+    private final Property<Integer> maxMethodCountProperty;
+    private final Property<Boolean> printVersionProperty;
+    private final Property<Boolean> printDeclarationsProperty;
+    private final Property<Boolean> enabledProperty;
 
     @Inject
     public DexCountExtension(ObjectFactory objects, ProviderFactory providers) {
-        this.runOnEachPackage = objects.property(Boolean.class).convention(Boolean.TRUE);
-        this.outputFormat = objects.property(OutputFormat.class).convention(OutputFormat.LIST);
-        this.includeClasses = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.includeClassCount = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.includeFieldCount = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.includeTotalMethodCount = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.orderByMethodCount = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.verbose = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.maxTreeDepth = objects.property(Integer.class).convention(Integer.MAX_VALUE);
-        this.teamCityIntegration = objects.property(Boolean.class).convention(providers.provider(() -> System.getenv("TEAMCITY_VERSION") != null));
-        this.teamCitySlug = objects.property(String.class);
-        this.maxMethodCount = objects.property(Integer.class).convention(-1);
-        this.printVersion = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.printDeclarations = objects.property(Boolean.class).convention(Boolean.FALSE);
-        this.enabled = objects.property(Boolean.class).convention(Boolean.TRUE);
+        this.runOnEachPackageProperty = objects.property(Boolean.class).convention(Boolean.TRUE);
+        this.outputFormatProperty = objects.property(OutputFormat.class).convention(OutputFormat.LIST);
+        this.includeClassesProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.includeClassCountProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.includeFieldCountProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.includeTotalMethodCountProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.orderByMethodCountProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.verboseProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.maxTreeDepthProperty = objects.property(Integer.class).convention(Integer.MAX_VALUE);
+        this.teamCityIntegrationProperty = objects.property(Boolean.class).convention(providers.provider(() -> System.getenv("TEAMCITY_VERSION") != null));
+        this.teamCitySlugProperty = objects.property(String.class);
+        this.maxMethodCountProperty = objects.property(Integer.class).convention(-1);
+        this.printVersionProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.printDeclarationsProperty = objects.property(Boolean.class).convention(Boolean.FALSE);
+        this.enabledProperty = objects.property(Boolean.class).convention(Boolean.TRUE);
     }
 
     /**
@@ -67,7 +67,7 @@ public class DexCountExtension {
      */
     @Internal("plugin input, not task input")
     public Property<Boolean> getRunOnEachPackage() {
-        return runOnEachPackage;
+        return runOnEachPackageProperty;
     }
 
     /**
@@ -75,7 +75,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<OutputFormat> getFormat() {
-        return outputFormat;
+        return outputFormatProperty;
     }
 
     /**
@@ -84,7 +84,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Boolean> getIncludeClasses() {
-        return includeClasses;
+        return includeClassesProperty;
     }
 
     /**
@@ -92,7 +92,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Boolean> getIncludeClassCount() {
-        return includeClassCount;
+        return includeClassCountProperty;
     }
 
     /**
@@ -100,7 +100,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Boolean> getIncludeFieldCount() {
-        return includeFieldCount;
+        return includeFieldCountProperty;
     }
 
     /**
@@ -109,7 +109,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Boolean> getIncludeTotalMethodCount() {
-        return includeTotalMethodCount;
+        return includeTotalMethodCountProperty;
     }
 
     /**
@@ -117,7 +117,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Boolean> getOrderByMethodCount() {
-        return orderByMethodCount;
+        return orderByMethodCountProperty;
     }
 
     /**
@@ -125,7 +125,7 @@ public class DexCountExtension {
      */
     @Internal
     public Property<Boolean> getVerbose() {
-        return verbose;
+        return verboseProperty;
     }
 
     /**
@@ -134,7 +134,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Integer> getMaxTreeDepth() {
-        return maxTreeDepth;
+        return maxTreeDepthProperty;
     }
 
     /**
@@ -143,7 +143,7 @@ public class DexCountExtension {
      */
     @Internal("TeamCity stats are stdout-only")
     public Property<Boolean> getTeamCityIntegration() {
-        return teamCityIntegration;
+        return teamCityIntegrationProperty;
     }
 
     /**
@@ -151,7 +151,7 @@ public class DexCountExtension {
      */
     @Internal("TeamCity stats are stdout-only")
     public Property<String> getTeamCitySlug() {
-        return teamCitySlug;
+        return teamCitySlugProperty;
     }
 
     /**
@@ -159,7 +159,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Integer> getMaxMethodCount() {
-        return maxMethodCount;
+        return maxMethodCountProperty;
     }
 
     /**
@@ -168,7 +168,7 @@ public class DexCountExtension {
      */
     @Internal("stdout-only")
     public Property<Boolean> getPrintVersion() {
-        return printVersion;
+        return printVersionProperty;
     }
 
     /**
@@ -178,7 +178,7 @@ public class DexCountExtension {
      */
     @Input
     public Property<Boolean> getPrintDeclarations() {
-        return printDeclarations;
+        return printDeclarationsProperty;
     }
 
     /**
@@ -187,6 +187,6 @@ public class DexCountExtension {
      */
     @Internal("this is plugin input, not task input")
     public Property<Boolean> getEnabled() {
-        return enabled;
+        return enabledProperty;
     }
 }
