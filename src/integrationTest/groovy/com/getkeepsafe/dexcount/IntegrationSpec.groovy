@@ -31,7 +31,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.1.0-alpha04" | "7.1.1"       || 7355       | 926        | 2590
+        "7.1.0-alpha07" | "7.1.1"       || 7355       | 926        | 2592
         "7.0.0"         | "7.1.1"       || 7355       | 926        | 2592
         "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
@@ -61,7 +61,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.1.0-alpha04" | "7.1.1"       || 7          | 5          | 3
+        "7.1.0-alpha07" | "7.1.1"       || 7          | 5          | 3
         "7.0.0"         | "7.1.1"       || 7          | 5          | 3
         "4.2.0"         | "6.8.1"       || 7          | 5          | 3
         "4.1.0"         | "6.7.1"       || 7          | 5          | 3
@@ -91,8 +91,8 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion         | gradleVersion || numMethods | numClasses | numFields
-        "7.1.0-alpha04"    | "7.1.1"       || 4266       | 723        | 1268
-        "7.0.0-rc01"       | "7.1.1"       || 4266       | 723        | 1268
+        "7.1.0-alpha07"    | "7.1.1"       || 4266       | 723        | 1268
+        "7.0.0"            | "7.1.1"       || 4266       | 723        | 1268
         "4.2.0"            | "6.8.1"       || 4266       | 723        | 1268
         "4.1.0"            | "6.7.1"       || 4266       | 723        | 1268
         "3.6.0"            | "6.5.1"       || 4265       | 723        | 1271
@@ -121,7 +121,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.1.0-alpha04" | "7.1.1"       || 7355       | 926        | 2590
+        "7.1.0-alpha07" | "7.1.1"       || 7355       | 926        | 2592
         "7.0.0"         | "7.1.1"       || 7355       | 926        | 2592
         "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597

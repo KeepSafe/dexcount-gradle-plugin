@@ -57,7 +57,7 @@ repositories {
     google()
 }
 
-def agpVersion = "7.1.0-alpha04"
+def agpVersion = "7.1.0-alpha07"
 def autoValueVersion = "1.8.1"
 def gsonVersion = "2.8.6"
 def javassistVersion = "3.27.0-GA"
@@ -76,7 +76,7 @@ dependencies {
 
     compileOnly "com.android.tools.build:gradle:$agpVersion"
     compileOnly "com.android.tools:r8:2.2.64"
-    compileOnly "com.android.tools:repository:30.1.0-alpha04"
+    compileOnly "com.android.tools:repository:30.1.0-alpha07"
 
     testImplementation "com.android.tools.build:gradle:$agpVersion"
     testImplementation "com.google.code.gson:gson:${gsonVersion}"
@@ -130,6 +130,7 @@ def integrationTest = tasks.register("integrationTest", Test) { t ->
     t.mustRunAfter tasks.named("test")
 
     t.outputs.cacheIf { false }
+    t.outputs.upToDateWhen { false }
 
     t.group "verification"
     t.description "Runs integration tests."
