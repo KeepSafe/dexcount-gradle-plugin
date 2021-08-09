@@ -5,7 +5,7 @@ site_url: https://keepsafe.github.io/dexcount-gradle-plugin
 site_description: A Gradle plugin to report the number of method references in your APK on every build.
 site_author: Benjamin Bader
 
-copyright: "Copyright &copy; 2014-2020 KeepSafe Software, Inc"
+copyright: "Copyright &copy; 2014-2021 KeepSafe Software, Inc"
 
 theme:
   name: material
