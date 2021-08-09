@@ -19,8 +19,8 @@ plugins {
     id "groovy"
     id "com.microsoft.thrifty" version "2.1.1"
     id "java-gradle-plugin"
-    id "com.vanniktech.maven.publish" version "0.13.0"
-    id "com.gradle.plugin-publish" version "0.12.0"
+    id "com.vanniktech.maven.publish" version "0.17.0"
+    id "com.gradle.plugin-publish" version "0.15.0"
 }
 
 group = GROUP
@@ -217,15 +217,6 @@ tasks.withType(Test) {
     maxParallelForks = isCi ? 1 : Runtime.runtime.availableProcessors().intdiv(2) ?: 1
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
-    kotlinOptions {
-        // Disabling until there's some workaround for the warning
-        // about AGP's builder.jar containing its own bundled Kotlin
-        // runtime library.
-        allWarningsAsErrors = false
-    }
-}
-
 tasks.withType(Javadoc) {
     title = "${project.name} ${project.version}"
     configure(options) {
@@ -290,7 +281,7 @@ pluginBundle {
 def isSnapshot = providers.gradleProperty("VERSION_NAME").forUseAtConfigurationTime().map { it.endsWith("-SNAPSHOT") }
 tasks.register("uploadSnapshot") {
     if (isSnapshot.get()) {
-        dependsOn("uploadArchives")
+        dependsOn tasks.named("publish")
     } else {
         doFirst {
             logger.lifecycle("Skipping upload of non-snapshot version '{}'", VERSION_NAME)
