@@ -81,7 +81,7 @@ dependencies {
     testImplementation "com.android.tools.build:gradle:$agpVersion"
     testImplementation "com.google.code.gson:gson:${gsonVersion}"
     testImplementation "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}"
-    testImplementation "org.codehaus.groovy:groovy-all:3.0.7"
+    testImplementation "org.codehaus.groovy:groovy-all:3.0.8"
     testImplementation "org.javassist:javassist:${javassistVersion}"
     testImplementation dependencies.create("org.spockframework:spock-core:2.0-groovy-3.0") {
         exclude module: "groovy-all"
@@ -291,5 +291,6 @@ tasks.register("uploadSnapshot") {
 }
 
 wrapper {
-    gradleVersion = "6.6"
+    gradleVersion = "7.2"
+    distributionType = Wrapper.DistributionType.ALL
 }
