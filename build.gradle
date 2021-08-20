@@ -61,7 +61,7 @@ def agpVersion = "7.1.0-alpha08"
 def autoValueVersion = "1.8.1"
 def gsonVersion = "2.8.6"
 def javassistVersion = "3.27.0-GA"
-def thriftyVersion = "2.1.1"
+def thriftyVersion = "3.0.0"
 
 dependencies {
     implementation 'commons-io:commons-io:2.10.0'
@@ -69,7 +69,7 @@ dependencies {
 
     compileOnly "com.google.code.gson:gson:${gsonVersion}"
     compileOnly "org.javassist:javassist:${javassistVersion}"
-    compileOnly "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}"
+    compileOnly "com.microsoft.thrifty:thrifty-runtime-jvm:${thriftyVersion}"
 
     compileOnlyApi "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
     annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
@@ -109,7 +109,7 @@ def generateDependencyResource = tasks.register("generateDependencyResource") { 
 
         file << "com.google.code.gson:gson:${gsonVersion}\n"
         file << "org.javassist:javassist:${javassistVersion}\n"
-        file << "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}\n"
+        file << "com.microsoft.thrifty:thrifty-runtime-jvm:${thriftyVersion}\n"
     }
 }
 

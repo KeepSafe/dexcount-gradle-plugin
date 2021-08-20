@@ -20,7 +20,7 @@ import com.getkeepsafe.dexcount.DexMethodCountPlugin;
 import com.getkeepsafe.dexcount.PackageTree;
 import com.getkeepsafe.dexcount.PrintOptions;
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput;
-import com.microsoft.thrifty.protocol.CompactProtocol;
+import com.microsoft.thrifty.KtApiKt;
 import com.microsoft.thrifty.protocol.Protocol;
 import com.microsoft.thrifty.transport.Transport;
 import okio.BufferedSink;
@@ -84,8 +84,8 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
         try (Sink fileSink = Okio.sink(treeFile);
              Sink gzipSink = new GzipSink(fileSink);
              BufferedSink sink = Okio.buffer(gzipSink);
-             Transport transport = new BufferedSinkTransport(sink);
-             Protocol protocol = new CompactProtocol(transport)) {
+             Transport transport = KtApiKt.transport(sink);
+             Protocol protocol = KtApiKt.compactProtocol(transport)) {
             TreeGenOutput.ADAPTER.write(protocol, thrift);
             protocol.flush();
         }
@@ -152,32 +152,4 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
     protected abstract String getInputRepresentation();
 
     protected abstract Logger getLogger();
-
-    private static class BufferedSinkTransport extends Transport {
-        private final BufferedSink sink;
-
-        BufferedSinkTransport(BufferedSink sink) {
-            this.sink = sink;
-        }
-
-        @Override
-        public int read(byte[] buffer, int offset, int count) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void write(byte[] buffer, int offset, int count) throws IOException {
-            sink.write(buffer, offset, count);
-        }
-
-        @Override
-        public void flush() throws IOException {
-            sink.flush();
-        }
-
-        @Override
-        public void close() throws IOException {
-            sink.close();
-        }
-    }
 }

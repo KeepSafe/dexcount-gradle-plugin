@@ -21,12 +21,13 @@ import com.getkeepsafe.dexcount.colors.Color;
 import com.getkeepsafe.dexcount.colors.IOConsumer;
 import com.getkeepsafe.dexcount.colors.Styleable;
 import com.getkeepsafe.dexcount.thrift.TreeGenOutput;
-import com.microsoft.thrifty.protocol.CompactProtocol;
+import com.microsoft.thrifty.KtApiKt;
 import com.microsoft.thrifty.protocol.Protocol;
 import com.microsoft.thrifty.transport.Transport;
 import okio.BufferedSource;
 import okio.GzipSource;
 import okio.Okio;
+import okio.Source;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.workers.WorkAction;
 import org.jetbrains.annotations.NotNull;
@@ -77,30 +78,16 @@ public abstract class ReportOutputWorker implements WorkAction<ReportOutputWorke
 
     private TreeGenOutput readTreeGenFile() throws IOException {
         File file = getParameters().getPackageTreeFile().getAsFile().get();
-        BufferedSource source = Okio.buffer(new GzipSource(Okio.source(file)));
-        Transport transport = new Transport() {
-            @Override
-            public int read(byte[] buffer, int offset, int count) throws IOException {
-                return source.read(buffer, offset, count);
-            }
 
-            @Override
-            public void write(byte[] buffer, int offset, int count) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void flush() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void close() throws IOException {
-                source.close();
-            }
-        };
-        Protocol protocol = new CompactProtocol(transport);
-        return TreeGenOutput.ADAPTER.read(protocol);
+        try (
+            Source source = Okio.source(file);
+            GzipSource gzip = new GzipSource(source);
+            BufferedSource bufferedSource = Okio.buffer(gzip);
+            Transport transport = KtApiKt.transport(bufferedSource);
+            Protocol protocol = KtApiKt.compactProtocol(transport)
+        ) {
+            return TreeGenOutput.ADAPTER.read(protocol);
+        }
     }
 
     private static class Slf4jStyleable implements Styleable {
