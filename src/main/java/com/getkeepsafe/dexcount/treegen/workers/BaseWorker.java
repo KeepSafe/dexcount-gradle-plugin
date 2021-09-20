@@ -54,14 +54,14 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
         Property<PrintOptions> getPrintOptions();
     }
 
+    private File outputDirectory = null;
+
     @Override
     public void execute() {
         try {
             PackageTree packageTree = generatePackageTree();
 
-            File outputDir = getParameters().getOutputDirectory().get().getAsFile();
-            FileUtils.deleteDirectory(outputDir);
-            FileUtils.forceMkdir(outputDir);
+            ensureCleanOutputDirectory();
 
             writeIntermediateThriftFile(packageTree);
             writeSummaryFile(packageTree);
@@ -70,6 +70,11 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
         } catch (IOException e) {
             throw new DexCountException("Counting dex method references failed", e);
         }
+    }
+
+    private void ensureCleanOutputDirectory() throws IOException {
+        FileUtils.deleteDirectory(getOutputDirectory());
+        FileUtils.forceMkdir(getOutputDirectory());
     }
 
     private void writeIntermediateThriftFile(PackageTree packageTree) throws IOException {
@@ -92,7 +97,7 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
     }
 
     private void writeSummaryFile(PackageTree packageTree) throws IOException {
-        File summaryFile = getParameters().getOutputDirectory().file("summary.csv").get().getAsFile();
+        File summaryFile = new File(getOutputDirectory(), "summary.csv");
         FileUtils.forceMkdirParent(summaryFile);
 
         String headers = "methods,fields,classes";
@@ -109,7 +114,7 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
     }
 
     private void writeChartFiles(PackageTree packageTree) throws IOException {
-        File chartDirectory = getParameters().getOutputDirectory().dir("chart").get().getAsFile();
+        File chartDirectory = new File(getOutputDirectory(), "chart");
         FileUtils.forceMkdir(chartDirectory);
 
         PrintOptions options = getParameters().getPrintOptions().get()
@@ -140,11 +145,18 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
     private void writeFullTree(PackageTree packageTree) throws IOException {
         PrintOptions options = getParameters().getPrintOptions().get();
         String fullCountFileName = getParameters().getOutputFileName().get() + options.getOutputFormat().getExtension();
-        File fullCountFile = getParameters().getOutputDirectory().file(fullCountFileName).get().getAsFile();
+        File fullCountFile = new File(getOutputDirectory(), fullCountFileName);
 
         try (BufferedWriter bw = Files.newBufferedWriter(fullCountFile.toPath())) {
             packageTree.print(bw, options.getOutputFormat(), options);
         }
+    }
+
+    private File getOutputDirectory() {
+        if (outputDirectory == null) {
+            outputDirectory = getParameters().getOutputDirectory().get().getAsFile();
+        }
+        return outputDirectory;
     }
 
     protected abstract PackageTree generatePackageTree() throws IOException;

@@ -41,6 +41,28 @@ class IntegrationSpec extends Specification {
     }
 
     @Unroll
+    def "completes successfully using AGP #agpVersion and Gradle #gradleVersion"() {
+        given: "an integration test project"
+        def project = projectDir(agpVersion, gradleVersion)
+
+        when:
+        def result = GradleRunner.create()
+            .withGradleVersion(gradleVersion)
+            .withProjectDir(project)
+            .withArguments(":app:countDebugDexMethods", "--stacktrace")
+            .build()
+
+        then:
+        result.task(":app:countDebugDexMethods").outcome == TaskOutcome.SUCCESS
+
+        // These version combinations were known to fail at some point.
+        // This spec serves to guard against regression.
+        where:
+        agpVersion | gradleVersion | reportedIn
+        "4.0.0"    | "6.1.1"       | "https://github.com/KeepSafe/dexcount-gradle-plugin/issues/410"
+    }
+
+    @Unroll
     def "counting AARs using AGP #agpVersion and Gradle #gradleVersion"() {
         given: "an integration test project"
         def project = projectDir(agpVersion, gradleVersion)
