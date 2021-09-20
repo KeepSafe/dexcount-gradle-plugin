@@ -1,3 +1,7 @@
+3.0.1 (20 September 2021)
+---------
+* Fix plugin compatibility with Gradle 6.1.1 (#411)
+
 3.0.0 (9 August 2021)
 ---------
 * **BREAKING** Port plugin from Kotlin to Java for better Gradle compatibility; public extension API changed. (#379)
