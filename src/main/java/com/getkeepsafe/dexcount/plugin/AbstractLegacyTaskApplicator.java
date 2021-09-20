@@ -143,7 +143,7 @@ abstract class AbstractLegacyTaskApplicator extends AbstractTaskApplicator {
         String treePath = path.replace("outputs", "intermediates") + "/tree.compact.gz";
 
         TaskProvider<LegacyGeneratePackageTreeTask> gen = getProject().getTasks().register(treeTaskName, LegacyGeneratePackageTreeTask.class, t -> {
-            t.setDescription("Generates dex method count for ${variant.name}.");
+            t.setDescription("Generates dex method count for " + variant.getName() + ".");
             t.setGroup("Reporting");
 
             t.getConfigProperty().set(getExt());
