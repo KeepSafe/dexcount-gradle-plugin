@@ -41,14 +41,8 @@ public final class TaskApplicators {
             new JavaOnlyApplicator.Factory()
         );
 
-        for (TaskApplicator.Factory factory : factories) {
-            if (revision.compareTo(factory.getMinimumRevision(), PreviewComparison.IGNORE) < 0) {
-                continue;
-            }
-
-            return Optional.of(factory);
-        }
-
-        return Optional.empty();
+        return factories.stream()
+            .filter(it -> revision.compareTo(it.getMinimumRevision(), PreviewComparison.IGNORE) >= 0)
+            .findFirst();
     }
 }
