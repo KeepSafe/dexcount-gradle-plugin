@@ -43,7 +43,6 @@ jobs:
         with:
           arguments: uploadSnapshot
         if: >-
-          matrix.jdk == 1.8 &&
           github.event_name == 'push' &&
           github.repository == 'KeepSafe/dexcount-gradle-plugin' &&
           github.ref == 'refs/heads/master'
