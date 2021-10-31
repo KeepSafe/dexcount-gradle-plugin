@@ -221,14 +221,15 @@ tasks.withType(Test) {
 tasks.withType(Javadoc) {
     title = "${project.name} ${project.version}"
     configure(options) {
+        source = JavaVersion.VERSION_1_8
         header = project.name
         encoding "UTF-8"
         docEncoding "UTF-8"
         charSet "UTF-8"
         linkSource true
         author = true
-        links("http://docs.oracle.com/javase/8/docs/api/",
-            "http://docs.oracle.com/javaee/7/api/")
+        links("https://docs.oracle.com/javase/8/docs/api/",
+            "https://docs.oracle.com/javaee/7/api/")
         exclude "**/*Test.java"
         if (JavaVersion.current().java8Compatible) addStringOption("Xdoclint:none", "-quiet")
     }
