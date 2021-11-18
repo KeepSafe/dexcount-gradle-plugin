@@ -57,7 +57,7 @@ repositories {
     google()
 }
 
-def agpVersion = "7.2.0-alpha03"
+def agpVersion = "7.2.0-alpha05"
 def autoValueVersion = "1.8.1"
 def gsonVersion = "2.8.6"
 def javassistVersion = "3.27.0-GA"
@@ -76,7 +76,7 @@ dependencies {
 
     compileOnly "com.android.tools.build:gradle:$agpVersion"
     compileOnly "com.android.tools:r8:2.2.64"
-    compileOnly "com.android.tools:repository:30.2.0-alpha03"
+    compileOnly "com.android.tools:repository:30.2.0-alpha05"
 
     testImplementation "com.android.tools.build:gradle:$agpVersion"
     testImplementation "com.google.code.gson:gson:${gsonVersion}"
