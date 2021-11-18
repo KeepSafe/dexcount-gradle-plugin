@@ -32,7 +32,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "7.2.0-alpha05" | "7.3-rc-1"    || 7421       | 926        | 2676
-        "7.1.0-beta02"  | "7.2"         || 7421       | 926        | 2676
+        "7.1.0-beta03"  | "7.2"         || 7421       | 926        | 2676
         "7.0.0"         | "7.1.1"       || 7355       | 926        | 2592
         "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
@@ -85,7 +85,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "7.2.0-alpha05" | "7.3-rc-1"    || 7          | 5          | 3
-        "7.1.0-beta02"  | "7.2"         || 7          | 5          | 3
+        "7.1.0-beta03"  | "7.2"         || 7          | 5          | 3
         "7.0.0"         | "7.1.1"       || 7          | 5          | 3
         "4.2.0"         | "6.8.1"       || 7          | 5          | 3
         "4.1.0"         | "6.7.1"       || 7          | 5          | 3
@@ -116,7 +116,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion         | gradleVersion || numMethods | numClasses | numFields
         "7.2.0-alpha05"    | "7.3-rc-1"    || 4266       | 723        | 1268
-        "7.1.0-beta02"     | "7.2"         || 4266       | 723        | 1268
+        "7.1.0-beta03"     | "7.2"         || 4266       | 723        | 1268
         "7.0.0"            | "7.1.1"       || 4266       | 723        | 1268
         "4.2.0"            | "6.8.1"       || 4266       | 723        | 1268
         "4.1.0"            | "6.7.1"       || 4266       | 723        | 1268
@@ -147,7 +147,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "7.2.0-alpha05" | "7.3-rc-1"    || 7421       | 926        | 2676
-        "7.1.0-beta02"  | "7.2"         || 7421       | 926        | 2676
+        "7.1.0-beta03"  | "7.2"         || 7421       | 926        | 2676
         "7.0.0"         | "7.1.1"       || 7355       | 926        | 2592
         "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
