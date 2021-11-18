@@ -42,8 +42,4 @@ public final class ProjectUtils {
 
         return false;
     }
-
-    public static GradleVersion gradleVersion(Project project) {
-        return GradleVersion.parse(project.getGradle().getGradleVersion());
-    }
 }
