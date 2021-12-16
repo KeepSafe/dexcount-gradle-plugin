@@ -69,7 +69,6 @@ class FourTwoApplicator extends FourOneApplicator {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public void apply() {
         if (!getExt().getEnabled().get()) {
             return;

@@ -57,7 +57,7 @@ repositories {
     google()
 }
 
-def agpVersion = "7.2.0-alpha05"
+def agpVersion = "7.2.0-alpha06"
 def autoValueVersion = "1.8.1"
 def gsonVersion = "2.8.6"
 def javassistVersion = "3.27.0-GA"
@@ -76,12 +76,12 @@ dependencies {
 
     compileOnly "com.android.tools.build:gradle:$agpVersion"
     compileOnly "com.android.tools:r8:2.2.64"
-    compileOnly "com.android.tools:repository:30.2.0-alpha05"
+    compileOnly "com.android.tools:repository:30.2.0-alpha06"
 
     testImplementation "com.android.tools.build:gradle:$agpVersion"
     testImplementation "com.google.code.gson:gson:${gsonVersion}"
     testImplementation "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}"
-    testImplementation "org.codehaus.groovy:groovy-all:3.0.8"
+    testImplementation "org.codehaus.groovy:groovy-all:3.0.9"
     testImplementation "org.javassist:javassist:${javassistVersion}"
     testImplementation dependencies.create("org.spockframework:spock-core:2.0-groovy-3.0") {
         exclude module: "groovy-all"
