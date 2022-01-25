@@ -1,3 +1,8 @@
+3.1.0 (25 January 2022)
+---------
+* Add support for AGP 7.1.0
+* Add preliminary support for AGP 7.2.0 alphas
+
 3.0.1 (20 September 2021)
 ---------
 * Fix plugin compatibility with Gradle 6.1.1 (#411)
