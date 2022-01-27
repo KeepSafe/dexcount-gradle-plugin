@@ -31,9 +31,9 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.2.0-alpha07" | "7.3"         || 7410       | 925        | 2666
-        "7.1.0-rc01"    | "7.2"         || 7421       | 926        | 2676
-        "7.0.0"         | "7.1.1"       || 7355       | 926        | 2592
+        "7.2.0-beta01"  | "7.3.3"       || 7410       | 925        | 2666
+        "7.1.0-rc01"    | "7.3.3"       || 7421       | 926        | 2676
+        "7.0.0"         | "7.3.3"       || 7355       | 926        | 2592
         "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
         "3.6.0"         | "6.5.1"       || 7370       | 926        | 3780
@@ -84,9 +84,9 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.2.0-alpha07" | "7.3"         || 7          | 5          | 3
-        "7.1.0-rc01"    | "7.2"         || 7          | 5          | 3
-        "7.0.0"         | "7.1.1"       || 7          | 5          | 3
+        "7.2.0-beta01"  | "7.3.3"       || 7          | 5          | 3
+        "7.1.0-rc01"    | "7.3.3"       || 7          | 5          | 3
+        "7.0.0"         | "7.3.3"       || 7          | 5          | 3
         "4.2.0"         | "6.8.1"       || 7          | 5          | 3
         "4.1.0"         | "6.7.1"       || 7          | 5          | 3
         "3.6.0"         | "6.5.1"       || 7          | 6          | 7
@@ -115,9 +115,9 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion         | gradleVersion || numMethods | numClasses | numFields
-        "7.2.0-alpha07"    | "7.3"         || 4266       | 723        | 1268
-        "7.1.0-rc01"       | "7.2"         || 4266       | 723        | 1268
-        "7.0.0"            | "7.1.1"       || 4266       | 723        | 1268
+        "7.2.0-beta01"     | "7.3.3"       || 4266       | 723        | 1268
+        "7.1.0-rc01"       | "7.3.3"       || 4266       | 723        | 1268
+        "7.0.0"            | "7.3.3"       || 4266       | 723        | 1268
         "4.2.0"            | "6.8.1"       || 4266       | 723        | 1268
         "4.1.0"            | "6.7.1"       || 4266       | 723        | 1268
         "3.6.0"            | "6.5.1"       || 4265       | 723        | 1271
@@ -146,9 +146,9 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.2.0-alpha07" | "7.3"         || 7410       | 925        | 2666
-        "7.1.0-rc01"    | "7.2"         || 7421       | 926        | 2676
-        "7.0.0"         | "7.1.1"       || 7355       | 926        | 2592
+        "7.2.0-beta01"  | "7.3.3"       || 7410       | 925        | 2666
+        "7.1.0-rc01"    | "7.3.3"       || 7421       | 926        | 2676
+        "7.0.0"         | "7.3.3"       || 7355       | 926        | 2592
         "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
         "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
     }
@@ -161,6 +161,7 @@ class IntegrationSpec extends Specification {
         gradleProperties.delete()
         gradleProperties << """
             org.gradle.caching=true
+            org.gradle.jvmargs=-XX:MaxMetaspaceSize=1024m
             agpVersion=$agpVersion
         """.stripIndent()
 
