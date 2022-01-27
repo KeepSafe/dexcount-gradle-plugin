@@ -161,6 +161,7 @@ class IntegrationSpec extends Specification {
         gradleProperties.delete()
         gradleProperties << """
             org.gradle.caching=true
+            org.gradle.jvmargs=-XX:MaxMetaspaceSize=1024m
             agpVersion=$agpVersion
         """.stripIndent()
 
