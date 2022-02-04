@@ -15,10 +15,8 @@
  */
 package com.getkeepsafe.dexcount;
 
-import com.getkeepsafe.dexcount.colors.Color;
-import com.getkeepsafe.dexcount.colors.Styleable;
 import org.gradle.api.GradleException;
-import org.gradle.api.logging.LogLevel;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 
@@ -34,7 +32,7 @@ public class CountReporter {
 
     private final PackageTree packageTree;
     private final String variantName;
-    private final Styleable styleable;
+    private final Logger logger;
     private final PrintOptions options;
     private final String inputRepresentation;
     private final boolean isInstantRun;
@@ -42,13 +40,13 @@ public class CountReporter {
     public CountReporter(
             PackageTree packageTree,
             String variantName,
-            Styleable styleable,
+            Logger logger,
             PrintOptions options,
             String inputRepresentation,
             boolean isInstantRun) {
         this.packageTree = packageTree;
         this.variantName = variantName;
-        this.styleable = styleable;
+        this.logger = logger;
         this.options = options;
         this.inputRepresentation = inputRepresentation;
         this.isInstantRun = isInstantRun;
@@ -61,23 +59,18 @@ public class CountReporter {
             printTaskDiagnosticData();
             failBuildMaxMethods();
         } catch (DexCountException e) {
-            styleable.withStyledOutput(Color.RED, LogLevel.ERROR, out -> {
-                out.println("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues");
-                e.printStackTrace(out);
-            });
+            logger.error("Error counting dex methods. Please contact the developer at https://github.com/KeepSafe/dexcount-gradle-plugin/issues", e);
         }
     }
 
-    private void printPreamble() throws IOException {
+    private void printPreamble() {
         if (options.getPrintHeader()) {
             String projectName = getClass().getPackage().getImplementationTitle();
             String projectVersion = getClass().getPackage().getImplementationVersion();
 
-            styleable.withStyledOutput(Color.DEFAULT, out -> {
-                out.println("Dexcount name:    " + projectName);
-                out.println("Dexcount version: " + projectVersion);
-                out.println("Dexcount input:   " + inputRepresentation);
-            });
+            logger.warn("Dexcount name:    {}", projectName);
+            logger.warn("Dexcount version: {}", projectVersion);
+            logger.warn("Dexcount input:   {}", inputRepresentation);
         }
     }
 
@@ -86,76 +79,66 @@ public class CountReporter {
         return String.format("%.2f", used);
     }
 
-    private void printSummary() throws IOException {
+    private void printSummary() {
         if (isInstantRun) {
-            styleable.withStyledOutput(Color.RED, out -> {
-                out.println("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.");
-            });
+            logger.warn("Warning: Instant Run build detected!  Instant Run does not run Proguard; method counts may be inaccurate.");
         }
 
-        Color color = packageTree.getMethodCount() < 50000 ? Color.GREEN : Color.YELLOW;
+        String percentMethodsUsed = percentUsed(packageTree.getMethodCount());
+        String percentFieldsUsed = percentUsed(packageTree.getFieldCount());
+        String percentClassesUsed = percentUsed(packageTree.getClassCount());
 
-        styleable.withStyledOutput(color, out -> {
-            String percentMethodsUsed = percentUsed(packageTree.getMethodCount());
-            String percentFieldsUsed = percentUsed(packageTree.getFieldCount());
-            String percentClassesUsed = percentUsed(packageTree.getClassCount());
+        int methodsRemaining = Math.max(MAX_DEX_REFS - packageTree.getMethodCount(), 0);
+        int fieldsRemaining = Math.max(MAX_DEX_REFS - packageTree.getFieldCount(), 0);
+        int classesRemaining = Math.max(MAX_DEX_REFS - packageTree.getClassCount(), 0);
 
-            int methodsRemaining = Math.max(MAX_DEX_REFS - packageTree.getMethodCount(), 0);
-            int fieldsRemaining = Math.max(MAX_DEX_REFS - packageTree.getFieldCount(), 0);
-            int classesRemaining = Math.max(MAX_DEX_REFS - packageTree.getClassCount(), 0);
+        int methodCount, fieldCount, classCount;
+        if (options.isAndroidProject()) {
+            methodCount = packageTree.getMethodCount();
+            fieldCount = packageTree.getFieldCount();
+            classCount = packageTree.getClassCount();
+        } else {
+            methodCount = packageTree.getMethodCountDeclared();
+            fieldCount = packageTree.getFieldCountDeclared();
+            classCount = packageTree.getClassCountDeclared();
+        }
 
-            int methodCount, fieldCount, classCount;
-            if (options.isAndroidProject()) {
-                methodCount = packageTree.getMethodCount();
-                fieldCount = packageTree.getFieldCount();
-                classCount = packageTree.getClassCount();
-            } else {
-                methodCount = packageTree.getMethodCountDeclared();
-                fieldCount = packageTree.getFieldCountDeclared();
-                classCount = packageTree.getClassCountDeclared();
-            }
+        logger.warn("Total methods in " + inputRepresentation + ": " + methodCount + " (" + percentMethodsUsed + "% used)");
+        logger.warn("Total fields in " + inputRepresentation + ": " + fieldCount + " (" + percentFieldsUsed + "% used)");
+        logger.warn("Total classes in " + inputRepresentation + ": " + classCount + " (" + percentClassesUsed + "% used)");
 
-            out.println("Total methods in " + inputRepresentation + ": " + methodCount + " (" + percentMethodsUsed + "% used)");
-            out.println("Total fields in " + inputRepresentation + ": " + fieldCount + " (" + percentFieldsUsed + "% used)");
-            out.println("Total classes in " + inputRepresentation + ": " + classCount + " (" + percentClassesUsed + "% used)");
-
-            if (options.isAndroidProject()) {
-                out.println("Methods remaining in " + inputRepresentation + ": " + methodsRemaining);
-                out.println("Fields remaining in " + inputRepresentation + ": " + fieldsRemaining);
-                out.println("Classes remaining in " + inputRepresentation + ": " + classesRemaining);
-            }
-        });
+        if (options.isAndroidProject()) {
+            logger.warn("Methods remaining in " + inputRepresentation + ": " + methodsRemaining);
+            logger.warn("Fields remaining in " + inputRepresentation + ": " + fieldsRemaining);
+            logger.warn("Classes remaining in " + inputRepresentation + ": " + classesRemaining);
+        }
 
         if (options.getTeamCityIntegration() || (options.getTeamCitySlug() != null && options.getTeamCitySlug().length() > 0)) {
-            styleable.withStyledOutput(Color.DEFAULT, out -> {
-                String slug = "Dexcount";
-                if (options.getTeamCitySlug() != null) {
-                    slug += "_" + options.getTeamCitySlug().replace(' ', '_');
-                }
-                String prefix = slug + "_" + variantName;
+            String slug = "Dexcount";
+            if (options.getTeamCitySlug() != null) {
+                slug += "_" + options.getTeamCitySlug().replace(' ', '_');
+            }
+            String prefix = slug + "_" + variantName;
 
-                /*
-                 * Reports to Team City statistic value
-                 * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
-                 */
-                out.println(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "ClassCount", packageTree.getClassCount()));
-                out.println(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "MethodCount", packageTree.getMethodCount()));
-                out.println(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "FieldCount", packageTree.getFieldCount()));
-            });
+            /*
+             * Reports to Team City statistic value
+             * Doc: https://confluence.jetbrains.com/display/TCD9/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingBuildStatistics
+             */
+            logger.warn(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "ClassCount", packageTree.getClassCount()));
+            logger.warn(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "MethodCount", packageTree.getMethodCount()));
+            logger.warn(String.format("##teamcity[buildStatisticValue key='%s_%s' value='%d']", prefix, "FieldCount", packageTree.getFieldCount()));
         }
     }
 
     private void printTaskDiagnosticData() throws IOException {
-        // Log the entire package list/tree at LogLevel.DEBUG, unless
-        // verbose is enabled (in which case use the default log level).
-        LogLevel level = options.isVerbose() ? null : LogLevel.DEBUG;
+        StringBuilder strBuilder = new StringBuilder();
+        packageTree.print(strBuilder, options.getOutputFormat(), options);
 
-        styleable.withStyledOutput(Color.YELLOW, level, out -> {
-            StringBuilder strBuilder = new StringBuilder();
-            packageTree.print(strBuilder, options.getOutputFormat(), options);
-
-            out.format(strBuilder.toString());
-        });
+        if (options.isVerbose()) {
+            logger.warn(strBuilder.toString());
+        } else {
+            logger.info(strBuilder.toString());
+        }
     }
 
     private void failBuildMaxMethods() {
