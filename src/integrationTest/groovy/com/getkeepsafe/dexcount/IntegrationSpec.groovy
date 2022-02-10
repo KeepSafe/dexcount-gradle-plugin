@@ -31,7 +31,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.3.0-alpha01" | "7.3.3"       || 7410       | 925        | 2666
+        "7.3.0-alpha02" | "7.3.3"       || 7410       | 925        | 2666
         "7.2.0-beta02"  | "7.3.3"       || 7410       | 925        | 2666
         "7.1.1"         | "7.3.3"       || 7421       | 926        | 2676
         "7.0.0"         | "7.3.3"       || 7355       | 926        | 2592
@@ -85,7 +85,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.3.0-alpha01" | "7.3.3"       || 7          | 5          | 3
+        "7.3.0-alpha02" | "7.3.3"       || 7          | 5          | 3
         "7.2.0-beta02"  | "7.3.3"       || 7          | 5          | 3
         "7.1.1"         | "7.3.3"       || 7          | 5          | 3
         "7.0.0"         | "7.3.3"       || 7          | 5          | 3
@@ -117,7 +117,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion         | gradleVersion || numMethods | numClasses | numFields
-        "7.3.0-alpha01"    | "7.3.3"       || 4266       | 723        | 1268
+        "7.3.0-alpha02"    | "7.3.3"       || 4266       | 723        | 1268
         "7.2.0-beta02"     | "7.3.3"       || 4266       | 723        | 1268
         "7.1.1"            | "7.3.3"       || 4266       | 723        | 1268
         "7.0.0"            | "7.3.3"       || 4266       | 723        | 1268
@@ -149,7 +149,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "7.3.0-alpha01" | "7.3.3"       || 7410       | 925        | 2666
+        "7.3.0-alpha02" | "7.3.3"       || 7410       | 925        | 2666
         "7.2.0-beta02"  | "7.3.3"       || 7410       | 925        | 2666
         "7.1.1"         | "7.3.3"       || 7421       | 926        | 2676
         "7.0.0"         | "7.3.3"       || 7355       | 926        | 2592
