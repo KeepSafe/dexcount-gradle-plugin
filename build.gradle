@@ -44,6 +44,11 @@ configurations {
     // and must be restricted to an isolated classpath
     workerImplementation
 
+    testImplementation {
+        extendsFrom androidBuildTool
+        extendsFrom workerImplementation
+    }
+
     integrationTestImplementation {
         extendsFrom testImplementation
     }
@@ -76,7 +81,6 @@ dependencies {
     compileOnlyApi libs.autoValue.annotations
     annotationProcessor libs.autoValue.processor
 
-    // Runtime dependencies that are safe to use everywhere
     implementation libs.commons.io
     implementation libs.commons.lang
 
@@ -88,12 +92,6 @@ dependencies {
     workerImplementation libs.javassist
     workerImplementation libs.thriftyRuntime
 
-    // Test dependencies, including concrete versions of the worker-specific
-    // dependencies.
-    testImplementation libs.androidTools.agp
-    testImplementation libs.groovy
-    testImplementation libs.gson
-    testImplementation libs.javassist
     testImplementation dependencies.create(libs.spock.get()) {
         exclude module: "groovy-all"
     }
@@ -189,7 +187,7 @@ tasks.withType(JavaCompile) {
     configure(options) {
         compilerArgs << "-Xlint:all"            // Turn on all warnings
         compilerArgs << "-Xlint:-options"       // Turn off "missing" bootclasspath warning
-        compilerArgs << "-Xlint:-processing"    // Turn off "no processor claimed these annotatiosn" warning
+        compilerArgs << "-Xlint:-processing"    // Turn off "no processor claimed these annotations" warning
         compilerArgs << "-Werror"               // Turn warnings into errors
         encoding = "utf-8"
         fork = true
@@ -217,7 +215,7 @@ tasks.withType(GroovyCompile) {
 }
 
 // Don't fork too much on CI - it tends to run out of metaspace memory.
-def isCi = providers.environmentVariable("CI").forUseAtConfigurationTime().isPresent()
+def isCi = providers.environmentVariable("CI").isPresent()
 
 tasks.withType(Test) {
     // Turn on logging for all tests, filter to show failures/skips only
@@ -297,7 +295,7 @@ pluginBundle {
 
 // Convenient entrypoint for the "upload snapshot" CI action.
 // It's easier to do the version check here than in a Github action.
-def isSnapshot = providers.gradleProperty("VERSION_NAME").forUseAtConfigurationTime().map { it.endsWith("-SNAPSHOT") }
+def isSnapshot = providers.gradleProperty("VERSION_NAME").map { it.endsWith("-SNAPSHOT") }
 tasks.register("uploadSnapshot") {
     if (isSnapshot.get()) {
         dependsOn tasks.named("publish")
