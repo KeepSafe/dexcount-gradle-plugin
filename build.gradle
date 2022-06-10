@@ -174,7 +174,7 @@ tasks.register("publishEverywhere") { t ->
     t.group "publishing"
     t.description "Publish to Maven Central and the Gradle Plugin Portal"
 
-    t.dependsOn("uploadArchives", "publishPlugins")
+    t.dependsOn("publish", "publishPlugins")
 }
 
 // Compiler settings
