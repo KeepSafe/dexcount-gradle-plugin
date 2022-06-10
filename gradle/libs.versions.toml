@@ -21,7 +21,7 @@ thriftyRuntime = { module = "com.microsoft.thrifty:thrifty-runtime-jvm", version
 
 # Test dependenies
 groovy = "org.codehaus.groovy:groovy-all:3.0.9"
-spock = "org.spockframework:spock-core:2.0-groovy-3.0" # Don't forget to exclude groovy-all
+spock = "org.spockframework:spock-core:2.1-groovy-3.0" # Don't forget to exclude groovy-all
 
 [plugins]
 mavenPublish = "com.vanniktech.maven.publish:0.17.0"
