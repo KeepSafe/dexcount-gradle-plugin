@@ -35,8 +35,22 @@ sourceSets {
 }
 
 configurations {
+    // Runtime dependencies provided by consuming Android projects - if you're
+    // building an Android project, you've already got these on the build classpath
+    // and we can't bundle our own copies.
+    androidBuildTool
+
+    // Runtime dependencies that are run only in Gradle Workers
+    // and must be restricted to an isolated classpath
+    workerImplementation
+
     integrationTestImplementation {
         extendsFrom testImplementation
+    }
+
+    compileOnly {
+        extendsFrom androidBuildTool
+        extendsFrom workerImplementation
     }
 }
 
@@ -66,18 +80,13 @@ dependencies {
     implementation libs.commons.io
     implementation libs.commons.lang
 
-    // Runtime dependencies provided by consuming Android projects - if you're
-    // building an Android project, you've already got these on the build classpath
-    // and we can't bundle our own copies.
-    compileOnly libs.androidTools.agp
-    compileOnly libs.androidTools.r8
-    compileOnly libs.androidTools.repository
+    androidBuildTool libs.androidTools.agp
+    androidBuildTool libs.androidTools.r8
+    androidBuildTool libs.androidTools.repository
 
-    // Runtime dependencies that are run only in Gradle Workers
-    // and must be restricted to an isolated classpath
-    compileOnly libs.gson
-    compileOnly libs.javassist
-    compileOnly libs.thriftyRuntime
+    workerImplementation libs.gson
+    workerImplementation libs.javassist
+    workerImplementation libs.thriftyRuntime
 
     // Test dependencies, including concrete versions of the worker-specific
     // dependencies.
@@ -102,10 +111,11 @@ def generateDependencyResource = tasks.register("generateDependencyResource") { 
 
     def generatedResourcesDir = project.layout.buildDirectory.dir(["generated", "sources", "dexcount", "src", "main", "resources"].join(File.separator))
     def outputFile = generatedResourcesDir.map { it -> it.file("dependencies.list") }
+    def dependencies = configurations.workerImplementation.getDependencies()
 
-    t.inputs.property("gson-version", libs.versions.gson.get())
-    t.inputs.property("javassist-version", libs.versions.javassist.get())
-    t.inputs.property("thrifty-version", libs.versions.thrifty.get())
+    dependencies.forEach { dep ->
+        t.inputs.property(dep.name, dep.version)
+    }
 
     t.outputs.dir(generatedResourcesDir)
 
@@ -114,9 +124,9 @@ def generateDependencyResource = tasks.register("generateDependencyResource") { 
         file.getParentFile().mkdirs()
         file.delete()
 
-        file << "com.google.code.gson:gson:${libs.versions.gson.get()}\n"
-        file << "org.javassist:javassist:${libs.versions.javassist.get()}\n"
-        file << "com.microsoft.thrifty:thrifty-runtime-jvm:${libs.versions.thrifty.get()}\n"
+        dependencies
+            .collect { "${it.group}:${it.name}:${it.version}" }
+            .forEach { file << "$it\n" }
     }
 }
 
