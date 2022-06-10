@@ -1,0 +1,30 @@
+[versions]
+agp = "7.4.0-alpha03" # Note that updates here usually require updates to androidTools-repository
+autoValue = "1.8.1"
+gson = "2.8.6"
+javassist = "3.27.0-GA"
+thrifty = "3.0.0"
+
+[libraries]
+
+# Build + runtime dependencies
+androidTools-agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+androidTools-r8 = "com.android.tools:r8:2.2.64"
+androidTools-repository = "com.android.tools:repository:30.4.0-alpha03"
+autoValue-processor = { module = "com.google.auto.value:auto-value", version.ref = "autoValue" }
+autoValue-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
+commons-io = "commons-io:commons-io:2.10.0"
+commons-lang = "org.apache.commons:commons-lang3:3.12.0"
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+javassist = { module = "org.javassist:javassist", version.ref = "javassist" }
+thriftyRuntime = { module = "com.microsoft.thrifty:thrifty-runtime-jvm", version.ref = "thrifty" }
+
+# Test dependenies
+groovy = "org.codehaus.groovy:groovy-all:3.0.9"
+spock = "org.spockframework:spock-core:2.0-groovy-3.0" # Don't forget to exclude groovy-all
+
+[plugins]
+mavenPublish = "com.vanniktech.maven.publish:0.17.0"
+gradlePluginPublish = "com.gradle.plugin-publish:0.15.0"
+thrifty = { id = "com.microsoft.thrifty", version.ref = "thrifty" }
+versions = "com.github.ben-manes.versions:0.29.0"
