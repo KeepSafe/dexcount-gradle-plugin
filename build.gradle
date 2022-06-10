@@ -15,12 +15,13 @@
  */
 
 plugins {
-    id "com.github.ben-manes.versions" version "0.29.0"
     id "groovy"
-    id "com.microsoft.thrifty" version "2.1.1"
     id "java-gradle-plugin"
-    id "com.vanniktech.maven.publish" version "0.17.0"
-    id "com.gradle.plugin-publish" version "0.15.0"
+
+    alias libs.plugins.gradlePluginPublish
+    alias libs.plugins.mavenPublish
+    alias libs.plugins.thrifty
+    alias libs.plugins.versions
 }
 
 group = GROUP
@@ -57,35 +58,37 @@ repositories {
     google()
 }
 
-def agpVersion = "7.4.0-alpha03"
-def autoValueVersion = "1.8.1"
-def gsonVersion = "2.8.6"
-def javassistVersion = "3.27.0-GA"
-def thriftyVersion = "3.0.0"
-
 dependencies {
-    implementation 'commons-io:commons-io:2.10.0'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    compileOnlyApi libs.autoValue.annotations
+    annotationProcessor libs.autoValue.processor
 
-    compileOnly "com.google.code.gson:gson:${gsonVersion}"
-    compileOnly "org.javassist:javassist:${javassistVersion}"
-    compileOnly "com.microsoft.thrifty:thrifty-runtime-jvm:${thriftyVersion}"
+    // Runtime dependencies that are safe to use everywhere
+    implementation libs.commons.io
+    implementation libs.commons.lang
 
-    compileOnlyApi "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
-    annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
+    // Runtime dependencies provided by consuming Android projects - if you're
+    // building an Android project, you've already got these on the build classpath
+    // and we can't bundle our own copies.
+    compileOnly libs.androidTools.agp
+    compileOnly libs.androidTools.r8
+    compileOnly libs.androidTools.repository
 
-    compileOnly "com.android.tools.build:gradle:$agpVersion"
-    compileOnly "com.android.tools:r8:2.2.64"
-    compileOnly "com.android.tools:repository:30.4.0-alpha03"
+    // Runtime dependencies that are run only in Gradle Workers
+    // and must be restricted to an isolated classpath
+    compileOnly libs.gson
+    compileOnly libs.javassist
+    compileOnly libs.thriftyRuntime
 
-    testImplementation "com.android.tools.build:gradle:$agpVersion"
-    testImplementation "com.google.code.gson:gson:${gsonVersion}"
-    testImplementation "com.microsoft.thrifty:thrifty-runtime:${thriftyVersion}"
-    testImplementation "org.codehaus.groovy:groovy-all:3.0.9"
-    testImplementation "org.javassist:javassist:${javassistVersion}"
-    testImplementation dependencies.create("org.spockframework:spock-core:2.0-groovy-3.0") {
+    // Test dependencies, including concrete versions of the worker-specific
+    // dependencies.
+    testImplementation libs.androidTools.agp
+    testImplementation libs.groovy
+    testImplementation libs.gson
+    testImplementation libs.javassist
+    testImplementation dependencies.create(libs.spock.get()) {
         exclude module: "groovy-all"
     }
+    testImplementation libs.thriftyRuntime
 }
 
 thrifty {
@@ -93,12 +96,16 @@ thrifty {
 }
 
 def generateDependencyResource = tasks.register("generateDependencyResource") { t ->
+    // This task generates a text file containing versions of our worker-specific
+    // dependencies.  At runtime, we'll stuff these into a custom configuration
+    // and hand that to Gradle Worker tasks.
+
     def generatedResourcesDir = project.layout.buildDirectory.dir(["generated", "sources", "dexcount", "src", "main", "resources"].join(File.separator))
     def outputFile = generatedResourcesDir.map { it -> it.file("dependencies.list") }
 
-    t.inputs.property("gson-version", gsonVersion)
-    t.inputs.property("javassist-version", javassistVersion)
-    t.inputs.property("thrifty-version", thriftyVersion)
+    t.inputs.property("gson-version", libs.versions.gson.get())
+    t.inputs.property("javassist-version", libs.versions.javassist.get())
+    t.inputs.property("thrifty-version", libs.versions.thrifty.get())
 
     t.outputs.dir(generatedResourcesDir)
 
@@ -107,9 +114,9 @@ def generateDependencyResource = tasks.register("generateDependencyResource") { 
         file.getParentFile().mkdirs()
         file.delete()
 
-        file << "com.google.code.gson:gson:${gsonVersion}\n"
-        file << "org.javassist:javassist:${javassistVersion}\n"
-        file << "com.microsoft.thrifty:thrifty-runtime-jvm:${thriftyVersion}\n"
+        file << "com.google.code.gson:gson:${libs.versions.gson.get()}\n"
+        file << "org.javassist:javassist:${libs.versions.javassist.get()}\n"
+        file << "com.microsoft.thrifty:thrifty-runtime-jvm:${libs.versions.thrifty.get()}\n"
     }
 }
 
