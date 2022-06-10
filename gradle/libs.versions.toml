@@ -1,7 +1,7 @@
 [versions]
 agp = "7.4.0-alpha03" # Note that updates here usually require updates to androidTools-repository
 autoValue = "1.8.1"
-gson = "2.8.6"
+gson = "2.9.0"
 javassist = "3.27.0-GA"
 thrifty = "3.0.0"
 
