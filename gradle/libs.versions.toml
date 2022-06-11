@@ -22,6 +22,6 @@ spock = "org.spockframework:spock-core:2.1-groovy-3.0" # Don't forget to exclude
 
 [plugins]
 mavenPublish = "com.vanniktech.maven.publish:0.20.0"
-gradlePluginPublish = "com.gradle.plugin-publish:0.15.0"
+gradlePluginPublish = "com.gradle.plugin-publish:0.21.0"
 thrifty = { id = "com.microsoft.thrifty", version.ref = "thrifty" }
 versions = "com.github.ben-manes.versions:0.29.0"
