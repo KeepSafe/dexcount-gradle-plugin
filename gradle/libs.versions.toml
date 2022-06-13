@@ -1,5 +1,5 @@
 [versions]
-autoValue = "1.8.1"
+autoValue = "1.9"
 thrifty = "3.0.0"
 
 [libraries]
