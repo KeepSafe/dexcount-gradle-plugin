@@ -5,9 +5,9 @@ thrifty = "3.0.0"
 [libraries]
 
 # Build + runtime dependencies
-androidTools-agp = "com.android.tools.build:gradle:7.4.0-alpha03" # Note that updates here usually require updates to androidTools-repository
+androidTools-agp = "com.android.tools.build:gradle:7.4.0-alpha04" # Note that updates here usually require updates to androidTools-repository
 androidTools-r8 = "com.android.tools:r8:3.3.28"
-androidTools-repository = "com.android.tools:repository:30.4.0-alpha03"
+androidTools-repository = "com.android.tools:repository:30.4.0-alpha04"
 autoValue-processor = { module = "com.google.auto.value:auto-value", version.ref = "autoValue" }
 autoValue-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
 commons-io = "commons-io:commons-io:2.10.0"

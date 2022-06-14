@@ -28,7 +28,7 @@ group = GROUP
 version = VERSION_NAME
 description = POM_DESCRIPTION
 
-sourceCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
 
 sourceSets {
     integrationTest
@@ -180,8 +180,8 @@ tasks.register("publishEverywhere") { t ->
 // Compiler settings
 
 tasks.withType(JavaCompile) {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 
     // Show all warnings except boot classpath
     configure(options) {
@@ -195,8 +195,8 @@ tasks.withType(JavaCompile) {
 }
 
 tasks.withType(GroovyCompile) {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 
     // Show all warnings except boot classpath
     configure(options) {
@@ -236,7 +236,7 @@ tasks.withType(Test) {
 tasks.withType(Javadoc) {
     title = "${project.name} ${project.version}"
     configure(options) {
-        source = JavaVersion.VERSION_1_8
+        source = JavaVersion.VERSION_11
         header = project.name
         encoding "UTF-8"
         docEncoding "UTF-8"
