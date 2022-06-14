@@ -1,3 +1,7 @@
+Unreleased
+---------
+* **BREAKING** Raise minimum JDK version to 11 (#462)
+
 3.1.0 (25 January 2022)
 ---------
 * Add support for AGP 7.1.0
