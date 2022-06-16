@@ -179,7 +179,7 @@ tasks.register("publishEverywhere") { t ->
 
 // Compiler settings
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 
@@ -194,7 +194,7 @@ tasks.withType(JavaCompile) {
     }
 }
 
-tasks.withType(GroovyCompile) {
+tasks.withType(GroovyCompile).configureEach {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 
@@ -217,7 +217,7 @@ tasks.withType(GroovyCompile) {
 // Don't fork too much on CI - it tends to run out of metaspace memory.
 def isCi = providers.environmentVariable("CI").isPresent()
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     // Turn on logging for all tests, filter to show failures/skips only
     testLogging {
         exceptionFormat "full"
@@ -233,7 +233,7 @@ tasks.withType(Test) {
     maxParallelForks = isCi ? 1 : Runtime.runtime.availableProcessors().intdiv(2) ?: 1
 }
 
-tasks.withType(Javadoc) {
+tasks.withType(Javadoc).configureEach {
     title = "${project.name} ${project.version}"
     configure(options) {
         source = JavaVersion.VERSION_11
@@ -243,14 +243,13 @@ tasks.withType(Javadoc) {
         charSet "UTF-8"
         linkSource true
         author = true
-        links("https://docs.oracle.com/javase/8/docs/api/",
-            "https://docs.oracle.com/javaee/7/api/")
+        links "https://docs.oracle.com/en/java/javase/11/docs/api/"
         exclude "**/*Test.java"
         if (JavaVersion.current().java8Compatible) addStringOption("Xdoclint:none", "-quiet")
     }
 }
 
-tasks.withType(Groovydoc) {
+tasks.withType(Groovydoc).configureEach {
     docTitle = "${project.name} ${project.version}"
     header = project.name
     link("http://docs.oracle.com/javase/8/docs/api/",
@@ -307,6 +306,6 @@ tasks.register("uploadSnapshot") {
 }
 
 wrapper {
-    gradleVersion = "7.4"
+    gradleVersion = "7.5-rc-2"
     distributionType = Wrapper.DistributionType.ALL
 }
