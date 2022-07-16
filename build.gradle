@@ -306,6 +306,6 @@ tasks.register("uploadSnapshot") {
 }
 
 wrapper {
-    gradleVersion = "7.5-rc-2"
+    gradleVersion = "7.5"
     distributionType = Wrapper.DistributionType.ALL
 }
