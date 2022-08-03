@@ -87,6 +87,7 @@ dependencies {
     androidBuildTool libs.androidTools.agp
     androidBuildTool libs.androidTools.r8
     androidBuildTool libs.androidTools.repository
+    androidBuildTool libs.androidTools.sdkCommon
 
     workerImplementation libs.gson
     workerImplementation libs.javassist
