@@ -87,7 +87,6 @@ dependencies {
     androidBuildTool libs.androidTools.agp
     androidBuildTool libs.androidTools.r8
     androidBuildTool libs.androidTools.repository
-    androidBuildTool libs.androidTools.sdkCommon // <-- compile-only dep to avoid https://issuetracker.google.com/issues/241287611
 
     workerImplementation libs.gson
     workerImplementation libs.javassist
