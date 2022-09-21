@@ -31,6 +31,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.0.0-alpha01" | "7.5"         || 6937       | 1019       | 2527
         "7.4.0-beta01"  | "7.5"         || 7289       | 1072       | 2657
         "7.3.0"         | "7.5"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.5"         || 7410       | 925        | 2666
@@ -86,6 +87,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.0.0-alpha01" | "7.5"         || 7          | 5          | 3
         "7.4.0-beta01"  | "7.5"         || 7          | 5          | 3
         "7.3.0"         | "7.5"         || 7          | 5          | 3
         "7.2.2"         | "7.5"         || 7          | 5          | 3
@@ -119,6 +121,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.0.0-alpha01" | "7.5"         || 4244       | 728        | 1268
         "7.4.0-beta01"  | "7.5"         || 4244       | 728        | 1268
         "7.3.0"         | "7.5"         || 4244       | 728        | 1268
         "7.2.2"         | "7.5"         || 4266       | 723        | 1268
@@ -152,6 +155,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.0.0-alpha01" | "7.5"         || 6937       | 1019       | 2527
         "7.4.0-beta01"  | "7.5"         || 7289       | 1072       | 2657
         "7.3.0"         | "7.5"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.5"         || 7410       | 925        | 2666
