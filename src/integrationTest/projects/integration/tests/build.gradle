@@ -4,6 +4,12 @@ plugins {
 }
 
 android {
+    try {
+        namespace "com.getkeepsafe.dexcount.integration.tests"
+    } catch (Throwable ignored) {
+        // Expected on AGP < 8.0.0
+    }
+
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
@@ -32,11 +38,7 @@ android {
 
 dependencies {
     // Android Testing Support Library"s runner and rules and hamcrest matchers
-    implementation dependencies.create("com.android.support.test:runner:1.0.2") {
-        exclude module: 'support-annotations'
-    }
-    implementation dependencies.create("com.android.support.test:rules:1.0.2") {
-        exclude module: 'support-annotations'
-    }
+    implementation "com.android.support.test:runner:1.0.2"
+    implementation "com.android.support.test:rules:1.0.2"
     implementation "org.hamcrest:hamcrest-core:1.3"
 }

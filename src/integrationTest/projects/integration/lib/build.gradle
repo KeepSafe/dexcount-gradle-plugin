@@ -6,6 +6,12 @@ plugins {
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
+    try {
+        namespace "com.getkeepsafe.dexcount.integration"
+    } catch (Throwable ignored) {
+        // Expected on AGP < 8.0.0
+    }
+
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
