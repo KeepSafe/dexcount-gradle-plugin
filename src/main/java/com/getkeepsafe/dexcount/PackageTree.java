@@ -627,9 +627,11 @@ public class PackageTree {
     }
 
     private static MethodRef methodRefFromThrift(com.getkeepsafe.dexcount.thrift.MethodRef methodRef) {
-        String[] argTypes = new String[0];
+        String[] argTypes;
         if (methodRef.argumentTypes != null) {
-            argTypes = methodRef.argumentTypes.toArray(argTypes);
+            argTypes = methodRef.argumentTypes.toArray(new String[0]);
+        } else {
+            argTypes = new String[0];
         }
 
         return new MethodRef(
