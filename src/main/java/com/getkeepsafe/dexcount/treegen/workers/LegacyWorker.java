@@ -61,7 +61,7 @@ public abstract class LegacyWorker extends BaseWorker<LegacyWorker.Params> {
                 sourceFiles.stream().flatMap(f -> f.getMethodRefs().stream()).forEach(tree::addMethodRef);
                 sourceFiles.stream().flatMap(f -> f.getFieldRefs().stream()).forEach(tree::addFieldRef);
             } finally {
-                IOUtils.closeQuietly(sourceFiles.toArray(new SourceFile[0]));
+                sourceFiles.forEach(IOUtils::closeQuietly);
             }
         }
 
