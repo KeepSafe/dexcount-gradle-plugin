@@ -47,7 +47,7 @@ public abstract class ApkishWorker extends ModernWorker<ApkishWorker.Params> {
                 sf.getFieldRefs().forEach(tree::addFieldRef);
             });
         } finally {
-            IOUtils.closeQuietly(sourceFiles.toArray(new SourceFile[0]));
+            sourceFiles.forEach(IOUtils::closeQuietly);
         }
 
         return tree;
