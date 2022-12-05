@@ -32,7 +32,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.0.0-alpha08" | "7.5"         || 6938       | 1022       | 2527
-        "7.4.0-beta05"  | "7.5"         || 7289       | 1072       | 2657
+        "7.4.0-rc01"    | "7.5"         || 7289       | 1072       | 2657
         "7.3.1"         | "7.5"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.5"         || 7410       | 925        | 2666
         "7.1.1"         | "7.5"         || 7421       | 926        | 2676
@@ -88,7 +88,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.0.0-alpha08" | "7.5"         || 7          | 5          | 3
-        "7.4.0-beta05"  | "7.5"         || 7          | 5          | 3
+        "7.4.0-rc01"    | "7.5"         || 7          | 5          | 3
         "7.3.1"         | "7.5"         || 7          | 5          | 3
         "7.2.2"         | "7.5"         || 7          | 5          | 3
         "7.1.1"         | "7.5"         || 7          | 5          | 3
@@ -122,7 +122,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.0.0-alpha08" | "7.5"         || 4242       | 726        | 1268
-        "7.4.0-beta05"  | "7.5"         || 4244       | 728        | 1268
+        "7.4.0-rc01"    | "7.5"         || 4244       | 728        | 1268
         "7.3.1"         | "7.5"         || 4277       | 745        | 1284
         "7.2.2"         | "7.5"         || 4266       | 723        | 1268
         "7.1.1"         | "7.5"         || 4266       | 723        | 1268
@@ -156,7 +156,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.0.0-alpha08" | "7.5"         || 6938       | 1022       | 2527
-        "7.4.0-beta05"  | "7.5"         || 7289       | 1072       | 2657
+        "7.4.0-rc01"    | "7.5"         || 7289       | 1072       | 2657
         "7.3.1"         | "7.5"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.5"         || 7410       | 925        | 2666
         "7.1.1"         | "7.5"         || 7421       | 926        | 2676
