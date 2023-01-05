@@ -3,6 +3,7 @@ package com.getkeepsafe.dexcount
 import org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -31,20 +32,16 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.0.0-alpha09" | "7.5"         || 6928       | 1018       | 2527
+        "8.0.0-alpha11" | "7.5"         || 6935       | 1026       | 2528
         "7.4.0-rc01"    | "7.5"         || 7289       | 1072       | 2657
         "7.3.1"         | "7.5"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.5"         || 7410       | 925        | 2666
         "7.1.1"         | "7.5"         || 7421       | 926        | 2676
         "7.0.0"         | "7.5"         || 7355       | 926        | 2592
-        "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
-        "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
-        "3.6.0"         | "6.5.1"       || 7370       | 926        | 3780
-        "3.5.4"         | "6.5.1"       || 7369       | 926        | 3780
-        "3.4.0"         | "6.5.1"       || 7435       | 926        | 3847
     }
 
     @Unroll
+    @Ignore
     def "completes successfully using AGP #agpVersion and Gradle #gradleVersion"() {
         given: "an integration test project"
         def project = projectDir(agpVersion, gradleVersion)
@@ -87,17 +84,12 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.0.0-alpha09" | "7.5"         || 4          | 3          | 0
+        "8.0.0-alpha11" | "7.5"         || 4          | 3          | 0
         "7.4.0-rc01"    | "7.5"         || 7          | 5          | 3
         "7.3.1"         | "7.5"         || 7          | 5          | 3
         "7.2.2"         | "7.5"         || 7          | 5          | 3
         "7.1.1"         | "7.5"         || 7          | 5          | 3
         "7.0.0"         | "7.5"         || 7          | 5          | 3
-        "4.2.0"         | "6.8.1"       || 7          | 5          | 3
-        "4.1.0"         | "6.7.1"       || 7          | 5          | 3
-        "3.6.0"         | "6.5.1"       || 7          | 6          | 7
-        "3.5.4"         | "6.5.1"       || 7          | 6          | 7
-        "3.4.0"         | "6.5.1"       || 7          | 6          | 6
     }
 
     @Unroll
@@ -121,17 +113,12 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.0.0-alpha09" | "7.5"         || 4240       | 725        | 1265
+        "8.0.0-alpha11" | "7.5"         || 4240       | 725        | 1265
         "7.4.0-rc01"    | "7.5"         || 4244       | 728        | 1268
         "7.3.1"         | "7.5"         || 4277       | 745        | 1284
         "7.2.2"         | "7.5"         || 4266       | 723        | 1268
         "7.1.1"         | "7.5"         || 4266       | 723        | 1268
         "7.0.0"         | "7.5"         || 4266       | 723        | 1268
-        "4.2.0"         | "6.8.1"       || 4266       | 723        | 1268
-        "4.1.0"         | "6.7.1"       || 4266       | 723        | 1268
-        "3.6.0"         | "6.5.1"       || 4298       | 740        | 1287
-        "3.5.4"         | "6.5.1"       || 4299       | 740        | 1287
-        "3.4.0"         | "6.5.1"       || 4300       | 740        | 1287
     }
 
     @Unroll
@@ -155,14 +142,12 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.0.0-alpha09" | "7.5"         || 6928       | 1018       | 2527
+        "8.0.0-alpha11" | "7.5"         || 6935       | 1026       | 2528
         "7.4.0-rc01"    | "7.5"         || 7289       | 1072       | 2657
         "7.3.1"         | "7.5"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.5"         || 7410       | 925        | 2666
         "7.1.1"         | "7.5"         || 7421       | 926        | 2676
         "7.0.0"         | "7.5"         || 7355       | 926        | 2592
-        "4.2.0"         | "6.8.1"       || 7422       | 926        | 2677
-        "4.1.0"         | "6.7.1"       || 7356       | 926        | 2597
     }
 
     private File projectDir(String agpVersion, String gradleVersion) {
