@@ -35,6 +35,13 @@ jobs:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_KEY_PW: ${{ secrets.GPG_SIGNING_KEY_PW }}
 
+      - name: Configure GPG signing params
+        run: |
+          mkdir -p ~/.gradle
+          echo -n "signing.gnupg.passphrase=${GPG_SIGNING_KEY_PW}" >> ~/.gradle/gradle.properties
+        env:
+          GPG_SIGNING_KEY_PW: ${{ secrets.GPG_SIGNING_KEY_PW }}
+
       - name: Set up JDK ${{ matrix.jdk }}
         uses: actions/setup-java@v1
         with:
