@@ -1,6 +1,11 @@
-Unreleased
+4.0.0 (16 January 2023)
 ---------
 * **BREAKING** Raise minimum JDK version to 11 (#462)
+* Add support for AGP 8.0.0 alphas - and drop support for AGP versions below 7.0.0 (#491)
+* Add support for AGP 7.4.0 (#492)
+* Add support for AGP 7.3.0 (#475)
+* Add support for AGP 7.2.0 (#444)
+* Remove (broken) color console output (#432)
 
 3.1.0 (25 January 2022)
 ---------

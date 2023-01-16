@@ -15,15 +15,15 @@ For more information, please see [the website](https://keepsafe.github.io/dexcou
 
 ## Download
 
-The plugin is available from the Gradle Plugin Portal under the ID `com.getkeepsafe.dexcount`, and from Maven Central under the coordinates `com.getkeepsafe.dexcount:dexcount-gradle-plugin:3.1.0`.
+The plugin is available from the Gradle Plugin Portal under the ID `com.getkeepsafe.dexcount`, and from Maven Central under the coordinates `com.getkeepsafe.dexcount:dexcount-gradle-plugin:4.0.0`.
 
 Snapshot builds are available from the Sonatype Snapshot Repository at `https://oss.sonatype.org/content/repositories/snapshots`.
 
-Dexcount requires Java 8 or higher, Gradle 6.0 or higher, and Android Gradle Plugin 3.4.0 or higher.
+Dexcount requires Java 11 or higher, Gradle 7.0 or higher, and Android Gradle Plugin 7.0.0 or higher.  (_Building_ the plugin requires Java 17 or higher.)
 
 ## Credits
 
 The Java code from the `com.android.dexdeps` package is sourced from the [Android source tree](https://android.googlesource.com/platform/dalvik.git/+/master/tools/dexdeps/).
 Inspired by Mihail Parparita's [`dex-method-counts`](https://github.com/mihaip/dex-method-counts) project, to whom much credit is due.
 
-Copyright 2015-2022 Keepsafe Software, Inc
+Copyright 2015-2023 Keepsafe Software, Inc

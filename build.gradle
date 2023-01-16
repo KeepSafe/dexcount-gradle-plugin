@@ -258,6 +258,10 @@ tasks.withType(Groovydoc).configureEach {
     exclude "**/*Spec.java"
 }
 
+signing {
+    useGpgCmd()
+}
+
 // Plugin Portal publishing
 
 gradlePlugin {
