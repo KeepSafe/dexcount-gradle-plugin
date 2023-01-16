@@ -30,7 +30,7 @@ jobs:
 
       - name: Import GPG key
         run: |
-          echo "$GPG_SIGNING_KEY_PW" | gpg --batch --yes --passphrase-fd 0 <(echo -n "$GPG_SIGNING_KEY" | base64 --decode)
+          echo "$GPG_SIGNING_KEY_PW" | gpg --batch --import --yes --passphrase-fd 0 <(echo -n "$GPG_SIGNING_KEY" | base64 --decode)
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_KEY_PW: ${{ secrets.GPG_SIGNING_KEY_PW }}
