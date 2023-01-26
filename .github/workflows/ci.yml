@@ -37,8 +37,7 @@ jobs:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
           GPG_SIGNING_KEY_PW: ${{ secrets.GPG_SIGNING_KEY_PW }}
         if: >-
-          github.repository == 'KeepSafe/dexcount-gradle-plugin' &&
-          github.ref == 'refs/head/master'
+          github.repository == 'KeepSafe/dexcount-gradle-plugin' && github.ref == 'refs/heads/master'
 
       - name: Import random GPG key
         run: |
@@ -57,7 +56,7 @@ jobs:
           echo -n "signing.gnupg.passphrase=foobar" >> ~/.gradle/gradle.properties
         if: >-
           github.repository != 'KeepSafe/dexcount-gradle-plugin' ||
-          github.ref != 'refs/head/master'
+          github.ref != 'refs/heads/master'
 
       - name: Set up JDK ${{ matrix.jdk }}
         uses: actions/setup-java@v1
