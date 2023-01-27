@@ -2,12 +2,15 @@ Dexcount is configurable via a Gradle extension (shown with default values):
 
 in `app/build.gradle`:
 ```groovy
+// When using the attribute `format`
+import com.getkeepsafe.dexcount.OutputFormat
+
 dexcount {
     // When false, no build outputs will be counted.  Defaults to true.
     enabled = true
 
-    // The format of the method count output, either "list", "tree", "json",
-    // or "yaml".
+    // The format of the method count output, either OutputFormat.LIST, 
+    // OutputFormat.TREE, OutputFormat.JSON or OutputFormat.YAML.
     format = OutputFormat.LIST
 
     // When true, individual classes will be included in the package list -
