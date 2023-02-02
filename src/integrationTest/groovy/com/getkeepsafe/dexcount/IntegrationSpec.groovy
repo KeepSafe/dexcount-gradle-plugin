@@ -32,6 +32,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.1.0-alpha02" | "8.0-rc-1"    || 6938       | 1029       | 2528
         "8.0.0-beta01"  | "8.0-rc-1"    || 6935       | 1026       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
         "7.3.1"         | "7.6"         || 7263       | 1037       | 2666
@@ -84,6 +85,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.1.0-alpha02" | "8.0-rc-1"    || 4          | 3          | 0
         "8.0.0-beta01"  | "8.0-rc-1"    || 4          | 3          | 0
         "7.4.1"         | "7.6"         || 7          | 5          | 3
         "7.3.1"         | "7.6"         || 7          | 5          | 3
@@ -113,6 +115,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.1.0-alpha02" | "8.0-rc-1"    || 4240       | 725        | 1265
         "8.0.0-beta01"  | "8.0-rc-1"    || 4240       | 725        | 1265
         "7.4.1"         | "7.6"         || 4242       | 726        | 1268
         "7.3.1"         | "7.6"         || 4277       | 745        | 1284
@@ -142,6 +145,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.1.0-alpha02" | "8.0-rc-1"    || 6938       | 1029       | 2528
         "8.0.0-beta01"  | "8.0-rc-1"    || 6935       | 1026       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
         "7.3.1"         | "7.6"         || 7263       | 1037       | 2666
