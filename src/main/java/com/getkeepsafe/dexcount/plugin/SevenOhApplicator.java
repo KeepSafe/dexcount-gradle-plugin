@@ -28,20 +28,15 @@ import com.android.repository.Revision;
 import com.getkeepsafe.dexcount.DexCountExtension;
 import com.getkeepsafe.dexcount.treegen.ApkPackageTreeTask;
 import com.getkeepsafe.dexcount.treegen.BundlePackageTreeTask;
-import com.getkeepsafe.dexcount.treegen.JarPackageTreeTask;
 import com.getkeepsafe.dexcount.treegen.LibraryPackageTreeTask;
-import com.getkeepsafe.dexcount.treegen.ModernGeneratePackageTreeTask;
+import com.getkeepsafe.dexcount.treegen.AndroidGeneratePackageTreeTask;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFile;
-import org.gradle.api.plugins.JavaLibraryPlugin;
-import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.internal.impldep.org.codehaus.plexus.util.FileUtils;
-import org.gradle.jvm.tasks.Jar;
 
 class SevenOhApplicator extends AbstractTaskApplicator {
     static class Factory implements TaskApplicator.Factory {
@@ -141,36 +136,7 @@ class SevenOhApplicator extends AbstractTaskApplicator {
         registerOutputTask(gen, variantName, true);
     }
 
-    private void registerJarTask() {
-        if (!getProject().getPlugins().hasPlugin(JavaLibraryPlugin.class) && !getProject().getPlugins().hasPlugin(JavaPlugin.class)) {
-            return;
-        }
-
-        if (!getExt().getPrintDeclarations().get()) {
-            throw new IllegalStateException("printDeclarations must be true for Java projects");
-        }
-
-        TaskProvider<Jar> jarTaskProvider = getProject().getTasks().named("jar", Jar.class);
-        TaskProvider<JarPackageTreeTask> treegen = getProject().getTasks().register("generatePackageTree", JarPackageTreeTask.class, t -> {
-            t.setDescription("Generate dex method counts");
-            t.setGroup("Reporting");
-
-            //noinspection NullableProblems
-            Provider<String> jarFileName = jarTaskProvider.flatMap(jarTask -> jarTask.getArchiveFileName().map(FileUtils::removeExtension));
-            DirectoryProperty buildDirectory = getProject().getLayout().getBuildDirectory();
-
-            t.getConfigProperty().set(getExt());
-            t.getOutputFileNameProperty().set(jarFileName);
-            t.getJarFile().set(jarTaskProvider.flatMap(Jar::getArchiveFile));
-            t.getPackageTreeFileProperty().set(buildDirectory.file("intermediates/dexcount/tree.compact.gz"));
-            t.getOutputDirectoryProperty().set(buildDirectory.dir("outputs/dexcount"));
-            t.getWorkerClasspath().from(getWorkerConfiguration());
-        });
-
-        registerOutputTask(treegen, "", false);
-    }
-
-    private <T extends ModernGeneratePackageTreeTask<?, ?>> void setCommonProperties(T task, Artifacts artifacts, String variantName) {
+    private <T extends AndroidGeneratePackageTreeTask<?, ?>> void setCommonProperties(T task, Artifacts artifacts, String variantName) {
         DirectoryProperty buildDirectory = getProject().getLayout().getBuildDirectory();
         Provider<RegularFile> packageTreeFile = buildDirectory.file("intermediates/dexcount/" + variantName + "/tree.compact.gz");
         Provider<Directory> outputDirectory = buildDirectory.dir("outputs/dexcount/" + variantName);

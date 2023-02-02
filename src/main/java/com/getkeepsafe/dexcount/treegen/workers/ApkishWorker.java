@@ -27,10 +27,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class ApkishWorker extends ModernWorker<ApkishWorker.Params> {
+public abstract class ApkishWorker extends AndroidWorker<ApkishWorker.Params> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApkishWorker.class);
 
-    public interface Params extends ModernWorker.Params {
+    public interface Params extends AndroidWorker.Params {
         RegularFileProperty getApkishFile();
     }
 

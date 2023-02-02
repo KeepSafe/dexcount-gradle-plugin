@@ -21,7 +21,7 @@ import org.gradle.api.file.RegularFileProperty;
 
 import java.io.IOException;
 
-public abstract class ModernWorker<P extends ModernWorker.Params> extends BaseWorker<P> {
+public abstract class AndroidWorker<P extends AndroidWorker.Params> extends BaseWorker<P> {
     public interface Params extends BaseWorker.Params {
         RegularFileProperty getMappingFile();
     }

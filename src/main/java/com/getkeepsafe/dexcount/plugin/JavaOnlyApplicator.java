@@ -16,11 +16,12 @@
 package com.getkeepsafe.dexcount.plugin;
 
 import com.android.repository.Revision;
+import com.getkeepsafe.dexcount.DexCountException;
 import com.getkeepsafe.dexcount.DexCountExtension;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.JavaPlugin;
 
-@SuppressWarnings("deprecation")
-class JavaOnlyApplicator extends AbstractLegacyTaskApplicator {
+class JavaOnlyApplicator extends AbstractTaskApplicator {
     static class Factory implements TaskApplicator.Factory {
         @Override
         public Revision getMinimumRevision() {
@@ -33,22 +34,23 @@ class JavaOnlyApplicator extends AbstractLegacyTaskApplicator {
         }
     }
 
+    private boolean didCreateJarTasks = false;
+
     JavaOnlyApplicator(Project project, DexCountExtension ext) {
         super(project, ext);
     }
 
     @Override
-    protected void applyToApplicationVariant(com.android.build.gradle.api.ApplicationVariant variant) {
-        throw new AssertionError("unreachable");
-    }
+    public void apply() {
+        getProject().getPlugins().withType(JavaPlugin.class).configureEach(plugin -> {
+            registerJarTask();
+            didCreateJarTasks = true;
+        });
 
-    @Override
-    protected void applyToLibraryVariant(com.android.build.gradle.api.LibraryVariant variant) {
-        throw new AssertionError("unreachable");
-    }
-
-    @Override
-    protected void applyToTestVariant(com.android.build.gradle.api.TestVariant variant) {
-        throw new AssertionError("unreachable");
+        getProject().afterEvaluate(_project -> {
+            if (!didCreateJarTasks) {
+                throw new DexCountException("Java plugin not detected");
+            }
+        });
     }
 }

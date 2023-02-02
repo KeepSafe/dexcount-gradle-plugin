@@ -34,10 +34,6 @@ public final class TaskApplicators {
     public static Optional<TaskApplicator.Factory> getFactory(Revision revision) {
         List<TaskApplicator.Factory> factories = Arrays.asList(
             new SevenOhApplicator.Factory(),
-            new FourTwoApplicator.Factory(),
-            new FourOneApplicator.Factory(),
-            new ThreeSixApplicator.Factory(),
-            new ThreeFourApplicator.Factory(),
             new JavaOnlyApplicator.Factory()
         );
 

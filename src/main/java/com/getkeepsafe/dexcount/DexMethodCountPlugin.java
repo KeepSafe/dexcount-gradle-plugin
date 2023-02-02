@@ -26,17 +26,14 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 public class DexMethodCountPlugin implements Plugin<Project> {
-    private static final String VERSION_3_ZERO_FIELD = "com.android.builder.Version"; // <= 3.0
-    private static final String VERSION_3_ONE_FIELD = "com.android.builder.model.Version"; // > 3.1
     private static final String VERSION_7_0_FIELD = "com.android.Version"; // >= 7.0
     private static final String AGP_VERSION_FIELD = "ANDROID_GRADLE_PLUGIN_VERSION";
 
-    private static final GradleVersion MIN_GRADLE_VERSION = GradleVersion.version("6.0");
+    private static final GradleVersion MIN_GRADLE_VERSION = GradleVersion.version("7.0");
     private static final Revision MIN_AGP_VERSION = new Revision(3, 4, 0);
 
     @Override
@@ -83,7 +80,7 @@ public class DexMethodCountPlugin implements Plugin<Project> {
     }
 
     private Revision getCurrentAgpRevision() throws RuntimeException {
-        List<String> versionClassNames = Arrays.asList(VERSION_7_0_FIELD, VERSION_3_ONE_FIELD, VERSION_3_ZERO_FIELD);
+        List<String> versionClassNames = List.of(VERSION_7_0_FIELD);
         Exception thrown = null;
 
         for (String className : versionClassNames) {
