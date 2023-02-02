@@ -19,12 +19,19 @@ import com.getkeepsafe.dexcount.DexCountException;
 import com.getkeepsafe.dexcount.DexCountExtension;
 import com.getkeepsafe.dexcount.report.DexCountOutputTask;
 import com.getkeepsafe.dexcount.treegen.BaseGeneratePackageTreeTask;
+import com.getkeepsafe.dexcount.treegen.JarPackageTreeTask;
+import java.io.File;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.plugins.JavaLibraryPlugin;
+import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.jvm.tasks.Jar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,6 +90,52 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
             attrs.attribute(Usage.USAGE_ATTRIBUTE, getProject().getObjects().named(Usage.class, Usage.JAVA_RUNTIME)));
 
         return c;
+    }
+
+    protected void registerJarTask() {
+        if (!getProject().getPlugins().hasPlugin(JavaLibraryPlugin.class) && !getProject().getPlugins().hasPlugin(
+            JavaPlugin.class)) {
+            return;
+        }
+
+        if (!getExt().getPrintDeclarations().get()) {
+            throw new IllegalStateException("printDeclarations must be true for Java projects");
+        }
+
+        TaskProvider<Jar> jarTaskProvider = getProject().getTasks().named("jar", Jar.class);
+        TaskProvider<JarPackageTreeTask> treegen = getProject().getTasks().register("generatePackageTree", JarPackageTreeTask.class, t -> {
+            t.setDescription("Generate dex method counts");
+            t.setGroup("Reporting");
+
+            Provider<String> jarFileName = jarTaskProvider.flatMap(
+                jarTask -> jarTask.getArchiveFileName()
+                    .map(AbstractTaskApplicator::removeFileExtension));
+
+            DirectoryProperty buildDirectory = getProject().getLayout().getBuildDirectory();
+
+            t.getConfigProperty().set(getExt());
+            t.getOutputFileNameProperty().set(jarFileName);
+            t.getJarFile().set(jarTaskProvider.flatMap(Jar::getArchiveFile));
+            t.getPackageTreeFileProperty().set(buildDirectory.file("intermediates/dexcount/tree.compact.gz"));
+            t.getOutputDirectoryProperty().set(buildDirectory.dir("outputs/dexcount"));
+            t.getWorkerClasspath().from(getWorkerConfiguration());
+        });
+
+        registerOutputTask(treegen, "", false);
+    }
+
+    static String removeFileExtension(String filePath) {
+        // We were unintentionally using an internal shaded dependency of Gradle's to
+        // do this; it seems simpler to write this one function here than to formally adopt
+        // yet another FileUtils-style dependency.
+        int lastSeparator = filePath.lastIndexOf(File.separatorChar);
+        int lastDot = filePath.lastIndexOf('.');
+
+        if (lastDot >= 0 && lastDot > lastSeparator) {
+            return filePath.substring(0, lastDot);
+        } else {
+            return filePath;
+        }
     }
 
     @SuppressWarnings("Convert2MethodRef")

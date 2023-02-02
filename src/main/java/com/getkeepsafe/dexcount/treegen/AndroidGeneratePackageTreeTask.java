@@ -16,7 +16,7 @@
 package com.getkeepsafe.dexcount.treegen;
 
 import com.android.build.api.variant.BuiltArtifactsLoader;
-import com.getkeepsafe.dexcount.treegen.workers.ModernWorker;
+import com.getkeepsafe.dexcount.treegen.workers.AndroidWorker;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.InputFile;
@@ -25,7 +25,7 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 
-public abstract class ModernGeneratePackageTreeTask<P extends ModernWorker.Params, W extends ModernWorker<P>> extends BaseGeneratePackageTreeTask<P, W> {
+public abstract class AndroidGeneratePackageTreeTask<P extends AndroidWorker.Params, W extends AndroidWorker<P>> extends BaseGeneratePackageTreeTask<P, W> {
     @InputFile
     @Optional
     @PathSensitive(PathSensitivity.RELATIVE)

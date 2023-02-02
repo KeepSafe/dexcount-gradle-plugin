@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CacheableTask
-public abstract class ApkPackageTreeTask extends ModernGeneratePackageTreeTask<ApkishWorker.Params, ApkishWorker> {
+public abstract class ApkPackageTreeTask extends AndroidGeneratePackageTreeTask<ApkishWorker.Params, ApkishWorker> {
     @InputDirectory
     @PathSensitive(PathSensitivity.RELATIVE)
     public abstract DirectoryProperty getApkDirectory();

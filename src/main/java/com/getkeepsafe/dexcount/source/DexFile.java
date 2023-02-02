@@ -20,6 +20,7 @@ import com.android.dexdeps.DexDataException;
 import com.android.dexdeps.FieldRef;
 import com.android.dexdeps.MethodRef;
 import com.getkeepsafe.dexcount.DexCountException;
+import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -36,18 +37,26 @@ class DexFile implements SourceFile {
     private final RandomAccessFile raf;
     private final DexData data;
 
-    DexFile(File file, boolean isTemp) throws IOException {
+    DexFile(File file, boolean isTemp) {
         this.file = file;
         this.isTemp = isTemp;
 
-        this.raf = new RandomAccessFile(file, "r");
-        this.data = new DexData(raf);
-
         try {
+            this.raf = new RandomAccessFile(file, "r");
+            this.data = new DexData(raf);
+
             data.load();
         } catch (IOException | DexDataException e) {
             throw new DexCountException("Error loading dex file", e);
         }
+    }
+
+    static DexFile newTempDexFile(Path path) {
+        return newTempDexFile(path.toFile());
+    }
+
+    static DexFile newTempDexFile(File file) {
+        return new DexFile(file, true);
     }
 
     @Override

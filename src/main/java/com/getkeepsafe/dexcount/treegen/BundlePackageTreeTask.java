@@ -23,7 +23,7 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 
 @CacheableTask
-public abstract class BundlePackageTreeTask extends ModernGeneratePackageTreeTask<ApkishWorker.Params, ApkishWorker> {
+public abstract class BundlePackageTreeTask extends AndroidGeneratePackageTreeTask<ApkishWorker.Params, ApkishWorker> {
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
     public abstract RegularFileProperty getBundleFile();

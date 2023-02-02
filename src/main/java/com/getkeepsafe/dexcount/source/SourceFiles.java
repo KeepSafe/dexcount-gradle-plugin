@@ -131,16 +131,12 @@ public class SourceFiles {
             throw new DexCountException("Failed to run D8 on an AAR", e);
         }
 
-        List<SourceFile> results = new ArrayList<>();
-        for (Path path : Files.list(tempDexDir).collect(Collectors.toList())) {
-            if (!Files.isRegularFile(path)) {
-                continue;
-            }
-
-            results.add(new DexFile(path.toFile(), true));
+        try (Stream<Path> paths = Files.list(tempDexDir)) {
+            return paths
+                .filter(Files::isRegularFile)
+                .map(DexFile::newTempDexFile)
+                .collect(Collectors.toList());
         }
-
-        return results;
     }
 
     private static List<SourceFile> extractDexFromZip(File file) throws IOException {

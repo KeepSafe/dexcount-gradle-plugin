@@ -23,7 +23,7 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 
 @CacheableTask
-public abstract class LibraryPackageTreeTask extends ModernGeneratePackageTreeTask<ApkishWorker.Params, ApkishWorker> {
+public abstract class LibraryPackageTreeTask extends AndroidGeneratePackageTreeTask<ApkishWorker.Params, ApkishWorker> {
     @InputFile
     @PathSensitive(PathSensitivity.RELATIVE)
     public abstract RegularFileProperty getAarFile();
