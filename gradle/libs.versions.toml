@@ -11,7 +11,6 @@ androidTools-repository = "com.android.tools:repository:31.1.0-alpha02"
 autoValue-processor = { module = "com.google.auto.value:auto-value", version.ref = "autoValue" }
 autoValue-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
 commons-io = "commons-io:commons-io:2.10.0"
-commons-lang = "org.apache.commons:commons-lang3:3.12.0"
 gson = "com.google.code.gson:gson:2.10.1"
 javassist = "org.javassist:javassist:3.29.2-GA"
 thriftyRuntime = { module = "com.microsoft.thrifty:thrifty-runtime-jvm", version.ref = "thrifty" }

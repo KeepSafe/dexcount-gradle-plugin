@@ -17,12 +17,11 @@ package com.getkeepsafe.dexcount.plugin;
 
 import com.getkeepsafe.dexcount.DexCountException;
 import com.getkeepsafe.dexcount.DexCountExtension;
+import com.getkeepsafe.dexcount.StringUtils;
 import com.getkeepsafe.dexcount.report.DexCountOutputTask;
 import com.getkeepsafe.dexcount.treegen.BaseGeneratePackageTreeTask;
 import com.getkeepsafe.dexcount.treegen.JarPackageTreeTask;
-import java.io.File;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Usage;
@@ -109,7 +108,7 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
 
             Provider<String> jarFileName = jarTaskProvider.flatMap(
                 jarTask -> jarTask.getArchiveFileName()
-                    .map(AbstractTaskApplicator::removeFileExtension));
+                    .map(StringUtils::removeExtension));
 
             DirectoryProperty buildDirectory = getProject().getLayout().getBuildDirectory();
 
@@ -122,20 +121,6 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
         });
 
         registerOutputTask(treegen, "", false);
-    }
-
-    static String removeFileExtension(String filePath) {
-        // We were unintentionally using an internal shaded dependency of Gradle's to
-        // do this; it seems simpler to write this one function here than to formally adopt
-        // yet another FileUtils-style dependency.
-        int lastSeparator = filePath.lastIndexOf(File.separatorChar);
-        int lastDot = filePath.lastIndexOf('.');
-
-        if (lastDot >= 0 && lastDot > lastSeparator) {
-            return filePath.substring(0, lastDot);
-        } else {
-            return filePath;
-        }
     }
 
     @SuppressWarnings("Convert2MethodRef")
