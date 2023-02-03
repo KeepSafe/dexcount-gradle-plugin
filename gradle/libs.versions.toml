@@ -1,5 +1,5 @@
 [versions]
-autoValue = "1.9"
+autoValue = "1.10.1"
 thrifty = "3.1.0"
 
 [libraries]
@@ -12,8 +12,8 @@ autoValue-processor = { module = "com.google.auto.value:auto-value", version.ref
 autoValue-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
 commons-io = "commons-io:commons-io:2.10.0"
 commons-lang = "org.apache.commons:commons-lang3:3.12.0"
-gson = "com.google.code.gson:gson:2.9.0"
-javassist = "org.javassist:javassist:3.29.0-GA"
+gson = "com.google.code.gson:gson:2.10.1"
+javassist = "org.javassist:javassist:3.29.2-GA"
 thriftyRuntime = { module = "com.microsoft.thrifty:thrifty-runtime-jvm", version.ref = "thrifty" }
 
 # Test dependenies
