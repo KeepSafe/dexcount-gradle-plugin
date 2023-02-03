@@ -82,7 +82,6 @@ dependencies {
     annotationProcessor libs.autoValue.processor
 
     implementation libs.commons.io
-    implementation libs.commons.lang
 
     androidBuildTool libs.androidTools.agp
     androidBuildTool libs.androidTools.r8
