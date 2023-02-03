@@ -6,7 +6,7 @@ thrifty = "3.1.0"
 
 # Build + runtime dependencies
 androidTools-agp = "com.android.tools.build:gradle:8.1.0-alpha02" # Note that updates here usually require updates to androidTools-repository
-androidTools-r8 = "com.android.tools:r8:3.3.28"
+androidTools-r8 = "com.android.tools:r8:4.0.48"
 androidTools-repository = "com.android.tools:repository:31.1.0-alpha02"
 autoValue-processor = { module = "com.google.auto.value:auto-value", version.ref = "autoValue" }
 autoValue-annotations = { module = "com.google.auto.value:auto-value-annotations", version.ref = "autoValue" }
