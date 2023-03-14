@@ -32,7 +32,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha08" | "8.0.2"       || 6941       | 1030       | 2528
+        "8.1.0-alpha09" | "8.0.2"       || 6935       | 1024       | 2528
         "8.0.0-beta04"  | "8.0.2"       || 6935       | 1026       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
         "7.3.1"         | "7.6"         || 7263       | 1037       | 2666
@@ -85,7 +85,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha08" | "8.0.2"       || 4          | 3          | 0
+        "8.1.0-alpha09" | "8.0.2"       || 4          | 3          | 0
         "8.0.0-beta04"  | "8.0.2"       || 4          | 3          | 0
         "7.4.1"         | "7.6"         || 7          | 5          | 3
         "7.3.1"         | "7.6"         || 7          | 5          | 3
@@ -115,7 +115,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha08" | "8.0.2"       || 4240       | 725        | 1265
+        "8.1.0-alpha09" | "8.0.2"       || 4240       | 725        | 1265
         "8.0.0-beta04"  | "8.0.2"       || 4240       | 725        | 1265
         "7.4.1"         | "7.6"         || 4242       | 726        | 1268
         "7.3.1"         | "7.6"         || 4277       | 745        | 1284
@@ -145,7 +145,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha08" | "8.0.2"       || 6941       | 1030       | 2528
+        "8.1.0-alpha09" | "8.0.2"       || 6935       | 1024       | 2528
         "8.0.0-beta04"  | "8.0.2"       || 6935       | 1026       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
         "7.3.1"         | "7.6"         || 7263       | 1037       | 2666
