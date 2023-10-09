@@ -28,7 +28,9 @@ group = GROUP
 version = VERSION_NAME
 description = POM_DESCRIPTION
 
-sourceCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+}
 
 sourceSets {
     integrationTest
@@ -264,34 +266,17 @@ signing {
 // Plugin Portal publishing
 
 gradlePlugin {
+    website = POM_URL
+    vcsUrl = POM_SCM_URL
+
     plugins {
         dexcount {
             id = "com.getkeepsafe.dexcount"
             implementationClass = "com.getkeepsafe.dexcount.DexMethodCountPlugin"
             displayName = POM_NAME
             description = POM_DESCRIPTION
+            tags.set(["android", "dex", "method count"])
         }
-    }
-}
-
-pluginBundle {
-    website = POM_URL
-    vcsUrl = POM_SCM_URL
-    description = POM_DESCRIPTION
-    tags = ['android', 'dex', 'method count']
-
-    plugins {
-        dexcount {
-            id = "com.getkeepsafe.dexcount"
-            displayName = POM_NAME
-            description = POM_DESCRIPTION
-        }
-    }
-
-    mavenCoordinates {
-        groupId = GROUP
-        artifactId = POM_ARTIFACT_ID
-        version = VERSION_NAME
     }
 }
 
