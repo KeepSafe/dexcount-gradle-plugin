@@ -155,7 +155,7 @@ def integrationTest = tasks.register("integrationTest", Test) { t ->
     t.classpath = sourceSets.integrationTest.runtimeClasspath
 
     // Workaround for https://github.com/gradle/gradle/issues/4506#issuecomment-570815277
-    t.systemProperty("org.gradle.testkit.dir", file("${buildDir}/tmp/.test-kit"))
+    t.systemProperty("org.gradle.testkit.dir", file("build/tmp/.test-kit"))
 
     t.jvmArgs(
         "-XX:+HeapDumpOnOutOfMemoryError", "-XX:GCTimeLimit=20", "-XX:GCHeapFreeLimit=10",
