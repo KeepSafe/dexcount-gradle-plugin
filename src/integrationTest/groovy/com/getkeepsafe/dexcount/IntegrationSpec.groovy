@@ -32,8 +32,8 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha11" | "8.0.2"       || 6935       | 1024       | 2528
-        "8.0.0"         | "8.0.2"       || 6929       | 1020       | 2528
+        "8.1.0-alpha11" | "8.4"         || 6935       | 1024       | 2528
+        "8.0.0"         | "8.4"         || 6929       | 1020       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
         "7.3.1"         | "7.6"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.6"         || 7410       | 925        | 2666
@@ -85,8 +85,8 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha11" | "8.0.2"       || 4          | 3          | 0
-        "8.0.0"         | "8.0.2"       || 4          | 3          | 0
+        "8.1.0-alpha11" | "8.4"         || 4          | 3          | 0
+        "8.0.0"         | "8.4"         || 4          | 3          | 0
         "7.4.1"         | "7.6"         || 7          | 5          | 3
         "7.3.1"         | "7.6"         || 7          | 5          | 3
         "7.2.2"         | "7.6"         || 7          | 5          | 3
@@ -115,8 +115,8 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha11" | "8.0.2"       || 4240       | 725        | 1265
-        "8.0.0"         | "8.0.2"       || 4240       | 725        | 1265
+        "8.1.0-alpha11" | "8.4"         || 4240       | 725        | 1265
+        "8.0.0"         | "8.4"         || 4240       | 725        | 1265
         "7.4.1"         | "7.6"         || 4242       | 726        | 1268
         "7.3.1"         | "7.6"         || 4277       | 745        | 1284
         "7.2.2"         | "7.6"         || 4266       | 723        | 1268
@@ -145,8 +145,8 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
-        "8.1.0-alpha11" | "8.0.2"       || 6935       | 1024       | 2528
-        "8.0.0"         | "8.0.2"       || 6929       | 1020       | 2528
+        "8.1.0-alpha11" | "8.4"         || 6935       | 1024       | 2528
+        "8.0.0"         | "8.4"         || 6929       | 1020       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
         "7.3.1"         | "7.6"         || 7263       | 1037       | 2666
         "7.2.2"         | "7.6"         || 7410       | 925        | 2666
