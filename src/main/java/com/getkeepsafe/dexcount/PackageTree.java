@@ -20,6 +20,7 @@ import com.android.dexdeps.HasDeclaringClass;
 import com.android.dexdeps.MethodRef;
 import com.android.dexdeps.Output;
 import com.google.gson.stream.JsonWriter;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,16 +45,46 @@ public class PackageTree {
         REFERENCED,
     }
 
+    private static class Totals {
+        Type type;
+        int classTotal = -1;
+        int methodTotal = -1;
+        int fieldTotal = -1;
+        LinkedHashSet<MethodRef> methods = new LinkedHashSet<>();
+        LinkedHashSet<FieldRef> fields = new LinkedHashSet<>();
+
+        Totals(Type type) {
+            this.type = type;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Totals totals = (Totals) o;
+            return classTotal == totals.classTotal && methodTotal == totals.methodTotal
+                && fieldTotal == totals.fieldTotal && type == totals.type && Objects.equals(methods,
+                totals.methods) && Objects.equals(fields, totals.fields);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, classTotal, methodTotal, fieldTotal, methods, fields);
+        }
+    }
+
     private final String name;
     private final boolean isClass;
     private final Deobfuscator deobfuscator;
 
-    private final LinkedHashMap<Type, Integer> classTotal = new LinkedHashMap<>();
-    private final LinkedHashMap<Type, Integer> methodTotal = new LinkedHashMap<>();
-    private final LinkedHashMap<Type, Integer> fieldTotal = new LinkedHashMap<>();
+    private final Totals declared = new Totals(Type.DECLARED);
+    private final Totals referenced = new Totals(Type.REFERENCED);
+
     private final SortedMap<String, PackageTree> children = new TreeMap<>();
-    private final LinkedHashMap<Type, LinkedHashSet<MethodRef>> methods = new LinkedHashMap<>();
-    private final LinkedHashMap<Type, LinkedHashSet<FieldRef>> fields = new LinkedHashMap<>();
 
     public PackageTree() {
         this("", false, null);
@@ -79,11 +110,6 @@ public class PackageTree {
         this.name = name;
         this.isClass = isClass;
         this.deobfuscator = deobfuscator;
-
-        for (Type type : Type.values()) {
-            methods.put(type, new LinkedHashSet<>());
-            fields.put(type, new LinkedHashSet<>());
-        }
     }
 
     public String getName() {
@@ -118,45 +144,67 @@ public class PackageTree {
         return getFieldCount(Type.DECLARED);
     }
 
-    private int getClassCount(Type type) {
-        Integer maybeTotal = classTotal.get(type);
-        if (maybeTotal != null) {
-            return maybeTotal;
+    private Totals getTotalsForType(Type type) {
+        switch (type) {
+            case DECLARED:
+                return declared;
+
+            case REFERENCED:
+                return referenced;
+
+            default:
+                throw new IllegalArgumentException("Unexpected Type: " + type);
+        }
+    }
+
+    private int getClassCount(Totals totals) {
+        if (totals.classTotal != -1) {
+            return totals.classTotal;
         }
 
         if (isClass) {
-            classTotal.put(type, 1);
+            totals.classTotal = 1;
             return 1;
         }
 
-        int result = children.values().parallelStream().mapToInt(child -> child.getClassCount(type)).sum();
-        classTotal.put(type, result);
+        int result = children.values().parallelStream().mapToInt(child -> child.getClassCount(totals.type)).sum();
+        totals.classTotal = result;
+
+        return result;
+    }
+
+    private int getClassCount(Type type) {
+        return getClassCount(getTotalsForType(type));
+    }
+
+    private int getMethodCount(Totals totals) {
+        if (totals.methodTotal != -1) {
+            return totals.methodTotal;
+        }
+
+        int result = totals.methods.size() + children.values().parallelStream().mapToInt(child -> child.getMethodCount(totals.type)).sum();
+        totals.methodTotal = result;
 
         return result;
     }
 
     private int getMethodCount(Type type) {
-        Integer maybeTotal = methodTotal.get(type);
-        if (maybeTotal != null) {
-            return maybeTotal;
+        return getMethodCount(getTotalsForType(type));
+    }
+
+    private int getFieldCount(Totals totals) {
+        if (totals.fieldTotal != -1) {
+            return totals.fieldTotal;
         }
 
-        int result = methods.get(type).size() + children.values().parallelStream().mapToInt(child -> child.getMethodCount(type)).sum();
-        methodTotal.put(type, result);
+        int result = totals.fields.size() + children.values().parallelStream().mapToInt(child -> child.getFieldCount(totals.type)).sum();
+        totals.fieldTotal = result;
 
         return result;
     }
 
     private int getFieldCount(Type type) {
-        Integer maybeTotal = fieldTotal.get(type);
-        if (maybeTotal != null) {
-            return maybeTotal;
-        }
-
-        int result = fields.get(type).size() + children.values().parallelStream().mapToInt(child -> child.getFieldCount(type)).sum();
-        fieldTotal.put(type, result);
-
-        return result;
+        return getFieldCount(getTotalsForType(type));
     }
 
     public void addMethodRef(MethodRef ref) {
@@ -191,16 +239,18 @@ public class PackageTree {
         }
 
         if (ix == -1) {
+            Totals totals = child.getTotalsForType(type);
             if (isMethod) {
-                child.methods.get(type).add((MethodRef) ref);
+                totals.methods.add((MethodRef) ref);
             } else {
-                child.fields.get(type).add((FieldRef) ref);
+                totals.fields.add((FieldRef) ref);
             }
         } else {
+            Totals totals = getTotalsForType(type);
             if (isMethod) {
-                methodTotal.remove(type);
+                totals.methodTotal = -1;
             } else {
-                fieldTotal.remove(type);
+                totals.fieldTotal = -1;
             }
             child.addInternal(name, ix + 1, isMethod, type, ref);
         }
@@ -397,7 +447,7 @@ public class PackageTree {
     public void printJson(Appendable out, PrintOptions opts) throws IOException {
         JsonWriter json = new JsonWriter(new Writer() {
             @Override
-            public void write(@NotNull char[] chars, int offset, int length) throws IOException {
+            public void write(char @NotNull [] chars, int offset, int length) throws IOException {
                 out.append(CharBuffer.wrap(chars, offset, length));
             }
 
@@ -599,8 +649,8 @@ public class PackageTree {
         if (isClass != that.isClass) return false;
         if (!name.equals(that.name)) return false;
         if (!children.equals(that.children)) return false;
-        if (!methods.equals(that.methods)) return false;
-        return fields.equals(that.fields);
+        if (!declared.equals(that.declared)) return false;
+        return referenced.equals(that.referenced);
     }
 
     @Override
@@ -608,8 +658,8 @@ public class PackageTree {
         int result = name.hashCode();
         result = 31 * result + (isClass ? 1 : 0);
         result = 31 * result + children.hashCode();
-        result = 31 * result + methods.hashCode();
-        result = 31 * result + fields.hashCode();
+        result = 31 * result + declared.hashCode();
+        result = 31 * result + referenced.hashCode();
         return result;
     }
 
@@ -665,13 +715,13 @@ public class PackageTree {
         }
 
         Set<com.getkeepsafe.dexcount.thrift.MethodRef> thriftMethodDecls =
-            tree.methods.get(Type.DECLARED).stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+            tree.declared.methods.stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
         Set<com.getkeepsafe.dexcount.thrift.MethodRef> thriftMethodRefs =
-            tree.methods.get(Type.REFERENCED).stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+            tree.referenced.methods.stream().map(PackageTree::methodRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
         Set<com.getkeepsafe.dexcount.thrift.FieldRef> thriftFieldDecls =
-            tree.fields.get(Type.DECLARED).stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+            tree.declared.fields.stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
         Set<com.getkeepsafe.dexcount.thrift.FieldRef> thriftFieldRefs =
-            tree.fields.get(Type.REFERENCED).stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
+            tree.referenced.fields.stream().map(PackageTree::fieldRefToThrift).collect(Collectors.toCollection(LinkedHashSet::new));
 
         return new com.getkeepsafe.dexcount.thrift.PackageTree.Builder()
             .name(tree.getName())
@@ -698,25 +748,25 @@ public class PackageTree {
 
         if (tree.declaredMethods != null) {
             for (com.getkeepsafe.dexcount.thrift.MethodRef declaredMethod : tree.declaredMethods) {
-                result.methods.get(Type.DECLARED).add(methodRefFromThrift(declaredMethod));
+                result.declared.methods.add(methodRefFromThrift(declaredMethod));
             }
         }
 
         if (tree.referencedMethods != null) {
             for (com.getkeepsafe.dexcount.thrift.MethodRef referencedMethod : tree.referencedMethods) {
-                result.methods.get(Type.REFERENCED).add(methodRefFromThrift(referencedMethod));
+                result.referenced.methods.add(methodRefFromThrift(referencedMethod));
             }
         }
 
         if (tree.declaredFields != null) {
             for (com.getkeepsafe.dexcount.thrift.FieldRef declaredField : tree.declaredFields) {
-                result.fields.get(Type.DECLARED).add(fieldRefFromThrift(declaredField));
+                result.declared.fields.add(fieldRefFromThrift(declaredField));
             }
         }
 
         if (tree.referencedFields != null) {
             for (com.getkeepsafe.dexcount.thrift.FieldRef referencedField : tree.referencedFields) {
-                result.fields.get(Type.REFERENCED).add(fieldRefFromThrift(referencedField));
+                result.referenced.fields.add(fieldRefFromThrift(referencedField));
             }
         }
 

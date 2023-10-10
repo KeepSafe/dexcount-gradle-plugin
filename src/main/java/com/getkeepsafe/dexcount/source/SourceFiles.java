@@ -214,7 +214,7 @@ public class SourceFiles {
         classPool.appendSystemPath();
 
         List<CtClass> classes = new ArrayList<>();
-        Files.walkFileTree(classFilesDir.toPath(), new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(classFilesDir.toPath(), new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!attrs.isRegularFile()) {

@@ -46,7 +46,7 @@ public class Deobfuscator {
      * lines that start with an identifier character.  We can just pluck them
      * out of the file with a regex.
      */
-    private static final Pattern CLASS_LINE = Pattern.compile("^([a-zA-Z][^\\s]*) -> ([^:]+):$");
+    private static final Pattern CLASS_LINE = Pattern.compile("^([a-zA-Z]\\S*) -> ([^:]+):$");
 
     public static final Deobfuscator EMPTY = new Deobfuscator(Collections.emptyMap());
 

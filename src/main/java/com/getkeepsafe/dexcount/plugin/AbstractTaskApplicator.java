@@ -26,9 +26,12 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
@@ -50,6 +53,18 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
 
     protected Project getProject() {
         return project;
+    }
+
+    protected ExtensionContainer getExtensions() {
+        return getProject().getExtensions();
+    }
+
+    protected PluginContainer getPlugins() {
+        return getProject().getPlugins();
+    }
+
+    protected TaskContainer getTasks() {
+        return getProject().getTasks();
     }
 
     protected DexCountExtension getExt() {
@@ -130,7 +145,7 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
         boolean isAndroid) {
         String reportTaskName = String.format("count%sDexMethods", StringUtils.capitalize(variantName));
 
-        getProject().getTasks().register(reportTaskName, DexCountOutputTask.class, t -> {
+        getTasks().register(reportTaskName, DexCountOutputTask.class, t -> {
             t.setDescription("Output dex method counts");
             t.setGroup("Reporting");
 

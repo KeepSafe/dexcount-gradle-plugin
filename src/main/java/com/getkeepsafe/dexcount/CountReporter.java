@@ -113,7 +113,7 @@ public class CountReporter {
             logger.warn("Classes remaining in " + inputRepresentation + ": " + classesRemaining);
         }
 
-        if (options.getTeamCityIntegration() || (options.getTeamCitySlug() != null && options.getTeamCitySlug().length() > 0)) {
+        if (options.getTeamCityIntegration() || options.hasTeamCitySlug()) {
             String slug = "Dexcount";
             if (options.getTeamCitySlug() != null) {
                 slug += "_" + options.getTeamCitySlug().replace(' ', '_');

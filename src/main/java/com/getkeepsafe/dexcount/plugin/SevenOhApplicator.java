@@ -36,7 +36,6 @@ import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.provider.Provider;
-import org.gradle.api.tasks.TaskProvider;
 
 class SevenOhApplicator extends AbstractTaskApplicator {
     static class Factory implements TaskApplicator.Factory {
@@ -61,30 +60,30 @@ class SevenOhApplicator extends AbstractTaskApplicator {
             return;
         }
 
-        getProject().getPlugins().withType(AppPlugin.class).configureEach(plugin -> {
-            ApplicationAndroidComponentsExtension components = getProject().getExtensions().getByType(ApplicationAndroidComponentsExtension.class);
+        getPlugins().withType(AppPlugin.class).configureEach(plugin -> {
+            var components = getExtensions().getByType(ApplicationAndroidComponentsExtension.class);
             components.onVariants(components.selector(), variant -> {
                 registerApkTask(variant.getName(), variant.getArtifacts());
                 registerAabTask(variant.getName(), variant.getArtifacts());
             });
         });
 
-        getProject().getPlugins().withType(LibraryPlugin.class).configureEach(plugin -> {
-            LibraryAndroidComponentsExtension components = getProject().getExtensions().getByType(LibraryAndroidComponentsExtension.class);
+        getPlugins().withType(LibraryPlugin.class).configureEach(plugin -> {
+            var components = getExtensions().getByType(LibraryAndroidComponentsExtension.class);
             components.onVariants(components.selector(), variant -> {
                 registerAarTask(variant.getName(), variant.getArtifacts());
             });
         });
 
-        getProject().getPlugins().withType(TestPlugin.class).configureEach(plugin -> {
-            TestAndroidComponentsExtension components = getProject().getExtensions().getByType(TestAndroidComponentsExtension.class);
+        getPlugins().withType(TestPlugin.class).configureEach(plugin -> {
+            var components = getExtensions().getByType(TestAndroidComponentsExtension.class);
             components.onVariants(components.selector(), variant -> {
                 registerApkTask(variant.getName(), variant.getArtifacts());
             });
         });
 
         getProject().afterEvaluate(project -> {
-            if (project.getExtensions().findByType(CommonExtension.class) == null) {
+            if (getExtensions().findByType(CommonExtension.class) == null) {
                 // No Android plugins were registered; this may be a jar-count usage.
                 registerJarTask();
             }
@@ -98,7 +97,7 @@ class SevenOhApplicator extends AbstractTaskApplicator {
 
         String genTaskName = String.format("generate%sPackageTree", StringUtils.capitalize(variantName));
 
-        TaskProvider<ApkPackageTreeTask> gen = getProject().getTasks().register(genTaskName, ApkPackageTreeTask.class, t -> {
+        var gen = getTasks().register(genTaskName, ApkPackageTreeTask.class, t -> {
             setCommonProperties(t, artifacts, variantName);
 
             t.getApkDirectory().set(artifacts.get(SingleArtifact.APK.INSTANCE));
@@ -115,7 +114,7 @@ class SevenOhApplicator extends AbstractTaskApplicator {
 
         String genTaskName = String.format("generate%sBundlePackageTree", StringUtils.capitalize(variantName));
 
-        TaskProvider<BundlePackageTreeTask> gen = getProject().getTasks().register(genTaskName, BundlePackageTreeTask.class, t -> {
+        var gen = getTasks().register(genTaskName, BundlePackageTreeTask.class, t -> {
             setCommonProperties(t, artifacts, variantName);
 
             t.getBundleFile().set(artifacts.get(SingleArtifact.BUNDLE.INSTANCE));
@@ -127,7 +126,7 @@ class SevenOhApplicator extends AbstractTaskApplicator {
     private void registerAarTask(String variantName, Artifacts artifacts) {
         String genTaskName = String.format("generate%sPackageTree", StringUtils.capitalize(variantName));
 
-        TaskProvider<LibraryPackageTreeTask> gen = getProject().getTasks().register(genTaskName, LibraryPackageTreeTask.class, t -> {
+        var gen = getTasks().register(genTaskName, LibraryPackageTreeTask.class, t -> {
             setCommonProperties(t, artifacts, variantName);
 
             t.getAarFile().set(artifacts.get(SingleArtifact.AAR.INSTANCE));

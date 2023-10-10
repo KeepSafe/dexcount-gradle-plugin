@@ -91,7 +91,7 @@ public abstract class BaseWorker<P extends BaseWorker.Params> implements WorkAct
              BufferedSink sink = Okio.buffer(gzipSink);
              Transport transport = KtApiKt.transport(sink);
              Protocol protocol = KtApiKt.compactProtocol(transport)) {
-            TreeGenOutput.ADAPTER.write(protocol, thrift);
+            thrift.write(protocol);
             protocol.flush();
         }
     }
