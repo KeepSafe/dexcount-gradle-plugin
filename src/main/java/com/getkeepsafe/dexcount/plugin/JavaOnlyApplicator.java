@@ -42,7 +42,7 @@ class JavaOnlyApplicator extends AbstractTaskApplicator {
 
     @Override
     public void apply() {
-        getProject().getPlugins().withType(JavaPlugin.class).configureEach(plugin -> {
+        getPlugins().withType(JavaPlugin.class).configureEach(plugin -> {
             registerJarTask();
             didCreateJarTasks = true;
         });

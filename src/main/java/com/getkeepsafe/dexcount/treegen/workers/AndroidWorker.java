@@ -30,16 +30,21 @@ public abstract class AndroidWorker<P extends AndroidWorker.Params> extends Base
 
     protected Deobfuscator getDeobfuscator() {
         if (deobfuscator == null) {
-            deobfuscator = getParameters()
-                .getMappingFile()
-                .map(it -> {
-                try {
-                    return Deobfuscator.create(it.getAsFile());
-                } catch (IOException e) {
-                    throw new DexCountException("Counting dex methods failed", e);
-                }
-            }).getOrElse(Deobfuscator.EMPTY);
+            deobfuscator = buildDeobfuscator();
         }
         return deobfuscator;
+    }
+
+    private Deobfuscator buildDeobfuscator() {
+        var mappingFile = getParameters().getMappingFile();
+        if (mappingFile.isPresent()) {
+            try {
+                return Deobfuscator.create(mappingFile.get().getAsFile());
+            } catch (IOException e) {
+                throw new DexCountException("Counting dex methods failed", e);
+            }
+        } else {
+            return Deobfuscator.EMPTY;
+        }
     }
 }

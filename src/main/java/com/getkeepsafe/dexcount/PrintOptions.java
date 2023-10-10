@@ -49,6 +49,11 @@ public abstract class PrintOptions implements Serializable {
             .build();
     }
 
+    public boolean hasTeamCitySlug() {
+        String slug = getTeamCitySlug();
+        return slug != null && !slug.isEmpty();
+    }
+
     @AutoValue.Builder
     public abstract static class Builder {
         public abstract Builder setIncludeClasses(boolean includeClasses);

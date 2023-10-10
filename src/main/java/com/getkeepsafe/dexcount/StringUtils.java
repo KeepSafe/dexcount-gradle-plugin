@@ -8,7 +8,7 @@ public final class StringUtils {
     }
 
     public static String capitalize(String text) {
-        if (text == null || text.length() == 0) {
+        if (text == null || text.isEmpty()) {
             return "";
         }
 

@@ -44,7 +44,7 @@ public abstract class BaseGeneratePackageTreeTask<P extends BaseWorker.Params, W
     public abstract Property<DexCountExtension> getConfigProperty();
 
     /**
-     * The name of the the method-count report file, without a file extension.
+     * The name of the method-count report file, without a file extension.
      */
     @Input
     public abstract Property<String> getOutputFileNameProperty();
