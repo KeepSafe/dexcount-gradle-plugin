@@ -3,7 +3,6 @@ package com.getkeepsafe.dexcount
 import org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -32,6 +31,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.3.0-alpha07" | "8.4"         || 6932       | 1023       | 2528
         "8.2.0-beta06"  | "8.4"         || 6932       | 1023       | 2528
         "8.1.2"         | "8.4"         || 6932       | 1023       | 2528
         "8.0.0"         | "8.4"         || 6929       | 1020       | 2528
@@ -63,6 +63,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.3.0-alpha07" | "8.4"         || 4          | 3          | 0
         "8.2.0-beta06"  | "8.4"         || 4          | 3          | 0
         "8.1.2"         | "8.4"         || 4          | 3          | 0
         "8.0.0"         | "8.4"         || 4          | 3          | 0
@@ -94,6 +95,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.3.0-alpha07" | "8.4"         || 4240       | 725        | 1265
         "8.2.0-beta06"  | "8.4"         || 4240       | 725        | 1265
         "8.1.2"         | "8.4"         || 4240       | 725        | 1265
         "8.0.0"         | "8.4"         || 4240       | 725        | 1265
@@ -125,6 +127,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.3.0-alpha07" | "8.4"         || 6932       | 1023       | 2528
         "8.2.0-beta06"  | "8.4"         || 6932       | 1023       | 2528
         "8.1.2"         | "8.4"         || 6932       | 1023       | 2528
         "8.0.0"         | "8.4"         || 6929       | 1020       | 2528
