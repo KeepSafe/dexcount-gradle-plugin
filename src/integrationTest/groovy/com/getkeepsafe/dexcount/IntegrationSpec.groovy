@@ -32,7 +32,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.3.0-alpha11" | "8.4"         || 6932       | 1023       | 2528
-        "8.2.0-beta06"  | "8.4"         || 6932       | 1023       | 2528
+        "8.2.0-rc01"    | "8.4"         || 6932       | 1023       | 2528
         "8.1.2"         | "8.4"         || 6932       | 1023       | 2528
         "8.0.0"         | "8.4"         || 6929       | 1020       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
@@ -64,7 +64,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.3.0-alpha11" | "8.4"         || 4          | 3          | 0
-        "8.2.0-beta06"  | "8.4"         || 4          | 3          | 0
+        "8.2.0-rc01"    | "8.4"         || 4          | 3          | 0
         "8.1.2"         | "8.4"         || 4          | 3          | 0
         "8.0.0"         | "8.4"         || 4          | 3          | 0
         "7.4.1"         | "7.6"         || 7          | 5          | 3
@@ -96,7 +96,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.3.0-alpha11" | "8.4"         || 4240       | 725        | 1265
-        "8.2.0-beta06"  | "8.4"         || 4240       | 725        | 1265
+        "8.2.0-rc01"    | "8.4"         || 4240       | 725        | 1265
         "8.1.2"         | "8.4"         || 4240       | 725        | 1265
         "8.0.0"         | "8.4"         || 4240       | 725        | 1265
         "7.4.1"         | "7.6"         || 4242       | 726        | 1268
@@ -128,7 +128,7 @@ class IntegrationSpec extends Specification {
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
         "8.3.0-alpha11" | "8.4"         || 6932       | 1023       | 2528
-        "8.2.0-beta06"  | "8.4"         || 6932       | 1023       | 2528
+        "8.2.0-rc01"    | "8.4"         || 6932       | 1023       | 2528
         "8.1.2"         | "8.4"         || 6932       | 1023       | 2528
         "8.0.0"         | "8.4"         || 6929       | 1020       | 2528
         "7.4.1"         | "7.6"         || 7273       | 1065       | 2657
