@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,18 +15,7 @@ jobs:
           - 17
 
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            **/build-cache
-            !tmp
-          key: v2-${{ runner.os }}-${{ matrix.jdk }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            v2-${{ runner.os }}-${{ matrix.jdk }}-gradle-
+      - uses: actions/checkout@v4
 
       - name: Import snapshot GPG key
         run: |
@@ -59,19 +48,19 @@ jobs:
           github.ref != 'refs/heads/master'
 
       - name: Set up JDK ${{ matrix.jdk }}
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.jdk }}
+          distribution: 'zulu'
+
+      - name: Cache Gradle
+        uses: gradle/gradle-build-action@v2
 
       - name: Build and test
-        uses: eskatos/gradle-command-action@v1
-        with:
-          arguments: check
+        run: ./gradlew check
 
       - name: Deploy snapshot
-        uses: eskatos/gradle-command-action@v1
-        with:
-          arguments: uploadSnapshot
+        run:  ./gradlew uploadSnapshot
         if: >-
           github.event_name == 'push' &&
           github.repository == 'KeepSafe/dexcount-gradle-plugin' &&
