@@ -31,6 +31,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.8.0-alpha08" | "8.10.2"      || 6934       | 1023       | 2528
         "8.7.2"         | "8.10.2"      || 6934       | 1023       | 2528
         "8.3.0"         | "8.4"         || 6932       | 1023       | 2528
         "8.2.0"         | "8.4"         || 6932       | 1023       | 2528
@@ -64,6 +65,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.8.0-alpha08" | "8.10.2"      || 4          | 3          | 0
         "8.7.2"         | "8.10.2"      || 4          | 3          | 0
         "8.3.0"         | "8.4"         || 4          | 3          | 0
         "8.2.0"         | "8.4"         || 4          | 3          | 0
@@ -97,6 +99,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.8.0-alpha08" | "8.10.2"      || 4243       | 725        | 1265
         "8.7.2"         | "8.10.2"      || 4243       | 725        | 1265
         "8.3.0"         | "8.4"         || 4240       | 725        | 1265
         "8.2.0"         | "8.4"         || 4240       | 725        | 1265
@@ -130,6 +133,7 @@ class IntegrationSpec extends Specification {
 
         where:
         agpVersion      | gradleVersion || numMethods | numClasses | numFields
+        "8.8.0-alpha08" | "8.10.2"      || 6934       | 1023       | 2528
         "8.7.2"         | "8.10.2"      || 6934       | 1023       | 2528
         "8.3.0"         | "8.4"         || 6932       | 1023       | 2528
         "8.2.0"         | "8.4"         || 6932       | 1023       | 2528
