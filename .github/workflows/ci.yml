@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         jdk:
-          - 17
+          - 21
 
     steps:
       - uses: actions/checkout@v4

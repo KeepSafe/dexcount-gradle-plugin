@@ -4,7 +4,6 @@ rootProject.name = "dexcount-gradle-plugin"
 buildCache {
     local {
         directory = new File(rootDir, "build-cache")
-        removeUnusedEntriesAfterDays = 30
     }
 }
 
