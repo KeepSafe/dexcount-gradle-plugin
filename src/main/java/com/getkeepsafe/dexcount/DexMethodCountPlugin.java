@@ -22,7 +22,6 @@ import com.getkeepsafe.dexcount.plugin.TaskApplicators;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.logging.configuration.ShowStacktrace;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -33,17 +32,10 @@ public class DexMethodCountPlugin implements Plugin<Project> {
     private static final String VERSION_7_0_FIELD = "com.android.Version"; // >= 7.0
     private static final String AGP_VERSION_FIELD = "ANDROID_GRADLE_PLUGIN_VERSION";
 
-    private static final GradleVersion MIN_GRADLE_VERSION = GradleVersion.version("7.0");
     private static final Revision MIN_AGP_VERSION = new Revision(3, 4, 0);
 
     @Override
     public void apply(@NotNull Project project) {
-        GradleVersion gradleVersion = GradleVersion.version(project.getGradle().getGradleVersion());
-        if (gradleVersion.compareTo(MIN_GRADLE_VERSION) < 0) {
-            project.getLogger().error("dexcount requires Gradle {} or above", MIN_GRADLE_VERSION);
-            return;
-        }
-
         Revision gradlePluginRevision = getCurrentAgpRevision();
         DexCountExtension ext = project.getExtensions().create("dexcount", DexCountExtension.class);
 
@@ -73,8 +65,7 @@ public class DexMethodCountPlugin implements Plugin<Project> {
             applicator.apply();
         } else {
             project.getLogger().error(
-                "No dexcount TaskApplicator configured for Gradle version {} and AGP version {}",
-                gradleVersion,
+                "No dexcount TaskApplicator configured for AGP version {}",
                 gradlePluginRevision);
         }
     }

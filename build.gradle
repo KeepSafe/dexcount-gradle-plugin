@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import org.gradle.api.attributes.plugin.GradlePluginApiVersion
+
 plugins {
     id "groovy"
     id "java-gradle-plugin"
@@ -59,6 +61,18 @@ configurations {
     compileOnly {
         extendsFrom androidBuildTool
         extendsFrom workerImplementation
+    }
+
+    runtimeElements {
+        attributes {
+            attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE, objects.named(GradlePluginApiVersion, MIN_GRADLE_VERSION))
+        }
+    }
+
+    apiElements {
+        attributes {
+            attribute(GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE, objects.named(GradlePluginApiVersion, MIN_GRADLE_VERSION))
+        }
     }
 }
 
