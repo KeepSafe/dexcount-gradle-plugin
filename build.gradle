@@ -56,6 +56,10 @@ configurations {
         extendsFrom testImplementation
     }
 
+    integrationTestRuntimeOnly {
+        extendsFrom testRuntimeOnly
+    }
+
     compileOnly {
         extendsFrom androidBuildTool
         extendsFrom workerImplementation
@@ -98,6 +102,7 @@ dependencies {
         exclude module: "groovy-all"
     }
     testImplementation libs.thriftyRuntime
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 thrifty {
@@ -295,6 +300,6 @@ tasks.register("uploadSnapshot") {
 }
 
 wrapper {
-    gradleVersion = "8.4"
+    gradleVersion = "9.1.0"
     distributionType = Wrapper.DistributionType.ALL
 }

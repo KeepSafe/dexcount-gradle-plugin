@@ -34,6 +34,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,7 +94,6 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
 
         Configuration c = getProject().getConfigurations().create("dexcountWorker")
             .setDescription("configuration for dexcount-gradle-plugin")
-            .setVisible(false)
             .setTransitive(true);
 
         c.defaultDependencies(dependencies -> lines.stream()
@@ -116,8 +116,8 @@ abstract class AbstractTaskApplicator implements TaskApplicator {
             throw new IllegalStateException("printDeclarations must be true for Java projects");
         }
 
-        TaskProvider<Jar> jarTaskProvider = getProject().getTasks().named("jar", Jar.class);
-        TaskProvider<JarPackageTreeTask> treegen = getProject().getTasks().register("generatePackageTree", JarPackageTreeTask.class, t -> {
+        TaskProvider<@NotNull Jar> jarTaskProvider = getProject().getTasks().named("jar", Jar.class);
+        TaskProvider<@NotNull JarPackageTreeTask> treegen = getProject().getTasks().register("generatePackageTree", JarPackageTreeTask.class, t -> {
             t.setDescription("Generate dex method counts");
             t.setGroup("Reporting");
 
